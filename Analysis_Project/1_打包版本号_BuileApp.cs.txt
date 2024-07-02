@@ -1,0 +1,14 @@
+
+版本号打包脚本：
+Assets/RealFram/Editor/Resource/BuileApp.cs：SaveVersion方法
+
+版本号打包测试方法：
+Assets/RealFram/Editor/Resource/BuileApp.cs：TVersion方法
+点击工具栏：测试-测试Version写入；进行测试实验。
+
+BuileApp.cs里的打包标准包的Build()方法里，就有使用到打包版本号功能方法
+
+打包版本号只修改Version.txt里的首行。
+其他记录的信息，不会随版本号更新而被覆盖。
+可手动修改Version.txt首行的版本号信息，
+点击工具栏：测试-测试Version写入；进行测试实验。

@@ -1,0 +1,19 @@
+测试加载AB资源：TestLoadAB()
+
+测试读取AB资源：ReadTestAssets()
+
+测试xml序列化：SerilizeTest()
+
+测试xml反序列化：DeSerilizerTest()
+
+xml序列化：XmlSerilize(TestSerilize testSerilize)
+
+xml反序列化：TestSerilize XmlDeSerilize()
+
+测试二进制序列化：BinarySerTest()
+
+测试二进制反序列化：BinaryDeSerTest()
+
+二进制序列化：BinarySerilize(TestSerilize serilize)
+
+二进制反序列化：TestSerilize BinaryDeserilize()
