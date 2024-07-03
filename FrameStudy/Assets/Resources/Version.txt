@@ -1,0 +1,17 @@
+﻿Version|0.1;PackageName|com.TTT.RealName;
+
+其他信息：
+
+版本号打包脚本：
+Assets/RealFram/Editor/Resource/BuileApp.cs：SaveVersion方法
+
+com.Bilibili.ProductName;	//b站包名
+com.XiaoMi.ProductName;		//小米包名
+服务器地址信息等等
+
+注：
+打包版本号只修改上面一行，
+其他记录的信息，不会随版本号更新而被覆盖
+可手动修改上面版本号信息，
+然后点击工具栏：测试-测试Version写入；进行测试实验。
+
