@@ -16,7 +16,9 @@ public class BuildApp
     public static void Build()
     {
         //打ab包
-        BundleEditor.Build();
+        //BundleEditor.Build();//热更前的ab包打包
+        BundleEditor.NormalBuild();//加入可热更打包的资源打包
+
         //打包时，写入版本号，查看地址：Assets/Resources/Version.txt
         SaveVersion(PlayerSettings.bundleVersion, PlayerSettings.applicationIdentifier);
         //生成可执行程序
@@ -163,7 +165,9 @@ public class BuildApp
     public static void BuildPC()
     {
         //打ab包
-        BundleEditor.Build();
+        //BundleEditor.Build();//热更前的ab包打包
+        BundleEditor.NormalBuild();//加入可热更打包的资源打包
+
         BuildSetting buildSetting = GetPCBuildSetting();
         string suffix = SetPcSetting(buildSetting);
         //生成可执行程序
@@ -263,7 +267,8 @@ public class BuildApp
     public static void BuildAndroid()
     {
         //打ab包
-        BundleEditor.Build();
+        //BundleEditor.Build();//热更前的ab包打包
+        BundleEditor.NormalBuild();//加入可热更打包的资源打包
         PlayerSettings.Android.keystorePass = "sikiocean";
         PlayerSettings.Android.keyaliasPass = "sikiocean";
         PlayerSettings.Android.keyaliasName = "android.keystore";
@@ -411,7 +416,8 @@ public class BuildApp
     public static void BuildIOS()
     {
         //打ab包
-        BundleEditor.Build();
+        //BundleEditor.Build();//热更前的ab包打包
+        BundleEditor.NormalBuild();//加入可热更打包的资源打包
         BuildSetting buildSetting = GetIOSBuildSetting();
         string suffix = SetIOSSetting(buildSetting);
 
@@ -530,26 +536,48 @@ public class BuildApp
     }
 }
 
+/// <summary>
+/// 打包设置
+/// </summary>
 public class BuildSetting
 {
-    //版本号
+    /// <summary>
+    /// 版本号
+    /// </summary>
     public string Version = "";
-    //build次数
+    /// <summary>
+    /// build次数
+    /// </summary>
     public string Build = "";
-    //程序名称
+    /// <summary>
+    /// 程序名称
+    /// </summary>
     public string Name = "";
-    //是否debug
+    /// <summary>
+    /// 是否debug
+    /// </summary>
     public bool Debug = true;
-    //渠道
+    /// <summary>
+    /// 渠道
+    /// </summary>
     public Place Place = Place.None;
-    //多线程渲染
+    /// <summary>
+    /// 多线程渲染
+    /// </summary>
     public bool MulRendering = true;
-    //是否IL2CPP
+    /// <summary>
+    /// 是否IL2CPP
+    /// </summary>
     public bool IL2CPP = false;
-    //是否开启动态合批
+    /// <summary>
+    /// 是否开启动态合批
+    /// </summary>
     public bool DynamicBatching = false;
 }
 
+/// <summary>
+/// 打包平台
+/// </summary>
 public enum Place
 {
     None =0,

@@ -1,0 +1,18 @@
+
+1、在BundleHotFix.cs里，添加热更次数记录 hotCount
+并在OnGUI里，添加打热更包的按钮功能，
+调用了BundleEditor脚本里的NormalBuild方法
+
+注：
+使用 菜单栏的 Tools/打包热更包 时，在显示的热更面板上，
+先执行 选择版本ABMD5文件/往ABMD5路径输入框里填入 MD5文件的路径
+再执行 开始打热更包 
+
+2、将BundleEditor.cs里的普通非热更打包Build()，
+换成可选择热更的打包NormalBuild()，Build(bool hotFix =false,string abmd5Path="",string hotCount="1")。
+
+在Build()方法中，调用WriteABMD5()方法，写入ab包信息处修改：
+非热更时执行WriteABMD5()，热更打包时执行其他操作（还没写上具体语句）
+
+3、将BuildApp.cs里的Build换成NormalBuild()；
+涉及Build()、BuildPC()、BuildAndroid()、BuildISO()这几个打包方法。

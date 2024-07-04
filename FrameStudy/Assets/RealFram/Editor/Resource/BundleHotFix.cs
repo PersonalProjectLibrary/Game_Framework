@@ -19,16 +19,18 @@ public class BundleHotFix : EditorWindow
 
     //OnGUI操作、ab包路径的选择
     string md5Path = "";
+    /// <summary>
+    /// 当前版本热更次数，热更了几次，默认1
+    /// </summary>
+    string hotCount = "1";
     OpenFileName m_OpenFileName = null;
     
     private void OnGUI()
     {
-        GUILayout.BeginHorizontal();
-
-        //内容名字：ABMD5路径，后接输入框宽500，高20
-        md5Path = EditorGUILayout.TextField("ABMD5路径：",md5Path,GUILayout.Width(500),GUILayout.Height(30));
-
         //添加按钮：选择版本ABMD5文件。使用WindowsFile脚本，实现Unity编辑器下，打开windows窗口的功能
+        //WindowsFile脚本位置：Assets/RealFrame/Editor/Resource/WindowsFile.cs
+        GUILayout.BeginHorizontal();
+        md5Path = EditorGUILayout.TextField("ABMD5路径：",md5Path,GUILayout.Width(500),GUILayout.Height(30));
         if (GUILayout.Button("选择版本ABMD5文件", GUILayout.Width(200), GUILayout.Height(30)))
         {
             //设置打开的窗口
@@ -49,8 +51,18 @@ public class BundleHotFix : EditorWindow
                 md5Path = m_OpenFileName.file;
             }
         }
+        GUILayout.EndHorizontal();
 
+        GUILayout.BeginHorizontal();
+        hotCount = EditorGUILayout.TextField("热更补丁版本：",hotCount,GUILayout.Width(350),GUILayout.Height(30));//显示热更次数
+        //打热更包的按钮
+        if (GUILayout.Button("开始打热更包", GUILayout.Width(100), GUILayout.Height(30)))
+        {
+            if (!string.IsNullOrEmpty(md5Path) && md5Path.EndsWith(".bytes"))
+            {
+                BundleEditor.Build(true, md5Path, hotCount);//调用bundleEditor进行热更打包
+            }
+        }
         GUILayout.EndHorizontal();
     }
-
 }

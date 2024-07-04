@@ -30,7 +30,20 @@ public class BundleEditor
     private static List<string> m_ConfigFil = new List<string>();
 
     [MenuItem("Tools/打包")]
-    public static void Build()
+    public static void NormalBuild()
+    {
+        Build();//标准打包，非热更打包
+    }
+
+    /// <summary>
+    /// 打包
+    /// 参数不加，是非热更打包
+    /// 使用参数，是进行热更打包
+    /// </summary>
+    /// <param name="hotFix">是否热更打包</param>
+    /// <param name="abmd5Path">热更的md5版本信息路径</param>
+    /// <param name="hotCount">热更次数</param>
+    public static void Build(bool hotFix = false, string abmd5Path = "", string hotCount = "1")
     {
         DataEditor.AllXmlToBinary();
         m_ConfigFil.Clear();
@@ -101,8 +114,11 @@ public class BundleEditor
             AssetDatabase.RemoveAssetBundleName(oldABNames[i], true);
             EditorUtility.DisplayProgressBar("清除AB包名", "名字：" + oldABNames[i], i * 1.0f / oldABNames.Length);
         }
-        //写入资源信息
-        WriteABMD5();
+        
+        if (hotFix) //热更打包时
+        {
+
+        }else WriteABMD5();//正常写入ab包资源信息
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
