@@ -11,8 +11,13 @@ public class BundleEditor
 {
     /// <summary>
     /// 打的包生成的地址
+    /// 不同平台渠道：EditorUserBuildSettings.activeBuildTarget.ToString()
     /// </summary>
     private static string m_BunleTargetPath = Application.dataPath+"/../AssetBundle/" + EditorUserBuildSettings.activeBuildTarget.ToString();
+    /// <summary>
+    /// 版本文件所在路径
+    /// </summary>
+    private static string m_VersionMd5Path = Application.dataPath+"/../Version/"+EditorUserBuildSettings.activeBuildTarget.ToString();
     private static string ABCONFIGPATH = "Assets/RealFram/Editor/Resource/ABConfig.asset";
     private static string ABBYTEPATH = RealConfig.GetRealFram().m_ABBytePath;
     //key是ab包名，value是路径，所有文件夹ab包dic
@@ -132,6 +137,12 @@ public class BundleEditor
         //序列化二进制
         BinarySerializeOpt.BinarySerilize(ABMD5Path, abmd5);
 
+        //将打版的版本文件MD5，拷贝到外部（m_VersionMd5Path）进行储存
+        if (!Directory.Exists(m_VersionMd5Path)) Directory.CreateDirectory(m_VersionMd5Path);
+        //文件夹+文件名+版本号+后缀
+        string targetPath = m_VersionMd5Path + "/ABMD5_" + PlayerSettings.bundleVersion + ".bytes";
+        if(File.Exists(targetPath))File.Delete(targetPath);
+        File.Copy(ABMD5Path, targetPath);
     }
 
     static void SetABName(string name, string path)

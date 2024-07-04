@@ -1,0 +1,12 @@
+
+在FrameStudy文件夹下建Version文件夹（和Assets同级目录）
+用于记录不同版本打包的MD5文件
+
+版本文件设置所在脚本：Assets/RealFram/Editor/Resource/BundleEditor.cs
+
+1、版本文件所在路径：m_VersionMd5Path
+m_VersionMd5Path =Application.dataPath+"/../Version/"+EditorUserBuildSettings.activeBuildTarget.ToString();
+
+2、使用位置：BundleEditor.cs的 WriteABMD5()方法里
+在写入MD5后，将打版的版本文件MD5，拷贝到外部（m_VersionMd5Path）进行储存。
+打包的版本文件，可在FrameStudy/Version里查看
