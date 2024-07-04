@@ -1,12 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1458242542
+CRC: 1498455345
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 4a0bd725dd4fa551abff19d12a4bfa4e
+    Hash: 9e687a4cc8296fcfcfd86c7f86d19621
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 1b424b3fdcf30874dca9d18e9720a3cf
+    Hash: 3b9c1cb8090ba4326f5413f3dc501728
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 9e687a4cc8296fcfcfd86c7f86d19621
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -18,15 +21,15 @@ ClassTypes:
 - Class: 48
   Script: {instanceID: 0}
 - Class: 114
-  Script: {fileID: -765806418, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
 - Class: 114
-  Script: {fileID: -113659843, guid: f70555f144d8491a825f0804e09c671c, type: 3}
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
 - Class: 114
-  Script: {fileID: 708705254, guid: f70555f144d8491a825f0804e09c671c, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: f57b28759484e4e4e8c3deb4f5c31f8d, type: 3}
+  Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: db4ab3953b0513b4aaeb86ada779eecc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f57b28759484e4e4e8c3deb4f5c31f8d, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -37,6 +40,23 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 224
   Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.Events.PersistentCallGroup
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.AnimationTriggers
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ColorBlock
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.FontData
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Navigation
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Slider/SliderEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.SpriteState
 Assets:
 - Assets/GameData/Prefabs/UGUI/Panel/LoadingPanel.prefab
 Dependencies: []

@@ -9,6 +9,9 @@ using UnityEngine.Profiling;
 
 public class BundleEditor
 {
+    /// <summary>
+    /// 打的包生成的地址
+    /// </summary>
     private static string m_BunleTargetPath = Application.dataPath+"/../AssetBundle/" + EditorUserBuildSettings.activeBuildTarget.ToString();
     private static string ABCONFIGPATH = "Assets/RealFram/Editor/Resource/ABConfig.asset";
     private static string ABBYTEPATH = RealConfig.GetRealFram().m_ABBytePath;
@@ -84,18 +87,51 @@ public class BundleEditor
             SetABName(name, m_AllPrefabDir[name]);
         }
 
+        //打包AB资源包
         BunildAssetBundle();
-
+        //清除旧AB资源包
         string[] oldABNames = AssetDatabase.GetAllAssetBundleNames();
         for (int i = 0; i < oldABNames.Length; i++)
         {
             AssetDatabase.RemoveAssetBundleName(oldABNames[i], true);
             EditorUtility.DisplayProgressBar("清除AB包名", "名字：" + oldABNames[i], i * 1.0f / oldABNames.Length);
         }
+        //写入资源信息
+        WriteABMD5();
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         EditorUtility.ClearProgressBar();
+    }
+
+    /// <summary>
+    /// 写入资源信息
+    /// </summary>
+    static void WriteABMD5()
+    {
+        DirectoryInfo directoryInfo = new DirectoryInfo(m_BunleTargetPath);//从资源文件夹里获取文件信息
+        FileInfo[] files = directoryInfo.GetFiles("*",SearchOption.AllDirectories);//获取所有文件信息。*表示所有文件信息
+        //文件写入
+        ABMD5 abmd5 = new ABMD5();
+        abmd5.ABMD5List = new List<ABMD5Base>();
+       for(int i=0;i< files.Length; i++)
+        {
+            //不是mate文件、manifest文件，则可进行写入
+            if (!files[i].Name.EndsWith(".meta") && !files[i].Name.EndsWith(".manifest"))
+            {
+                ABMD5Base abmd5Base = new ABMD5Base();
+                abmd5Base.Name = files[i].Name;
+                abmd5Base.Md5 = MD5Manager.Instance.BuildFileMd5(files[i].FullName);//传入全路径
+                abmd5Base.Size = files[i].Length / 1024.0f;//单位kb
+                abmd5.ABMD5List.Add(abmd5Base);
+            }
+        }
+        //储存md5
+        string ABMD5Path = Application.dataPath + "/Resources/ABMD5.bytes";
+
+        //序列化二进制
+        BinarySerializeOpt.BinarySerilize(ABMD5Path, abmd5);
+
     }
 
     static void SetABName(string name, string path)
@@ -119,6 +155,9 @@ public class BundleEditor
         }
     }
 
+    /// <summary>
+    /// 打包AB资源包
+    /// </summary>
     static void BunildAssetBundle()
     {
         string[] allBundles = AssetDatabase.GetAllAssetBundleNames();
