@@ -1,0 +1,6 @@
+
+设置热更数据配置表的数据结构：
+
+在资源列表文件夹（Assets/RealFram/FramPlug/ResourceFrame）下，
+新建Download文件夹，
+新建ServerInfo.cs脚本，其设置的数据结构，为热更数据配置表的数据结构
