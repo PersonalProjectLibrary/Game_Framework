@@ -6,6 +6,7 @@ using System.IO;
 using System.Xml.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine.Profiling;
+using NUnit.Framework;
 
 public class BundleEditor
 {
@@ -18,6 +19,11 @@ public class BundleEditor
     /// 版本文件所在路径
     /// </summary>
     private static string m_VersionMd5Path = Application.dataPath+"/../Version/"+EditorUserBuildSettings.activeBuildTarget.ToString();
+    /// <summary>
+    /// 热热更的路径
+    /// 热更相关的文件夹，存储有更新的资源
+    /// </summary>
+    private static string m_HotPath = Application.dataPath + "/../Hot/" + EditorUserBuildSettings.activeBuildTarget.ToString();
     private static string ABCONFIGPATH = "Assets/RealFram/Editor/Resource/ABConfig.asset";
     private static string ABBYTEPATH = RealConfig.GetRealFram().m_ABBytePath;
     //key是ab包名，value是路径，所有文件夹ab包dic
@@ -28,6 +34,11 @@ public class BundleEditor
     private static Dictionary<string, List<string>> m_AllPrefabDir = new Dictionary<string, List<string>>();
     //储存所有有效路径
     private static List<string> m_ConfigFil = new List<string>();
+
+    /// <summary>
+    /// 存储本地存在的MD5
+    /// </summary>
+    private static Dictionary<string,ABMD5Base> m_PackedMd5 = new Dictionary<string,ABMD5Base>();
 
     [MenuItem("Tools/打包")]
     public static void NormalBuild()
@@ -84,26 +95,14 @@ public class BundleEditor
                         allDependPath.Add(allDepend[j]);
                     }
                 }
-                if (m_AllPrefabDir.ContainsKey(obj.name))
-                {
-                    Debug.LogError("存在相同名字的Prefab！名字：" + obj.name);
-                }
-                else
-                {
-                    m_AllPrefabDir.Add(obj.name, allDependPath);
-                }
+                if (m_AllPrefabDir.ContainsKey(obj.name)) Debug.LogError("存在相同名字的Prefab！名字：" + obj.name);
+                else m_AllPrefabDir.Add(obj.name, allDependPath);
             }
         }
 
-        foreach (string name in m_AllFileDir.Keys)
-        {
-            SetABName(name, m_AllFileDir[name]);
-        }
+        foreach (string name in m_AllFileDir.Keys) SetABName(name, m_AllFileDir[name]);
 
-        foreach (string name in m_AllPrefabDir.Keys)
-        {
-            SetABName(name, m_AllPrefabDir[name]);
-        }
+        foreach (string name in m_AllPrefabDir.Keys) SetABName(name, m_AllPrefabDir[name]);
 
         //打包AB资源包
         BunildAssetBundle();
@@ -115,10 +114,8 @@ public class BundleEditor
             EditorUtility.DisplayProgressBar("清除AB包名", "名字：" + oldABNames[i], i * 1.0f / oldABNames.Length);
         }
         
-        if (hotFix) //热更打包时
-        {
-
-        }else WriteABMD5();//正常写入ab包资源信息
+        if (hotFix) ReadMd5Com(abmd5Path, hotCount);//筛选有改变/热更的资源，并复制到热更文件夹下
+        else WriteABMD5();//正常写入ab包资源信息
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -159,6 +156,63 @@ public class BundleEditor
         string targetPath = m_VersionMd5Path + "/ABMD5_" + PlayerSettings.bundleVersion + ".bytes";
         if(File.Exists(targetPath))File.Delete(targetPath);
         File.Copy(ABMD5Path, targetPath);
+    }
+
+    /// <summary>
+    /// 筛选有改变的资源，并拷贝热更后/已改变的资源
+    /// </summary>
+    /// <param name="abmd5Path"></param>
+    /// <param name="hotCount"></param>
+    static void ReadMd5Com(string abmd5Path,string hotCount)
+    {
+        m_PackedMd5.Clear();
+        //读取记录文件夹中已存储的md5
+        using(FileStream fileStream = new FileStream(abmd5Path, FileMode.Open, FileAccess.Read))
+        {
+            BinaryFormatter bf = new BinaryFormatter();
+            ABMD5 abmd5 = bf.Deserialize(fileStream) as ABMD5;
+            foreach(ABMD5Base abmd5Base in abmd5.ABMD5List)
+            {
+                m_PackedMd5.Add(abmd5Base.Name, abmd5Base);
+            }
+        }
+        
+        List<string> changeList = new List<string>();//记录已改变的资源
+        DirectoryInfo directoryInfo = new DirectoryInfo(m_BunleTargetPath);//获取文件夹信息
+        FileInfo[] files = directoryInfo.GetFiles("*", SearchOption.AllDirectories);//获取文件信息
+        for(int i = 0;i< files.Length; i++)
+        {
+            if (!files[i].Name.EndsWith(".meta") && !files[i].Name.EndsWith(".manifest"))
+            {
+                string name = files[i].Name;
+                string md5 = MD5Manager.Instance.BuildFileMd5(files[i].FullName);//本次根据ab包的资源信息，新打包的MD5文件
+                ABMD5Base abmd5Base = null;//存储本地同名的md5
+                if (!m_PackedMd5.ContainsKey(name)) changeList.Add(name);//已经打包的MD5文件夹中不含有此版本的MD5，此次是新版本打包的MD5
+                else
+                {
+                    if(m_PackedMd5.TryGetValue(name,out abmd5Base))//在过去打包的MD5中找到同版本号的MD5文件
+                    {
+                        if(md5!=abmd5Base.Md5)changeList.Add(name);//旧版本的MD5和这次打包的MD5数据不一样，说明资源更新了
+                    }
+                }
+            }
+        }
+        CopyABAndGenerateXML(changeList, hotCount);
+    }
+
+    /// <summary>
+    /// 拷贝改变的资源，后面xml生成的配置表也在这里设置
+    /// </summary>
+    /// <param name="changeList">已改变的资源列表</param>
+    /// <param name="hotCount">热更次数</param>
+    static void CopyABAndGenerateXML(List<string> changeList,string hotCount)
+    {
+        if(!Directory.Exists(m_HotPath))Directory.CreateDirectory(m_HotPath);
+        DeleteAllFile(m_HotPath);//删除文件夹里已有的AB包
+        foreach (string str in changeList)//拷贝这次改变的AB包
+        {
+            if (!str.EndsWith(".manifest")) File.Copy(m_BunleTargetPath + "/" + str, m_HotPath + "/" + str);
+        }
     }
 
     static void SetABName(string name, string path)
@@ -361,5 +415,25 @@ public class BundleEditor
             }
         }
         return false;
+    }
+
+    /// <summary>
+    /// 删除指定文件目录下的所有文件
+    /// 不包含递归的文件夹的删除
+    /// </summary>
+    /// <param name="fullPath">全路径</param>
+    /// <returns></returns>
+    public static void DeleteAllFile(string fullPath)
+    {
+        if (Directory.Exists(fullPath))
+        {
+            DirectoryInfo directory = new DirectoryInfo(fullPath);
+            FileInfo[] files = directory.GetFiles("*", SearchOption.AllDirectories);
+            for (int i = 0; i < files.Length; i++)
+            {
+                if (files[i].Name.EndsWith(".meta")) continue;
+                File.Delete(files[i].FullName);
+            }
+        }
     }
 }

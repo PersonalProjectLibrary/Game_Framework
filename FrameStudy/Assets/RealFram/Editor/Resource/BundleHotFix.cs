@@ -21,6 +21,7 @@ public class BundleHotFix : EditorWindow
     string md5Path = "";
     /// <summary>
     /// 当前版本热更次数，热更了几次，默认1
+    /// 后面做配置表时候会用到
     /// </summary>
     string hotCount = "1";
     OpenFileName m_OpenFileName = null;

@@ -1,0 +1,16 @@
+
+完善BundleEditor.cs的Build()方法中的热更打包逻辑：if(hotFix){ReadMd5Com()}
+
+添加新的方法函数：
+筛选有改变/更新的资源方法 ReadMd5Com(string abmd5Path,string hotCount)
+
+拷贝有改变/更新的资源到热更文件夹中 CopyABAndGenerateXML(List<string> changeList,string hotCount)
+这个方法，ReadMd5Com里有调用，后续xml生成的配置表的设置也在这里设置
+
+新增热更文件夹，路径：FrameStudy/Hot文件夹（和Asset文件夹是同级目录）
+m_HotPath = Application.dataPath + "/../Hot/" + EditorUserBuildSettings.activeBuildTarget.ToString();
+
+测试方法：修改某一资源，然后进行热更：点击菜单栏 Tools/打包热更包 按钮
+在弹出的热更面板上，先设置md5路径，然后点击开始打热更包
+
+可在FrameStudy/Hot 文件夹里看到打包出来的，有更新的资源文件
