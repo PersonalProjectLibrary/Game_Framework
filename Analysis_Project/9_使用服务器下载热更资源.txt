@@ -1,0 +1,48 @@
+1、搭建服务器
+课程里使用的是Apache第三方平台版本在本地搭建服务器
+个人使用Phpstudy在本地搭建服务器平台
+
+我是把服务器放到D:\PhpStudy里，
+对应本地服务器磁盘目录是D:\PhpStudy\LocalServer\phpstudy_pro\WWW
+对应调用服务器地址：http://localhost/
+或http://127.0.0.1/
+
+2、服务器上建立热更文件资源
+（1）在服务器上，根地址目录下建立文件夹：AssetBundle\0.1\1
+其中：0.1表示版本，1表示第几次热更。
+
+对应地址：服务器上热更资源地址：http://localhost/AssetBundle/0.1/1/
+或：http://127.0.0.1/AssetBundle/0.1/1/
+
+（2）把热更资源复制到1文件夹里。
+
+（3）说明：
+我是往项目里添加了图片：HotTest.PNG
+打包出来的资源有：assetbundleconfig，StandaloneWindows64，ugui，Patch.xml
+这里将assetbundleconfig，StandaloneWindows64，ugui，Patch.xml放到服务器的1文件夹里
+
+3、在服务器上建服务器列表/服务器配置表文件：ServerInfo.xml
+（1）和服务器上的AssetBundle同级，都是在服务器的根目录文件上。
+对应服务器地址：http://localhost/ServerInfo.xml
+http://127.0.0.1/ServerInfo.xml
+后续可从服务器下载配置表与本地对比，判断是否有进行热更。
+
+（2）这里把在服务器上建的ServerInfo.xml复制一份到Analysis_Project/000HotFiles里，
+可参考文件构建自己的服务器配置表
+服务器上建的ServerInfo.xml格式是对照项目里的ServerInfo.cs配置类来写的。
+
+（3）说明：
+服务器配置表记录版本热更内容，
+每次热更后，把Patch.xml里的
+删除Patchs的xmlns，Files添加 Des后的
+<Patchs PatchVersion="1"><Files ... /> <Files ... /></Patchs>
+模块内容复制到ServerInfo.xml中新增
+
+因为每次更新都是生成Patchs 信息，而不是整个ServerInfo，
+有新的Patchs热更，把对应热更内容添加到ServerInfo.xml中来记录版本热更信息。
+
+4、注意把BundleEditor.cs的Build方法里的生成服务器配置表部分的
+patch.Url补充完善：
+patch.Url = "" + PlayerSettings.bundleVersion + "/" + hotCount + "/" + files[i].Name;
+改为：
+patch.Url = "http://127.0.0.1/AssetBundle" + PlayerSettings.bundleVersion + "/" + hotCount + "/" + files[i].Name;

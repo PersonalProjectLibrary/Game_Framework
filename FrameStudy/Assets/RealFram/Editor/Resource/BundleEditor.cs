@@ -230,8 +230,8 @@ public class BundleEditor
             patch.Name = files[i].Name;
             patch.Size = files[i].Length / 1024.0f;
             patch.Platform = EditorUserBuildSettings.activeBuildTarget.ToString();
-            //后续服务器设置好再添加完善
-            patch.Url = "" + PlayerSettings.bundleVersion + "/" + hotCount + "/" + files[i].Name;
+            //搭建本地服务器后，完善地址如下
+            patch.Url = "http://127.0.0.1/AssetBundle" + PlayerSettings.bundleVersion + "/" + hotCount + "/" + files[i].Name;
             patchs.Files.Add(patch);
         }
 
