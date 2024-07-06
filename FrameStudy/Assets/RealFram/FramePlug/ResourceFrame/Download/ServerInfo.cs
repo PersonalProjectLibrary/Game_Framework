@@ -12,7 +12,7 @@ public class ServerInfo
     /// <summary>
     /// 记录所有版本信息
     /// </summary>
-    [XmlAttribute("GameVersion")]
+    [XmlElement("GameVersion")]     //注意这里是数组元素，不是单个元素，用XmlElement，不用XmlAttribute
     public VersionInfo[] GameVersion;
 }
 
@@ -27,10 +27,12 @@ public class VersionInfo
     /// 当前游戏的版本号
     /// </summary>
     [XmlAttribute]  //不写参数，默认参数是变量，等价于[XmlAttribute("Version")]
-    public string nowVersion;
+    public string NowVersion;
 
-    //当前版本有几个热更包
-    [XmlAttribute]
+    /// <summary>
+    /// 当前版本有几个热更包
+    /// </summary>
+    [XmlElement]    //注意这里是数组元素，不是单个元素，用XmlElement，不用XmlAttribute
     public Patchs[] Patchs;
 
     //游戏的渠道类型（这里暂时没添加）
@@ -55,8 +57,10 @@ public class Patchs
     [XmlAttribute]
     public string Des;
 
-    //每个热更包里包含哪些文件
-    [XmlAttribute]
+    /// <summary>
+    /// 每个热更包里包含哪些文件
+    /// </summary>
+    [XmlElement]    //注意这里是List元素，不是单个元素，用XmlElement，不用XmlAttribute
     public List<Patch> Files;
 }
 

@@ -1,0 +1,32 @@
+
+1、继续完善 BundleEditor.cs 脚本的CopyABAndGenerateXML()方法
+
+添加自动生成服务器配置表的功能
+其中patch.Url未添加服务器地址，只加了版本号热更数和补丁名等参数
+patch.Url = "" + PlayerSettings.bundleVersion + "/" + hotCount + "/" + files[i].Name;
+
+2、测试方法：
+修改项目中的某一资源，然后打热更包（可参考之前文档说明。这里不赘述）
+可去FrameStudy/hot文件夹下查看热更结果：生成一个Patch.xml
+
+3、Bug修复：
+
+Assets/RealFram/FramPlug/ResourceFrame/Download/ServerInfo.cs里的
+数组，列表等元素的序列化使用XmlAttribute标签，
+
+导致Patch无法正常序列化未xml文件，应改为使用XmlElement标签标记
+
+如：
+错误写法：
+[XmlAttribute]
+public Patchs[] Patchs;
+
+[XmlAttribute]
+public List<Patch> Files;
+
+正确写法：
+[XmlElement] 
+public Patchs[] Patchs;
+
+[XmlElement] 
+public List<Patch> Files;

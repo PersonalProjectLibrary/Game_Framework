@@ -201,18 +201,42 @@ public class BundleEditor
     }
 
     /// <summary>
-    /// 拷贝改变的资源，后面xml生成的配置表也在这里设置
+    /// 拷贝改变的AB包资源，及自动生成服务器配置表
     /// </summary>
     /// <param name="changeList">已改变的资源列表</param>
     /// <param name="hotCount">热更次数</param>
     static void CopyABAndGenerateXML(List<string> changeList,string hotCount)
     {
+        //热更资源文件夹不存在，则生成热更资源文件夹
         if(!Directory.Exists(m_HotPath))Directory.CreateDirectory(m_HotPath);
-        DeleteAllFile(m_HotPath);//删除文件夹里已有的AB包
-        foreach (string str in changeList)//拷贝这次改变的AB包
+        //删除文件夹里已有的AB包
+        DeleteAllFile(m_HotPath);
+        //拷贝这次改变的AB包
+        foreach (string str in changeList)
         {
             if (!str.EndsWith(".manifest")) File.Copy(m_BunleTargetPath + "/" + str, m_HotPath + "/" + str);
         }
+        //自动生成服务器配置表
+        DirectoryInfo directory = new DirectoryInfo(m_HotPath);
+        FileInfo[] files = directory.GetFiles("*",SearchOption.AllDirectories);
+        //ServerInfo是总配置表，我们不从总配置表生成，只需每次从单个热更总包开始生成拷贝
+        Patchs patchs = new Patchs();
+        patchs.PatchVersion = 1;//这么默认1，可自行修改
+        patchs.Files = new List<Patch>();
+        for (int i = 0; i < files.Length; i++)
+        {
+            Patch patch = new Patch();
+            patch.Md5 = MD5Manager.Instance.BuildFileMd5(files[i].FullName);
+            patch.Name = files[i].Name;
+            patch.Size = files[i].Length / 1024.0f;
+            patch.Platform = EditorUserBuildSettings.activeBuildTarget.ToString();
+            //后续服务器设置好再添加完善
+            patch.Url = "" + PlayerSettings.bundleVersion + "/" + hotCount + "/" + files[i].Name;
+            patchs.Files.Add(patch);
+        }
+
+        //序列化
+        BinarySerializeOpt.Xmlserialize(m_HotPath+"/Patch.xml",patchs);
     }
 
     static void SetABName(string name, string path)
