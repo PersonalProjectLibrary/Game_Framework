@@ -1,0 +1,8 @@
+
+下载东西：
+
+1、在Assets\RealFram\FramePlug\ResourceFrame\Download文件夹下新建类：DownLoadItem.cs
+DownLoadItem.cs作为下载资源的基类、虚类
+
+2、在Assets\RealFram\FramePlug\ResourceFrame\Download文件夹下新建类：DownLoadAssetBundle.cs
+DownLoadAssetBundle.cs继承DownLoadItem.cs，用于下载AB资源
