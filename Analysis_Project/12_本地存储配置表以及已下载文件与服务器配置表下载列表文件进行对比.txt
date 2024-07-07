@@ -1,0 +1,18 @@
+
+1、文件热更优化：
+（1）所有文件下载对比，并且缓存本地的下载服务器列表，来比较与远程服务器Patch版本是否一致。
+（2）一致的情况下，还是检查文件的MD5码是否一致，判断本地文件是否有被修改，本地文件是否是完全下载下来的资源还是之前下载中断，需要重新下载。
+MD5码也一致，则不需要下载。
+（3）否则从服务器下载热更资源。
+
+2、本地以往的服务器配置表存储位置
+    private string m_LocalXmlPath = Application.persistentDataPath + "/LocalInfo.xml";
+
+3、检查本地和服务器的热更对比：
+（1）HotPatchManager.cs里添加 bool CheckLocalAndServerPatch()方法
+（2）本地以往的服务器配置表存储位置：
+m_LocalXmlPath = Application.persistentDataPath + "/LocalInfo.xml";
+（3）存储本地配置表xml反序列化后的数据： ServerInfo m_LocalInfo;
+（4）本地不存在服务器配置表，返回true；
+本地配置表和远程配置表存在，且版本号不同，返回true；
+否则返回 false.

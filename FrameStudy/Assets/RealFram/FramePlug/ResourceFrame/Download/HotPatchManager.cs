@@ -8,13 +8,23 @@ using UnityEngine.Networking;
 
 public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
 {
-    private string m_CurVersion;// 当前版本号
-    private string m_CurPackName;// 当前热更包名
+    /// <summary>
+    /// 当前版本号
+    /// </summary>
+    private string m_CurVersion;
+    /// <summary>
+    /// 当前热更包名
+    /// </summary>
+    private string m_CurPackName;
 
     private MonoBehaviour m_Mono;// 用于开启协程
-    private string m_ServerXmlPath = Application.persistentDataPath + "/ServerInfo.xml";// 服务器配置表下载后存储位置
-    private ServerInfo m_ServerInfo;// 存储xml反序列后的结果
+    //服务器配置表下载后存储位置
+    private string m_ServerXmlPath = Application.persistentDataPath + "/ServerInfo.xml";
+    private ServerInfo m_ServerInfo;//存储服务器配置表xml反序列后的结果
 
+    //本地以往的服务器配置表存储位置
+    private string m_LocalXmlPath = Application.persistentDataPath + "/LocalInfo.xml";
+    private ServerInfo m_LocalInfo;//存储本地配置表xml反序列化后的数据
 
     private VersionInfo m_GameVersion;// 当前游戏版本
     private Patchs m_CurrentPatches;//当前热更Patchs
@@ -38,8 +48,8 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// </summary>
     public float LoadSumSize { get; set; } = 0;
 
-    //GameStart里来调用这个方法进行初始化
-    public void Init(MonoBehaviour mono)    //之前分离过程序集，用这种方式使用MonoBehaviour，和外界避开
+    //GameStart里来调用这个方法进行初始化，之前分离过程序集，用这种方式使用MonoBehaviour，和外界避开
+    public void Init(MonoBehaviour mono)
     {
         m_Mono = mono;
     }
@@ -72,7 +82,19 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
                 }
             }
             GetHotAB();//获取服务器上所有可能需要的热更资源
-            ComputeDownload();//计算要下载的热更包
+
+            //判断是否需要热更
+            if(CheckLocalAndServerPatch())
+            {
+                ComputeDownload();//计算要下载的热更包
+                if (File.Exists(m_ServerXmlPath))
+                {
+                    if(File.Exists(m_LocalXmlPath))File.Delete(m_LocalXmlPath);
+                    File.Move(m_ServerXmlPath, m_LocalXmlPath);//将服务器热更xml名改换为本地热更xml名
+                }
+            }
+            else ComputeDownload();//服务器信息与本地信息完全一致，检查本地patch资源与服务器patch资源是否一致
+
             //计算资源大小
             LoadFileCount = m_DownLoadList.Count;
             LoadSumSize = m_DownLoadList.Sum(x=>x.Size);
@@ -82,6 +104,37 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             if (hotCallBack!=null)hotCallBack(m_DownLoadList.Count>0);
 
         }));
+    }
+
+    /// <summary>
+    /// 本地配置配置表与服务器热更配置表比较，是否需要更新
+    /// </summary>
+    /// <returns>true：需要热更；false：不需要热更</returns>
+    bool CheckLocalAndServerPatch()
+    {
+        //本地不存在配置表，即首次进行热更
+        if (!File.Exists(m_LocalXmlPath)) return true;
+
+        //本地有服务器配置表，反序列化本地配置表
+        m_LocalInfo = BinarySerializeOpt.XmlDeserialize(m_LocalXmlPath,typeof(ServerInfo)) as ServerInfo;
+
+        VersionInfo localGameVersion = null;
+        if (m_LocalInfo != null)
+        {
+            foreach(VersionInfo version in m_LocalInfo.GameVersion)
+            {
+                if (version.NowVersion == m_CurVersion)//配置表里当前这个的版号就是当前游戏版号
+                {
+                    localGameVersion = version;
+                    break;
+                }
+            }
+        }
+        //两个服务器版本不同
+        if (m_GameVersion.Patchs != null && localGameVersion != null &&  localGameVersion.Patchs != null && m_GameVersion.Patchs.Length > 0 && m_GameVersion.Patchs[m_GameVersion.Patchs.Length - 1].PatchVersion != localGameVersion.Patchs[localGameVersion.Patchs.Length - 1].PatchVersion)
+            return true;
+
+        return false;
     }
 
     /// <summary>
@@ -157,6 +210,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
 
     /// <summary>
     /// 计算要下载的资源
+    /// 也是：
+    /// 检查本地资源是否与服务器下载列表信息一致，
+    /// 主要用于在下载一半退出，再进入游戏，下载剩下部分
+    /// 虽然未达到断点续传，但达到了已下载、未下载的分类
     /// </summary>
     void ComputeDownload()
     {
@@ -203,7 +260,6 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             m_DownLoadDic.Add(patch.Name, patch);
         }
     }
-
 
 }
 
