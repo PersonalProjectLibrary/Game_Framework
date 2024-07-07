@@ -4,98 +4,98 @@ using UnityEngine;
 using System.Xml.Serialization;
 
 /// <summary>
-/// Õû¸öµÄÊı¾İÀà
+/// æ•´ä¸ªçš„æ•°æ®ç±»
 /// </summary>
 [System.Serializable]
 public class ServerInfo
 {
     /// <summary>
-    /// ¼ÇÂ¼ËùÓĞ°æ±¾ĞÅÏ¢
+    /// è®°å½•æ‰€æœ‰ç‰ˆæœ¬ä¿¡æ¯
     /// </summary>
-    [XmlElement("GameVersion")]     //×¢ÒâÕâÀïÊÇÊı×éÔªËØ£¬²»ÊÇµ¥¸öÔªËØ£¬ÓÃXmlElement£¬²»ÓÃXmlAttribute
+    [XmlElement("GameVersion")]     //æ³¨æ„è¿™é‡Œæ˜¯æ•°ç»„å…ƒç´ ï¼Œä¸æ˜¯å•ä¸ªå…ƒç´ ï¼Œç”¨XmlElementï¼Œä¸ç”¨XmlAttribute
     public VersionInfo[] GameVersion;
 }
 
 /// <summary>
-/// °æ±¾ĞÅÏ¢
-/// µ±Ç°ÓÎÏ·°æ±¾¶ÔÓ¦µÄËùÓĞ²¹¶¡
+/// ç‰ˆæœ¬ä¿¡æ¯
+/// å½“å‰æ¸¸æˆç‰ˆæœ¬å¯¹åº”çš„æ‰€æœ‰è¡¥ä¸
 /// </summary>
 [System.Serializable]
 public class VersionInfo
 {
     /// <summary>
-    /// µ±Ç°ÓÎÏ·µÄ°æ±¾ºÅ
+    /// å½“å‰æ¸¸æˆçš„ç‰ˆæœ¬å·
     /// </summary>
-    [XmlAttribute]  //²»Ğ´²ÎÊı£¬Ä¬ÈÏ²ÎÊıÊÇ±äÁ¿£¬µÈ¼ÛÓÚ[XmlAttribute("Version")]
+    [XmlAttribute]  //ä¸å†™å‚æ•°ï¼Œé»˜è®¤å‚æ•°æ˜¯å˜é‡ï¼Œç­‰ä»·äº[XmlAttribute("Version")]
     public string NowVersion;
 
     /// <summary>
-    /// µ±Ç°°æ±¾ÓĞ¼¸¸öÈÈ¸ü°ü
+    /// å½“å‰ç‰ˆæœ¬æœ‰å‡ ä¸ªçƒ­æ›´åŒ…
     /// </summary>
-    [XmlElement]    //×¢ÒâÕâÀïÊÇÊı×éÔªËØ£¬²»ÊÇµ¥¸öÔªËØ£¬ÓÃXmlElement£¬²»ÓÃXmlAttribute
+    [XmlElement]    //æ³¨æ„è¿™é‡Œæ˜¯æ•°ç»„å…ƒç´ ï¼Œä¸æ˜¯å•ä¸ªå…ƒç´ ï¼Œç”¨XmlElementï¼Œä¸ç”¨XmlAttribute
     public Patchs[] Patchs;
 
-    //ÓÎÏ·µÄÇşµÀÀàĞÍ£¨ÕâÀïÔİÊ±Ã»Ìí¼Ó£©
+    //æ¸¸æˆçš„æ¸ é“ç±»å‹ï¼ˆè¿™é‡Œæš‚æ—¶æ²¡æ·»åŠ ï¼‰
 }
 
 /// <summary>
-/// µ¥¸ö×Ü²¹¶¡°ü
+/// å•ä¸ªæ€»è¡¥ä¸åŒ…
 /// </summary>
 [System.Serializable]
 public class Patchs
 {
     /// <summary>
-    /// µ±Ç°ÈÈ¸üµÄ°æ±¾
-    /// ÔÚÕâ¸ö°æ±¾ÊÇµÚ¼¸´ÎÈÈ¸ü
+    /// å½“å‰çƒ­æ›´çš„ç‰ˆæœ¬
+    /// åœ¨è¿™ä¸ªç‰ˆæœ¬æ˜¯ç¬¬å‡ æ¬¡çƒ­æ›´
     /// </summary>
     [XmlAttribute]
     public int PatchVersion;
 
     /// <summary>
-    /// Õâ´ÎÈÈ¸üÃèÊö
+    /// è¿™æ¬¡çƒ­æ›´æè¿°
     /// </summary>
     [XmlAttribute]
     public string Des;
 
     /// <summary>
-    /// Ã¿¸öÈÈ¸ü°üÀï°üº¬ÄÄĞ©ÎÄ¼ş
+    /// æ¯ä¸ªçƒ­æ›´åŒ…é‡ŒåŒ…å«å“ªäº›æ–‡ä»¶
     /// </summary>
-    [XmlElement]    //×¢ÒâÕâÀïÊÇListÔªËØ£¬²»ÊÇµ¥¸öÔªËØ£¬ÓÃXmlElement£¬²»ÓÃXmlAttribute
+    [XmlElement]    //æ³¨æ„è¿™é‡Œæ˜¯Listå…ƒç´ ï¼Œä¸æ˜¯å•ä¸ªå…ƒç´ ï¼Œç”¨XmlElementï¼Œä¸ç”¨XmlAttribute
     public List<Patch> Files;
 }
 
 /// <summary>
-/// µ¥¸ö²¹¶¡
+/// å•ä¸ªè¡¥ä¸
 /// </summary>
 [System.Serializable]
 public class Patch
 {
     /// <summary>
-    /// µ±Ç°ÈÈ¸ü°üÃû
+    /// å½“å‰çƒ­æ›´åŒ…å
     /// </summary>
     [XmlAttribute]
     public string Name;
 
     /// <summary>
-    /// ĞèÒªÏÂÔØµÄµØÖ·
+    /// éœ€è¦ä¸‹è½½çš„åœ°å€
     /// </summary>
     [XmlAttribute]
     public string Url;
 
     /// <summary>
-    /// µ±Ç°°üµÄÆ½Ì¨
+    /// å½“å‰åŒ…çš„å¹³å°
     /// </summary>
     [XmlAttribute]
     public string Platform;
 
     /// <summary>
-    /// ´¢´æÕâ¸ö×ÊÔ´µÄMD5Âë
+    /// å‚¨å­˜è¿™ä¸ªèµ„æºçš„MD5ç 
     /// </summary>
     [XmlAttribute]
     public string Md5;
 
     /// <summary>
-    /// ×ÊÔ´µÄ´óĞ¡
+    /// èµ„æºçš„å¤§å°
     /// </summary>
     [XmlAttribute]
     public float Size;

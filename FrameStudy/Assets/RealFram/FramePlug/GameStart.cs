@@ -13,6 +13,9 @@ public class GameStart : MonoSingleton<GameStart>
         AssetBundleManager.Instance.LoadAssetBundleConfig();
         ResourceManager.Instance.Init(this);
         ObjectManager.Instance.Init(transform.Find("RecyclePoolTrs"), transform.Find("SceneTrs"));
+
+        //热更新初始化，使HotPatchManager可使用协程进行服务器数据的获取
+        HotPatchManager.Instance.Init(this);
     }
     // Use this for initialization
     void Start ()

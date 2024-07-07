@@ -1,31 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Xml.Serialization;//xmlĞòÁĞ»¯
+using System.Xml.Serialization;//xmlåºåˆ—åŒ–
 
 [System.Serializable]
 public class ABMD5
 {
     [XmlAttribute("ABMD5List")]
-    public List<ABMD5Base> ABMD5List {  get; set; }
+    public List<ABMD5Base> ABMD5List { get; set; }
 }
 
-[System.Serializable]//¿ÉĞòÁĞ»¯
+[System.Serializable]//å¯åºåˆ—åŒ–
 public class ABMD5Base
 {
     /// <summary>
-    /// ×ÊÔ´Ãû³Æ
+    /// èµ„æºåç§°
     /// </summary>
-    [XmlAttribute("Name")]//¿ÉxmlĞòÁĞ»¯
+    [XmlAttribute("Name")]//å¯xmlåºåˆ—åŒ–
     public string Name { get; set; }
     /// <summary>
-    /// MD5Âë
+    /// MD5ç 
     /// </summary>
     [XmlAttribute("Md5")]
-    public string Md5 {  get; set; }
+    public string Md5 { get; set; }
     /// <summary>
-    /// ÎÄ¼ş´óĞ¡
+    /// æ–‡ä»¶å¤§å°
     /// </summary>
     [XmlAttribute("Size")]
-    public float Size {  get; set; }
+    public float Size { get; set; }
 }

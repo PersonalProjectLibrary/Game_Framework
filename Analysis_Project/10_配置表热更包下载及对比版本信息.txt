@@ -1,0 +1,33 @@
+
+1、新建管理类：HotPatchManager.cs
+文件路径：Assets/RealFram/FramePlug/ResourceFrame/Download/HotPatchManager.cs
+
+2、检查热更 CheckVersion(Action<bool> hotCallBack = null)
+（1）读取当前本地版本文件ReadVersion（）；
+1）版本原文件：Assets/Resources下的Version.txt文件
+2）获取地址：versionText =Resources.Load<TextAsset>("Version");
+
+（2）协程读取服务器配置配置表信息ReadXml（）；
+1）服务器配置文件：xmlUrl = http://127.0.0.1/ServerInfo.xml
+2）下载的配置文件存储位置：
+m_ServerXmlPath = Application.persistentDataPath + "/ServerInfo.xml";
+
+（3）获取所有热更包的信息GetHotAB（）；
+实际应还有进行文件对比，计算哪些要下载，哪些不要下载，
+这里暂时没添加，使用临时代码，后续再处理
+
+3、使用MonoBehaviour里的协程来获取服务器数据，下载热更文件，
+这里添加方法Init(MonoBehaviour mono)，
+通过在GameStart.cs的Awake()里调用执行，获取MonoBehaviour类，
+方便之后使用MonoBehaviour来执行协程。
+通过该方式，避免不同程序集的交叉，和外界隔开。
+
+4、服务器下载的xml文件要反序列化为ServerInfo.cs文件，
+将Assets/RealFram/FramePlug/ConifigFrame下的BinarySerializeOpt.cs
+放到Assets/RealFram/FramePlug/ResourceFrame里，
+不然无法使用BinarySerializeOpt.cs里的反序列化方法进行反序列化。
+
+5、对于获取到的热更信息，用字典m_HotFixDic记录下来，
+注意每次热更前清空下字典，这里在CheckVersion()方法一开始进行字典清空。
+在获取热更包信息的GetHotAB()方法里，往字典里添加本次热更获取到的热更信息。
+
