@@ -2,41 +2,41 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 
 public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
 {
-    /// <summary>
-    /// 当前版本号
-    /// </summary>
-    private string m_CurVersion;
-    /// <summary>
-    /// 当前热更包名
-    /// </summary>
-    private string m_CurPackName;
+    private string m_CurVersion;// 当前版本号
+    private string m_CurPackName;// 当前热更包名
 
-    /// <summary>
-    /// 用于开启协程
-    /// </summary>
-    private MonoBehaviour m_Mono;
-    /// <summary>
-    /// 服务器配置表下载后存储位置
-    /// </summary>
-    private string m_ServerXmlPath = Application.persistentDataPath + "/ServerInfo.xml";
-    /// <summary>
-    /// 存储xml反序列后的结果
-    /// </summary>
-    private ServerInfo m_ServerInfo;
+    private MonoBehaviour m_Mono;// 用于开启协程
+    private string m_ServerXmlPath = Application.persistentDataPath + "/ServerInfo.xml";// 服务器配置表下载后存储位置
+    private ServerInfo m_ServerInfo;// 存储xml反序列后的结果
 
-    /// <summary>
-    /// 当前游戏版本
-    /// </summary>
-    private VersionInfo m_GameVersion;
-    /// <summary>
-    /// 所有需要热更的东西，每次热更前记得清空下
-    /// </summary>
+
+    private VersionInfo m_GameVersion;// 当前游戏版本
+    private Patchs m_CurrentPatches;//当前热更Patchs
+
+    // 热更的所有东西，每次热更前记得清空下
     private Dictionary<string,Patch> m_HotFixDic = new Dictionary<string,Patch>();
+    // 所有需要下载的东西
+    private List<Patch> m_DownLoadList = new List<Patch>();
+    // 所有需要下载的东西的dic
+    private Dictionary<string,Patch> m_DownLoadDic = new Dictionary<string,Patch>();
+    //下载的资源的保存位置
+    private string m_DownloadPath = Application.persistentDataPath + "/DownLoad";
+
+    //方便外面计算：加载速度、当前下载了多少，进度条等
+    /// <summary>
+    /// 需要下载的资源总个数，默认0
+    /// </summary>
+    public int LoadFileCount { get; set; } = 0;
+    /// <summary>
+    /// 需要下载资源的总大小 单位KB，默认0
+    /// </summary>
+    public float LoadSumSize { get; set; } = 0;
 
     //GameStart里来调用这个方法进行初始化
     public void Init(MonoBehaviour mono)    //之前分离过程序集，用这种方式使用MonoBehaviour，和外界避开
@@ -71,11 +71,15 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
                     break;
                 }
             }
-            //获取热更的ab包
-            GetHotAB();
+            GetHotAB();//获取服务器上所有可能需要的热更资源
+            ComputeDownload();//计算要下载的热更包
+            //计算资源大小
+            LoadFileCount = m_DownLoadList.Count;
+            LoadSumSize = m_DownLoadList.Sum(x=>x.Size);
 
             //这里没有进行文件对比，后续添加，这里临时代码做获取所有热更包后的处理
-            if(hotCallBack!=null)hotCallBack(m_HotFixDic.Count>0);
+            //这次改为计算下载资源，而不是所有热更资源，这里将m_HotFixDic.Count>0改为m_DownLoadList.Count>0
+            if (hotCallBack!=null)hotCallBack(m_DownLoadList.Count>0);
 
         }));
     }
@@ -129,7 +133,8 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     }
 
     /// <summary>
-    /// 获取所有热更包信息
+    /// 获取服务器上所有可能需要的热更资源
+    /// 后续计算ab包会用到
     /// </summary>
     void GetHotAB()
     {
@@ -149,6 +154,57 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             }
         }
     }
+
+    /// <summary>
+    /// 计算要下载的资源
+    /// </summary>
+    void ComputeDownload()
+    {
+        m_DownLoadList.Clear();
+        m_DownLoadDic.Clear();
+        if (m_GameVersion != null && m_GameVersion.Patchs != null && m_GameVersion.Patchs.Length > 0)
+        {
+            m_CurrentPatches = m_GameVersion.Patchs[m_GameVersion.Patchs.Length - 1];
+            if(m_CurrentPatches.Files!= null && m_CurrentPatches.Files.Count > 0)
+            {
+                foreach (Patch patch in m_CurrentPatches.Files)
+                {
+                    //不同平台不一样
+                    if ((Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor) && patch.Platform.Contains("StandaloneWindows64"))
+                        AddDownloadList(patch);
+                    else if ((Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.WindowsEditor) && patch.Platform.Contains("Android"))
+                        AddDownloadList(patch);
+                    else if ((Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.WindowsEditor) && patch.Platform.Contains("IOS"))
+                        AddDownloadList(patch);
+                }
+            }
+        }
+    }
+
+    //把要下载的资源加入下载队列：m_DownLoadList/m_DownLoadDic
+    void AddDownloadList(Patch patch)
+    {
+        string filePath = m_DownloadPath + "/" + patch.Name;
+        //下载下的文件与本地文件对比，对比MD5码，看本地文件是否有被修改
+        if (File.Exists(filePath))
+        {
+            string md5 = MD5Manager.Instance.BuildFileMd5(filePath);
+            if (patch.Md5 != md5)
+            {
+                //本地被修改过，重新下载
+                m_DownLoadList.Add(patch);
+                m_DownLoadDic.Add(patch.Name, patch);
+            }
+        }
+        else
+        {
+            //本地不存在，直接下载获取
+            m_DownLoadList.Add(patch);
+            m_DownLoadDic.Add(patch.Name, patch);
+        }
+    }
+
+
 }
 
 public class FileTool

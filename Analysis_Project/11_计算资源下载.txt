@@ -1,0 +1,18 @@
+
+计算需要下载的资源：
+
+1、在HotPatchManagers.cs里新增ComputeDownload()方法：
+（1）计算实际要下载的热更资源ComputeDownload()，并把要下载的资源用m_DownLoadList，m_DownLoadDic记录。
+（2）在下载配置表，检查热更的CheckVersion(Action<bool> hotCallBack = null)方法里使用。
+（3）在获取服务器上所有可能需要的热更资源方法GetHotAB()后，进行计算ComputeDownload()；
+（4）计算下载资源后，记录下载资源的大小：
+LoadFileCount = m_DownLoadList.Count;
+LoadSumSize = m_DownLoadList.Sum(x=>x.Size);
+方便外面计算资源加载速度、当前下载了多少资源，加载进度条等。
+
+2、将Assets/Scripts/Manager文件夹里的MD5Manager.cs移动到
+Assets/RealFram/FramePlug/ResourceFrame文件夹下
+
+检查本地文件与下载的文件是否一致，本地文件是否未修改时，
+对比文件资源的MD5码，会用到MD5Manager.cs，
+放在Assets/Scripts/Manager下会找不到MD5Manager.cs。
