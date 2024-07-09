@@ -110,6 +110,11 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// </summary>
     public Action LoadOver;
 
+    /// <summary>
+    /// 当前正在下载的资源
+    /// </summary>
+    private DownLoadAssetBundle m_CurDownload = null;
+
     //GameStart里来调用这个方法进行初始化，之前分离过程序集，用这种方式使用MonoBehaviour，和外界避开
     /// <summary>
     /// 使用调用Init方法的脚本的MonoBehaviour，
@@ -316,21 +321,36 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
         if (File.Exists(filePath))
         {
             string md5 = MD5Manager.Instance.BuildFileMd5(filePath);
-            if (patch.Md5 != md5)
+            if (patch.Md5 != md5)//本地被修改过，重新下载
             {
-                //本地被修改过，重新下载
                 m_DownLoadList.Add(patch);
                 m_DownLoadDic.Add(patch.Name, patch);
                 m_DownLoadMD5Dic.Add(patch.Name,patch.Md5);
             }
         }
-        else
+        else //本地不存在，直接下载获取
         {
-            //本地不存在，直接下载获取
             m_DownLoadList.Add(patch);
             m_DownLoadDic.Add(patch.Name, patch);
             m_DownLoadMD5Dic.Add(patch.Name, patch.Md5);
         }
+    }
+
+    /// <summary>
+    /// 获取下载总进度
+    /// </summary>
+    /// <returns></returns>
+    public float GetProgress()
+    {
+        float alreadySize = m_AlreadyDownList.Sum(x =>x.Size);//已经下载的资源的总大小
+        //由当前下载的资源m_CurDownload来获取,m_CurDownload在StartDownLoadAB()里，添加对m_CurDownload的更新赋值。
+        float curAlreadySize = 0;//当前正在下载的资源，已经下载的大小
+        if (m_CurDownload != null)
+        {
+            Patch patch = FindPatchByGameName(m_CurDownload.FileName);
+            if (patch != null && !m_AlreadyDownList.Contains(patch)) curAlreadySize = m_CurDownload.GetProcess() * patch.Size;
+        }
+        return (alreadySize + curAlreadySize) / LoadSumSize;
     }
 
     /// <summary>
@@ -349,15 +369,16 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
         //由于重复下载下载失败的资源使用到该协程，这里原本只有callback参数，添加allPatch
         //添加判断，不传参时，默认是m_DownLoadList，传参的是要重复下载的资源列表
         if (allPatch == null) allPatch = m_DownLoadList;
+
         foreach (Patch patch in allPatch)
         {
             downLoadAssetBundles.Add(new DownLoadAssetBundle(patch.Url, m_DownloadPath));
         }
-        //根据DownLoadAssetBundle，下载AB资源
-        foreach (DownLoadAssetBundle downLoadAB in downLoadAssetBundles)
+        foreach (DownLoadAssetBundle downLoadAB in downLoadAssetBundles)//根据DownLoadAssetBundle，下载AB资源
         {
+            m_CurDownload = downLoadAB;//记录当前下载的资源，方便后面计算当前资源，已下载的资源大小
             yield return m_Mono.StartCoroutine(downLoadAB.Download());
-            Patch patch = FindPatchByName(downLoadAB.FileName);
+            Patch patch = FindPatchByGameName(downLoadAB.FileName);
             if(patch != null) m_AlreadyDownList.Add(patch);
             downLoadAB.DestoryDownload();
         }
@@ -373,7 +394,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// </summary>
     /// <param name="name">Patch名</param>
     /// <returns>返回热更patch</returns>
-    Patch FindPatchByName(string name)
+    Patch FindPatchByGameName(string name)
     {
         Patch patch = null;
         m_DownLoadDic.TryGetValue(name, out patch);
@@ -396,7 +417,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
                 if (MD5Manager.Instance.BuildFileMd5(downloadAB.SaveFilePath) != md5)
                 {
                     Debug.Log(string.Format("文件{0}MD5校验失败，即将重新下载", downloadAB.FileName));
-                    Patch patch = FindPatchByName(downloadAB.FileName);
+                    Patch patch = FindPatchByGameName(downloadAB.FileName);
                     if (patch != null) downLoadList.Add(patch);
                 }
             }

@@ -1,0 +1,14 @@
+往HotPatchManager.cs里添加下载所需的其他一些东西：
+下载的总进度、下载的总大小、外面根据进度和大小计算下载速度等
+
+1、获取下载总进度：float GetProgress()：
+（1）根据m_AlreadyDownList，获取已经下载的资源的总大小：alreadySize
+（2）新增全局变量，记录当前下载的资源：DownLoadAssetBundle m_CurDownload =null；
+在开始下载AB包的协程StartDownLoadAB()里，循环遍历下载资源处，添加对m_CurDownload的更新赋值。
+根据当前下载的资源，获取当前下载的资源里已经下载的大小：curAlreadySize。
+（3）最后将（已下载资源的大小+当前资源已下载的大小）/总需要下载大小，即总下载进度，返回出去。
+
+2、将方法FindPatchByName()，重命名为FindPatchByGameName()；（与视频里命名保持一致）
+
+
+
