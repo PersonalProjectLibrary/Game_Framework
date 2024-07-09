@@ -1,0 +1,16 @@
+1、新增获取下载总大小功能float GetLoadSize()，优化获取下载总进度的功能GetProgress()；
+
+实际是将GetProgress()的实现逻辑迁移到GetLoadSize()，
+然后将GetProgress()的实现方法改为：GetLoadSize()/LoadSumSize；
+
+后续根据总大小和进度，计算下载速度；
+
+
+2、新增功能计算AB包路径：string ComputeABPath(string name)
+在AssetBundleManager.cs里的LoadAssetBundle()加载assetbundle里使用
+
+3、对AssetBundleManager.cs里的LoadAssetBundle()的获取ab包路径进行优化
+原本是获取本地ab包所在位置+ab包名：string fullPath = ABLoadPath + name;
+改为：
+string hotABPath = HotPatchManager.Instance.ComputeABPath(name);
+string fullPath = string.IsNullOrEmpty(hotABPath)?ABLoadPath + name: hotABPath;

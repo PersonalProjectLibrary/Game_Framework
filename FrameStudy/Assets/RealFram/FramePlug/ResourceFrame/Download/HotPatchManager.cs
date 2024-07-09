@@ -127,6 +127,20 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     }
 
     /// <summary>
+    /// 计算AB包路径
+    /// </summary>
+    /// 在AssetBundleManager.cs里的LoadAssetBundle()加载assetbundle里使用
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public string ComputeABPath(string name)
+    {
+        Patch patch = null;
+        m_HotFixDic.TryGetValue(name, out patch);
+        if (patch != null) return m_DownloadPath + "/" + name;
+        return "";
+    }
+
+    /// <summary>
     /// 下载配置表，检查是否有热更
     /// </summary>
     /// 下载服务器列表要用协程，所以这里用到了回调，协程要用到MonoBehaviour类
@@ -337,12 +351,21 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     }
 
     /// <summary>
-    /// 获取下载总进度
+    /// 获取已经下载总进度
     /// </summary>
     /// <returns></returns>
     public float GetProgress()
     {
-        float alreadySize = m_AlreadyDownList.Sum(x =>x.Size);//已经下载的资源的总大小
+        return GetLoadSize()/ LoadSumSize;
+    }
+
+    /// <summary>
+    /// 获取下载总大小
+    /// </summary>
+    /// <returns></returns>
+    public float GetLoadSize()
+    {
+        float alreadySize = m_AlreadyDownList.Sum(x => x.Size);//已经下载的资源的总大小
         //由当前下载的资源m_CurDownload来获取,m_CurDownload在StartDownLoadAB()里，添加对m_CurDownload的更新赋值。
         float curAlreadySize = 0;//当前正在下载的资源，已经下载的大小
         if (m_CurDownload != null)
@@ -350,7 +373,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             Patch patch = FindPatchByGameName(m_CurDownload.FileName);
             if (patch != null && !m_AlreadyDownList.Contains(patch)) curAlreadySize = m_CurDownload.GetProcess() * patch.Size;
         }
-        return (alreadySize + curAlreadySize) / LoadSumSize;
+        return alreadySize + curAlreadySize;
     }
 
     /// <summary>
