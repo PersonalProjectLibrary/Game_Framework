@@ -1,0 +1,82 @@
+
+HotPatchManager.cs里添加开始下载AB包的协程：
+IEnumerator StartDownLoadAB(Action callback)
+
+添加成员变量：
+储存以及下载的资源：List<Patch> m_AlreadyDownList
+是否开始下载：bool m_StartDownload
+
+注：
+下载配置表，检查是否有热更CheckVersion()里，计算要下载的资源ComputeDownload()，
+计算要下载的资源ComputeDownload()里，清空了m_DownLoadList；
+计算要下载的资源ComputeDownload()里，调用AddDownloadList(Patch)
+在AddDownloadList()里，添加了m_DownLoadList；
+
+List<Patch> m_DownLoadList：记录所有需要下载的热更补丁Patch.
+
+1、这里根据m_DownLoadList记录的资源信息（Url），
+解析成DownLoadAssetBundle数据，并添加到DownLoadAssetBundle数组中：
+downLoadAssetBundles.Add(new DownLoadAssetBundle(patch.Url, m_DownloadPath));
+
+2、然后遍历DownLoadAssetBundle数组，
+使用记录StartGame的MonoBehaviour的m_Mono开启下载协程，
+进行AB资源下载：m_Mono.StartCoroutine(downLoadAB.Download());
+并把已经下载的文件记录到m_AlreadyDownList里
+
+注；后面重新下载MD5码校验失败的文件资源，也还会用到m_Mono.StartCoroutine：
+m_Mono.StartCoroutine(StartDownLoadAB(callback，allPatch))
+
+3、在文件全部下载后，对所有文件进行MD5码的校验
+如果校验没通过，自动重新下载没通过的文件，
+同时对下载次数进行重复下载计数，达到一定次数后，反馈某文件下载失败
+
+（1）为了方便MD5码的校验，这里新增m_DownLoadMD5Dic，记录要下载的资源的MD5码，
+Dictionary<string,string> m_DownLoadMD5Dic。
+
+（2）设置m_DownLoadMD5Dic：和m_DownLoadList同步设置
+在更新添加、删除m_DownLoadList时，也一起更新添加、删除m_DownLoadMD5Dic。
+1）ComputeDownload()里，清除置空m_DownLoadMD5Dic：
+m_DownLoadMD5Dic.Clear();
+2）AddDownloadList()里，添加m_DownLoadList：
+m_DownLoadMD5Dic.Add(patch.Name,patch.Md5);
+
+4、MD5码的校验：VerifyMD5(List<DownLoadAssetBundle> downLoadAssets,Action callBack)
+用临时变量List<Patch> downLoadList记录校验失败的文件，文件校验完后，重新下载downLoadList里的文件。
+最大允许重复下载次数为DOWNLOADCOUNT = 4；用m_TryDownCount记录重复下载次数。
+在检查版本时CheckVersion()里，把重复下载数置0；
+在VerifyMD5()的重复下载处，对下载计数增加；
+
+5、重新下载还是使用IEnumerator StartDownLoadAB(Action callback)
+但下载方法里只能传回调，默认下载m_DownLoadList的资源
+
+这里修改StartDownLoadAB方法，添加List<Patch> patchs参数
+IEnumerator StartDownLoadAB(Action callback，List<Patch> allPatch =null)
+原本的
+foreach (Patch patch in m_DownLoadList)
+{
+    downLoadAssetBundles.Add(new DownLoadAssetBundle(patch.Url, m_DownloadPath));
+}
+改为
+if(allPatch ==null)allPatch  =m_DownLoadList;
+foreach (Patch patch in allPatch)
+{
+    downLoadAssetBundles.Add(new DownLoadAssetBundle(patch.Url, m_DownloadPath));
+}
+
+6、四次重复下载都失败，结束下载，也要给外部返回一个回调callBack()；
+这里添加个异常的注册：Action<string> ItemError;
+这里也添加下载完成回调LoadOver和服务器列表获取错误回调SeverInfoError；
+
+一共是提供三个异常回调：SeverInfoError、ItemError、LoadOver；
+供外部需要时进行错误处理、功能扩展注册等使用。
+
+注：关于SeverInfoError回调：课程视频里021还没添加，026视频开头可发现已添加，中间的视频里是其他功能也未提到涉及SeverInfoError回调。关于该回调的加入，视频里可能是漏了。
+关于SeverInfoError回调在检查版本，开启读取xml获取服务器列表的协程里使用：
+if(m_ServerInfo == null)
+{
+    if(ServerInfoError != null) ServerInfoError();
+    return;
+}
+
+同理：关于检查版本CheckVersion里，服务器信息与本地信息对比，检查Patch是否一致
+022视频里尾部是添加对应方法函数，但未写完，视频戛然而止，023视频里也没有继续实现，等后面视频里变成直接使用ComputeDownload()方法来实现。

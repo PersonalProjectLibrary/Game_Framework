@@ -8,11 +8,23 @@ public class DownLoadAssetBundle : DownLoadItem
 {
     UnityWebRequest m_WebRequest;
 
+    /// <summary>
+    /// 初始化脚本，继承父类，父类里实现过了
+    /// </summary>
+    /// <param name="url">网络资源路径URL：m_Url</param>
+    /// <param name="path">下载存放路径，不包含文件名</param>
     public DownLoadAssetBundle(string url,string path) : base(url, path)
     {
 
     }
 
+    /// <summary>
+    /// UnityWebRequest下载m_Url，存储到m_SaveFilePath
+    /// m_Url：网络资源路径URL
+    /// m_SavePath：资源下载存放路径，不包含文件名
+    /// </summary>
+    /// <param name="callback"></param>
+    /// <returns></returns>
     public override IEnumerator Download(Action callback = null)
     {
         m_WebRequest = UnityWebRequest.Get(m_Url);
@@ -32,11 +44,23 @@ public class DownLoadAssetBundle : DownLoadItem
     }
 
     /// <summary>
-    /// 关闭下载请求
+    /// 关掉、删除掉当前类
     /// </summary>
     public override void Destory()
     {
-        if(m_WebRequest != null)
+        if (m_WebRequest != null)
+        {
+            m_WebRequest.Dispose();
+            m_WebRequest = null;
+        }
+    }
+    
+    /// <summary>
+    /// 关闭下载请求
+    /// </summary>
+    public override void DestoryDownload()
+    {
+        if (m_WebRequest != null)
         {
             m_WebRequest.Dispose();
             m_WebRequest = null;

@@ -16,3 +16,23 @@ m_LocalXmlPath = Application.persistentDataPath + "/LocalInfo.xml";
 （4）本地不存在服务器配置表，返回true；
 本地配置表和远程配置表存在，且版本号不同，返回true；
 否则返回 false.
+
+注：
+关于检查版本CheckVersion里，服务器信息与本地信息对比，检查Patch是否一致
+022视频里尾部是添加对应方法函数，但未写完，视频戛然而止。
+023视频里也没有继续实现，等后面视频里变成直接使用ComputeDownload()方法来实现。
+if(CheckLocalAndServerPatch())
+{
+    ComputeDownload();//计算要下载的热更包
+    if (File.Exists(m_ServerXmlPath))
+    {
+        if(File.Exists(m_LocalXmlPath))File.Delete(m_LocalXmlPath);
+        File.Move(m_ServerXmlPath, m_LocalXmlPath);//将服务器热更xml名改换为本地热更xml名
+    }
+}
+else ComputeDownload();//服务器信息与本地信息完全一致，检查本地patch资源与服务器patch资源是否一致
+
+同样情况还有：关于SeverInfoError回调：
+课程视频里021还没添加，026视频开头可发现已添加，中间的视频里是其他功能也未提到涉及SeverInfoError回调。关于该回调的加入，视频里可能是漏了。
+
+
