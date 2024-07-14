@@ -242,23 +242,23 @@ public class BundleEditor
         DirectoryInfo directory = new DirectoryInfo(m_HotPath);
         FileInfo[] files = directory.GetFiles("*",SearchOption.AllDirectories);
         //ServerInfo是总配置表，我们不从总配置表生成，只需每次从单个热更总包开始生成拷贝
-        Patchs patchs = new Patchs();
-        patchs.PatchVersion = 1;//这么默认1，可自行修改
-        patchs.Files = new List<Patch>();
+        Patch patch = new Patch();
+        patch.PatchVersion = 1;//这么默认1，可自行修改
+        patch.PatchFiles = new List<PatchFile>();
         for (int i = 0; i < files.Length; i++)
         {
-            Patch patch = new Patch();
-            patch.Md5 = MD5Manager.Instance.BuildFileMd5(files[i].FullName);
-            patch.Name = files[i].Name;
-            patch.Size = files[i].Length / 1024.0f;
-            patch.Platform = EditorUserBuildSettings.activeBuildTarget.ToString();
+            PatchFile patchFile = new PatchFile();
+            patchFile.Md5 = MD5Manager.Instance.BuildFileMd5(files[i].FullName);
+            patchFile.Name = files[i].Name;
+            patchFile.Size = files[i].Length / 1024.0f;
+            patchFile.Platform = EditorUserBuildSettings.activeBuildTarget.ToString();
             //搭建本地服务器后，完善地址如下
-            patch.Url = "http://127.0.0.1/AssetBundle" + PlayerSettings.bundleVersion + "/" + hotCount + "/" + files[i].Name;
-            patchs.Files.Add(patch);
+            patchFile.Url = "http://127.0.0.1/AssetBundle" + PlayerSettings.bundleVersion + "/" + hotCount + "/" + files[i].Name;
+            patch.PatchFiles.Add(patchFile);
         }
 
         //序列化
-        BinarySerializeOpt.Xmlserialize(m_HotPath+"/Patch.xml",patchs);
+        BinarySerializeOpt.Xmlserialize(m_HotPath+"/Patch.xml",patch);
     }
 
     static void SetABName(string name, string path)

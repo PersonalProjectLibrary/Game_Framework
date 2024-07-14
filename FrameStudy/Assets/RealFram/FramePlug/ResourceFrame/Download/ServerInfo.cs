@@ -12,8 +12,8 @@ public class ServerInfo
     /// <summary>
     /// 记录所有版本信息
     /// </summary>
-    [XmlElement("GameVersion")]     //注意这里是数组元素，不是单个元素，用XmlElement，不用XmlAttribute
-    public VersionInfo[] GameVersion;
+    [XmlElement("GameVersions")]     //注意这里是数组元素，不是单个元素，用XmlElement，不用XmlAttribute
+    public GameVersion[] GameVersions;
 }
 
 /// <summary>
@@ -21,19 +21,19 @@ public class ServerInfo
 /// </summary>
 /// 某游戏版本及其patch等信息
 [System.Serializable]
-public class VersionInfo
+public class GameVersion
 {
     /// <summary>
     /// 游戏版本
     /// </summary>
     [XmlAttribute]  //不写参数，默认参数是变量，等价于[XmlAttribute("Version")]
-    public string NowVersion;
+    public string Version;
 
     /// <summary>
-    /// 该版本的所有热更包
+    /// 该版本的所有热更补丁
     /// </summary>
     [XmlElement]    //注意这里是数组元素，不是单个元素，用XmlElement，不用XmlAttribute
-    public Patchs[] Patchs;
+    public Patch[] Patchs;
 
     //游戏的渠道类型（这里暂时没添加）
 }
@@ -42,36 +42,36 @@ public class VersionInfo
 /// 热更/补丁包
 /// </summary>
 [System.Serializable]
-public class Patchs
+public class Patch
 {
     /// <summary>
-    /// 当前热更的版本
-    /// 在这个版本是第几次热更
+    /// 当前补丁版本
     /// </summary>
+    /// 在这个版本是第几次补丁
     [XmlAttribute]
     public int PatchVersion;
 
     /// <summary>
-    /// 这次热更描述
+    /// 这次补丁描述
     /// </summary>
     [XmlAttribute]
     public string Des;
 
     /// <summary>
-    /// 每个热更包里包含哪些文件
+    /// 补丁包里的所有文件
     /// </summary>
     [XmlElement]    //注意这里是List元素，不是单个元素，用XmlElement，不用XmlAttribute
-    public List<Patch> Files;
+    public List<PatchFile> PatchFiles;
 }
 
 /// <summary>
-/// 热更/补丁包内容
+/// 补丁文件
 /// </summary>
 [System.Serializable]
-public class Patch
+public class PatchFile
 {
     /// <summary>
-    /// 当前热更包名
+    /// 当前补丁文件名
     /// </summary>
     [XmlAttribute]
     public string Name;
@@ -83,19 +83,19 @@ public class Patch
     public string Url;
 
     /// <summary>
-    /// 当前包的平台
+    /// 当前文件的平台
     /// </summary>
     [XmlAttribute]
     public string Platform;
 
     /// <summary>
-    /// 储存这个资源的MD5码
+    /// 储存这个文件的MD5码
     /// </summary>
     [XmlAttribute]
     public string Md5;
 
     /// <summary>
-    /// 资源的大小
+    /// 文件的大小
     /// </summary>
     [XmlAttribute]
     public float Size;
