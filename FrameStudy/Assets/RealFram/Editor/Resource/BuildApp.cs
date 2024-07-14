@@ -99,6 +99,11 @@ public class BuildApp
         return editorScenes.ToArray();
     }
 
+    /// <summary>
+    /// 递归式将源文件及其子文件复制到目标位置
+    /// </summary>
+    /// <param name="srcPath">源文件路径</param>
+    /// <param name="targetPath">目标位置</param>
     private static void Copy(string srcPath, string targetPath)
     {
         try
@@ -136,6 +141,10 @@ public class BuildApp
         }
     }
 
+    /// <summary>
+    /// 删除目录文件
+    /// </summary>
+    /// <param name="scrPath">源目录/文件所在地址</param>
     public static void DeleteDir(string scrPath)
     {
         try

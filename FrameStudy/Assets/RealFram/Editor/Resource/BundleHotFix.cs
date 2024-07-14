@@ -7,45 +7,50 @@ using System.Runtime.InteropServices;
 public class BundleHotFix : EditorWindow
 {
     /// <summary>
-    /// ±à¼­Æ÷²Ëµ¥ÏÂÌí¼Ó´ò°üÈÈ¸ü°ü³õÊ¼»¯°´Å¥
-    /// µã»÷°´Å¥³õÊ¼»¯£¬Éú³ÉÈÈ¸ü°ü½çÃæ
+    /// è¿›è¡Œçƒ­æ›´åŒ…æ‰“åŒ…
     /// </summary>
-    [MenuItem("Tools/´ò°üÈÈ¸ü°ü")]
+    /// ç¼–è¾‘å™¨èœå•ä¸‹æ·»åŠ æ‰“åŒ…çƒ­æ›´åŒ…æŒ‰é’®
+    [MenuItem("Tools/æ‰“åŒ…çƒ­æ›´åŒ…")]
     static void Init()
     {
-        BundleHotFix window = (BundleHotFix)EditorWindow.GetWindow(typeof(BundleHotFix),false,"ÈÈ¸ü°ü½çÃæ",true);//´´½¨ÈÈ¸ü°ü½çÃæ
-        window.Show();//´ò¿ªµ±Ç°½çÃæ
+        BundleHotFix window = (BundleHotFix)EditorWindow.GetWindow(typeof(BundleHotFix), false, "çƒ­æ›´åŒ…ç•Œé¢", true);//åˆ›å»ºçƒ­æ›´åŒ…ç•Œé¢
+        window.Show();//æ‰“å¼€å½“å‰ç•Œé¢
     }
 
-    //OnGUI²Ù×÷¡¢ab°üÂ·¾¶µÄÑ¡Ôñ
+    //OnGUIæ“ä½œã€abåŒ…è·¯å¾„çš„é€‰æ‹©
     string md5Path = "";
     /// <summary>
-    /// µ±Ç°°æ±¾ÈÈ¸ü´ÎÊı£¬ÈÈ¸üÁË¼¸´Î£¬Ä¬ÈÏ1
-    /// ºóÃæ×öÅäÖÃ±íÊ±ºò»áÓÃµ½
+    /// å½“å‰ç‰ˆæœ¬çƒ­æ›´æ¬¡æ•°ï¼Œçƒ­æ›´äº†å‡ æ¬¡ï¼Œé»˜è®¤1
     /// </summary>
+    /// åé¢åšé…ç½®è¡¨æ—¶å€™ä¼šç”¨åˆ°
     string hotCount = "1";
     OpenFileName m_OpenFileName = null;
-    
+
+    /// <summary>
+    /// æ‰“åŒ…çƒ­æ›´åŒ…çš„çƒ­æ›´è®¾ç½®é¢æ¿
+    /// </summary>
+    /// ä¸Šé¢æŒ‰é’®ç‚¹å‡»å,å¼¹å‡ºè¯¥GUIç•Œé¢ï¼Œè¿›è¡Œçƒ­æ›´è®¾ç½®åæ‰“åŒ…
+    /// æ·»åŠ æŒ‰é’®ï¼šé€‰æ‹©ç‰ˆæœ¬ABMD5æ–‡ä»¶ã€‚ä½¿ç”¨WindowsFileè„šæœ¬ï¼Œå®ç°Unityç¼–è¾‘å™¨ä¸‹ï¼Œæ‰“å¼€windowsçª—å£çš„åŠŸèƒ½
+    /// WindowsFileè„šæœ¬ä½ç½®ï¼šAssets/RealFrame/Editor/Resource/WindowsFile.cs
     private void OnGUI()
     {
-        //Ìí¼Ó°´Å¥£ºÑ¡Ôñ°æ±¾ABMD5ÎÄ¼ş¡£Ê¹ÓÃWindowsFile½Å±¾£¬ÊµÏÖUnity±à¼­Æ÷ÏÂ£¬´ò¿ªwindows´°¿ÚµÄ¹¦ÄÜ
-        //WindowsFile½Å±¾Î»ÖÃ£ºAssets/RealFrame/Editor/Resource/WindowsFile.cs
+        //é€‰æ‹©ç‰ˆæœ¬ABMD5æ–‡ä»¶ã€‚
         GUILayout.BeginHorizontal();
-        md5Path = EditorGUILayout.TextField("ABMD5Â·¾¶£º",md5Path,GUILayout.Width(500),GUILayout.Height(30));
-        if (GUILayout.Button("Ñ¡Ôñ°æ±¾ABMD5ÎÄ¼ş", GUILayout.Width(200), GUILayout.Height(30)))
+        md5Path = EditorGUILayout.TextField("ABMD5è·¯å¾„ï¼š", md5Path, GUILayout.Width(500), GUILayout.Height(30));
+        if (GUILayout.Button("é€‰æ‹©ç‰ˆæœ¬ABMD5æ–‡ä»¶", GUILayout.Width(200), GUILayout.Height(30)))
         {
-            //ÉèÖÃ´ò¿ªµÄ´°¿Ú
+            //è®¾ç½®æ‰“å¼€çš„çª—å£
             m_OpenFileName = new OpenFileName();
             m_OpenFileName.structSize = Marshal.SizeOf(m_OpenFileName);
-            m_OpenFileName.filter = "ABMD5ÎÄ¼ş(*.bytes)\0*.bytes";
+            m_OpenFileName.filter = "ABMD5æ–‡ä»¶(*.bytes)\0*.bytes";
             m_OpenFileName.file = new string(new char[256]);
             m_OpenFileName.maxFile = m_OpenFileName.file.Length;
             m_OpenFileName.fileTitle = new string(new char[64]);
             m_OpenFileName.maxFileTitle = m_OpenFileName.fileTitle.Length;
-            m_OpenFileName.initialDir = (Application.dataPath + "/../Version").Replace("/", "\\");//Ä¬ÈÏÂ·¾¶
-            m_OpenFileName.title = "Ñ¡ÔñMD5´°¿Ú";
-            m_OpenFileName.flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000008;//Ö±½Ó¸´ÖÆ¹ıÀ´µÄ£¬²»ÓÃ¹Ü
-            //×îÖÕÖ´ĞĞµÄ²Ù×÷£¬ÊµÏÖµÄ¹¦ÄÜ×÷ÓÃ
+            m_OpenFileName.initialDir = (Application.dataPath + "/../Version").Replace("/", "\\");//é»˜è®¤è·¯å¾„
+            m_OpenFileName.title = "é€‰æ‹©MD5çª—å£";
+            m_OpenFileName.flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000008;//ç›´æ¥å¤åˆ¶è¿‡æ¥çš„ï¼Œä¸ç”¨ç®¡
+            //æœ€ç»ˆæ‰§è¡Œçš„æ“ä½œï¼Œå®ç°çš„åŠŸèƒ½ä½œç”¨
             if (LocalDialog.GetOpenFileName(m_OpenFileName))
             {
                 Debug.Log(m_OpenFileName.file);
@@ -55,13 +60,13 @@ public class BundleHotFix : EditorWindow
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
-        hotCount = EditorGUILayout.TextField("ÈÈ¸ü²¹¶¡°æ±¾£º",hotCount,GUILayout.Width(350),GUILayout.Height(30));//ÏÔÊ¾ÈÈ¸ü´ÎÊı
-        //´òÈÈ¸ü°üµÄ°´Å¥
-        if (GUILayout.Button("¿ªÊ¼´òÈÈ¸ü°ü", GUILayout.Width(100), GUILayout.Height(30)))
+        hotCount = EditorGUILayout.TextField("çƒ­æ›´è¡¥ä¸ç‰ˆæœ¬ï¼š", hotCount, GUILayout.Width(350), GUILayout.Height(30));//æ˜¾ç¤ºçƒ­æ›´æ¬¡æ•°
+        //æ‰“çƒ­æ›´åŒ…çš„æŒ‰é’®
+        if (GUILayout.Button("å¼€å§‹æ‰“çƒ­æ›´åŒ…", GUILayout.Width(100), GUILayout.Height(30)))
         {
             if (!string.IsNullOrEmpty(md5Path) && md5Path.EndsWith(".bytes"))
             {
-                BundleEditor.Build(true, md5Path, hotCount);//µ÷ÓÃbundleEditor½øĞĞÈÈ¸ü´ò°ü
+                BundleEditor.Build(true, md5Path, hotCount);//è°ƒç”¨bundleEditorè¿›è¡Œçƒ­æ›´æ‰“åŒ…
             }
         }
         GUILayout.EndHorizontal();

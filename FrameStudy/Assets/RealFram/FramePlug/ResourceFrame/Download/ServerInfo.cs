@@ -18,19 +18,19 @@ public class ServerInfo
 
 /// <summary>
 /// 版本信息
-/// 当前游戏版本对应的所有补丁
 /// </summary>
+/// 某游戏版本及其patch等信息
 [System.Serializable]
 public class VersionInfo
 {
     /// <summary>
-    /// 当前游戏的版本号
+    /// 游戏版本
     /// </summary>
     [XmlAttribute]  //不写参数，默认参数是变量，等价于[XmlAttribute("Version")]
     public string NowVersion;
 
     /// <summary>
-    /// 当前版本有几个热更包
+    /// 该版本的所有热更包
     /// </summary>
     [XmlElement]    //注意这里是数组元素，不是单个元素，用XmlElement，不用XmlAttribute
     public Patchs[] Patchs;
@@ -39,7 +39,7 @@ public class VersionInfo
 }
 
 /// <summary>
-/// 单个总补丁包
+/// 热更/补丁包
 /// </summary>
 [System.Serializable]
 public class Patchs
@@ -65,7 +65,7 @@ public class Patchs
 }
 
 /// <summary>
-/// 单个补丁
+/// 热更/补丁包内容
 /// </summary>
 [System.Serializable]
 public class Patch
@@ -77,7 +77,7 @@ public class Patch
     public string Name;
 
     /// <summary>
-    /// 需要下载的地址
+    /// 下载的地址
     /// </summary>
     [XmlAttribute]
     public string Url;

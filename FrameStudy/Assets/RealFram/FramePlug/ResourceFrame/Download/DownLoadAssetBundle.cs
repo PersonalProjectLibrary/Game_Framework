@@ -19,12 +19,13 @@ public class DownLoadAssetBundle : DownLoadItem
     }
 
     /// <summary>
-    /// UnityWebRequest下载m_Url，存储到m_SaveFilePath
-    /// m_Url：网络资源路径URL
-    /// m_SavePath：资源下载存放路径，不包含文件名
+    /// 根据默认资源路径下载资源，存储到本地
     /// </summary>
     /// <param name="callback"></param>
     /// <returns></returns>
+    /// UnityWebRequest下载m_Url，存储到m_SaveFilePath
+    /// m_Url：网络资源路径URL
+    /// m_SavePath：资源下载存放路径，不包含文件名
     public override IEnumerator Download(Action callback = null)
     {
         m_WebRequest = UnityWebRequest.Get(m_Url);
@@ -78,10 +79,10 @@ public class DownLoadAssetBundle : DownLoadItem
     }
 
     /// <summary>
-    /// 获取下载的文件大小
-    /// 这里不需要，默认返回0
+    /// 获取下载的文件大小，默认返回0
     /// </summary>
     /// <returns></returns>
+    /// 这里用不到，默认返回0
     public override long GetLength()
     {
         return 0;

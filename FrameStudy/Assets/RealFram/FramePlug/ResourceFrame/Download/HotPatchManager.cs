@@ -18,9 +18,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     private string m_CurPackName;
 
     /// <summary>
-    /// 记录了GameStart的MonoBehaviour，用此变量方便开启协程
-    /// Init()里设置了，StartDownLoadAB()里使用了
+    /// 存储GameStart的MonoBehaviour，方便使用协程
     /// </summary>
+    /// 记录了GameStart的MonoBehaviour，用此变量方便开启协程
+    /// 在Init()里设置，StartDownLoadAB()里使用
     private MonoBehaviour m_Mono;
     /// <summary>
     /// 服务器配置表下载后存储位置
@@ -66,10 +67,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// </summary>
     private string m_DownloadPath = Application.persistentDataPath + "/DownLoad";
 
-    //方便外面计算：加载速度、当前下载了多少，进度条等
     /// <summary>
     /// 需要下载的资源总个数，默认0
     /// </summary>
+    /// 方便外面调用来计算：加载速度、当前下载了多少，设置进度条等
     public int LoadFileCount { get; set; } = 0;
     /// <summary>
     /// 需要下载资源的总大小 单位KB，默认0
@@ -82,12 +83,13 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     public List<Patch> m_AlreadyDownList = new List<Patch>();
     /// <summary>
     /// 是否开始下载资源
-    /// 开始下载时进行开启，MD5码校验后关闭
     /// </summary>
+    /// 开始下载时进行开启，MD5码校验后关闭
     private bool m_StartDownload = false;
     /// <summary>
-    /// 服务器上的资源名对应的MD5,用于下载后MD5校验，在设置m_DownLoadList时一起设置
+    /// 服务器上要下载的资源的MD5
     /// </summary>
+    /// 用于下载后MD5校验，在设置m_DownLoadList时一起设置
     private Dictionary<string,string> m_DownLoadMD5Dic = new Dictionary<string,string>();
     /// <summary>
     /// 服务器列表获取错误回调
@@ -115,12 +117,12 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// </summary>
     private DownLoadAssetBundle m_CurDownload = null;
 
-    //GameStart里来调用这个方法进行初始化，之前分离过程序集，用这种方式使用MonoBehaviour，和外界避开
     /// <summary>
-    /// 使用调用Init方法的脚本的MonoBehaviour，
-    /// 使用MonoBehaviour的协程方法
+    /// 初始化绑定m_Mono
     /// </summary>
     /// <param name="mono"></param>
+    /// GameStart.cs里来调用这个方法进行绑定m_Mono，方便后续协程使用
+    /// 之前分离过程序集，用这种方式使用MonoBehaviour，和外界避开
     public void Init(MonoBehaviour mono)
     {
         m_Mono = mono;
@@ -143,9 +145,11 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// <summary>
     /// 下载配置表，检查是否有热更
     /// </summary>
-    /// 下载服务器列表要用协程，所以这里用到了回调，协程要用到MonoBehaviour类
-    /// 读取本地版本后，读取服务器的xml，即下载服务器的xml
     /// <param name="hotCallBack">外部回调，默认为空，用于告诉是否有回调，UI界面该做如何的显示</param>
+    /// 下载服务器列表要用协程，协程要用到MonoBehaviour类
+    /// 这里用到了回调，方便协程完成后实现需求
+    /// 读取本地版本后，读取服务器的xml，即下载服务器的xml
+    /// 
     public void CheckVersion(Action<bool> hotCallBack = null)
     {
         m_TryDownCount = 0;
@@ -194,9 +198,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     }
 
     /// <summary>
-    /// 本地配置配置表与服务器热更配置表比较，是否需要更新
+    /// 比较配置表，判断是否需要更新
     /// </summary>
     /// <returns>true：需要热更；false：不需要热更</returns>
+    /// 比较本地配置表与服务器配置表，判断是否需要更新
     bool CheckLocalAndServerPatch()
     {
         //本地不存在配置表，即首次进行热更
@@ -225,9 +230,9 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     }
 
     /// <summary>
-    /// 读当前本地版本信息
-    /// 读Assets/Resources下的Version.txt文件
+    /// 获取当前本地版本信息
     /// </summary>
+    /// 读Assets/Resources下的Version.txt文件
     void ReadVersion()
     {
         TextAsset versionText = Resources.Load<TextAsset>("Version");
@@ -249,10 +254,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
 
     /// <summary>
     /// 获取服务器版本信息
-    /// 协程下载服务器配置表
     /// </summary>
     /// <param name="callBack"></param>
     /// <returns></returns>
+    /// 使用协程下载服务器配置表，这里添加协程完成后可执行的回调
     IEnumerator ReadXml(Action callBack)
     {
         string xmlUrl = "http://127.0.0.1/ServerInfo.xml";//服务器上配置表地址
@@ -274,8 +279,8 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
 
     /// <summary>
     /// 获取服务器上所有可能需要的热更资源
-    /// 后续计算ab包会用到
     /// </summary>
+    /// 后续计算ab包会用到
     void GetHotAB()
     {
         //当前游戏版本不为空，热更包不为空，且热更包里有热更内容
@@ -296,9 +301,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     }
 
     /// <summary>
-    /// 计算要下载的资源，并把要下载的资源加入下载队列
-    /// 也是检查本地资源是否与服务器下载列表信息一致
+    /// 计算、检查下载资源列表
     /// </summary>
+    /// 作用1：计算要下载的资源，并把要下载的资源加入下载队列
+    /// 作用2：也是检查本地资源是否与服务器下载列表信息一致
     void ComputeDownload()
     {
         m_DownLoadList.Clear();
@@ -325,9 +331,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     }
 
     /// <summary>
-    /// 把要下载的资源加入下载队列：m_DownLoadList/m_DownLoadDic
+    /// 把要下载的资源加入下载队列
     /// </summary>
     /// <param name="patch"></param>
+    /// 下载队列：m_DownLoadList/m_DownLoadDic
     void AddDownloadList(Patch patch)
     {
         string filePath = m_DownloadPath + "/" + patch.Name;
@@ -413,10 +420,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
 
     /// <summary>
     /// 根据名字查找对象的热更patch
-    /// 通过m_DownLoadDic来查找
     /// </summary>
     /// <param name="name">Patch名</param>
     /// <returns>返回热更patch</returns>
+    /// 通过m_DownLoadDic来查找patch
     Patch FindPatchByGameName(string name)
     {
         Patch patch = null;
@@ -425,10 +432,11 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     }
 
     /// <summary>
-    /// 校验下载的文件MD5码,与储存在字典里的md5码是否一致
+    /// 下载校验
     /// </summary>
     /// <param name="downLoadAssets"></param>
     /// <param name="callBack"></param>
+    /// 校验下载的文件MD5码,与储存在字典里的md5码是否一致
     void VerifyMD5(List<DownLoadAssetBundle> downLoadAssets, Action callBack)
     {
         List<Patch> downLoadList = new List<Patch>();//重新下载列表

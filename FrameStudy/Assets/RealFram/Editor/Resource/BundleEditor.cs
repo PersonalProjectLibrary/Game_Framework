@@ -12,28 +12,47 @@ public class BundleEditor
 {
     /// <summary>
     /// 打的包生成的地址
-    /// 不同平台渠道：EditorUserBuildSettings.activeBuildTarget.ToString()
     /// </summary>
+    /// 不同平台渠道：
+    /// EditorUserBuildSettings.activeBuildTarget.ToString()
     private static string m_BunleTargetPath = Application.dataPath+"/../AssetBundle/" + EditorUserBuildSettings.activeBuildTarget.ToString();
     /// <summary>
     /// 版本文件所在路径
     /// </summary>
     private static string m_VersionMd5Path = Application.dataPath+"/../Version/"+EditorUserBuildSettings.activeBuildTarget.ToString();
     /// <summary>
-    /// 热热更的路径
-    /// 热更相关的文件夹，存储有更新的资源
+    /// 热更的路径
     /// </summary>
+    /// 热更相关的文件夹，存储有更新的资源
     private static string m_HotPath = Application.dataPath + "/../Hot/" + EditorUserBuildSettings.activeBuildTarget.ToString();
+    /// <summary>
+    /// ab包的配置路径
+    /// </summary>
     private static string ABCONFIGPATH = "Assets/RealFram/Editor/Resource/ABConfig.asset";
+    /// <summary>
+    /// ab包的字节路径
+    /// </summary>
     private static string ABBYTEPATH = RealConfig.GetRealFram().m_ABBytePath;
-    //key是ab包名，value是路径，所有文件夹ab包dic
+    /// <summary>
+    /// 记录所有ab包的文件夹的dic
+    /// [ab包名，路径]
+    /// </summary>
     private static Dictionary<string, string> m_AllFileDir = new Dictionary<string, string>();
-    //过滤的list
+    /// <summary>
+    /// AB包的所有文件路径
+    /// </summary>
+    /// 过滤的list
     private static List<string> m_AllFileAB = new List<string>();
-    //单个prefab的ab包
+    /// <summary>
+    /// 单个prefab的ab包
+    /// [prefab名，prefab的依赖资源列表]
+    /// </summary>
     private static Dictionary<string, List<string>> m_AllPrefabDir = new Dictionary<string, List<string>>();
-    //储存所有有效路径
-    private static List<string> m_ConfigFil = new List<string>();
+    /// <summary>
+    /// 储存所有配置文件的有效路径
+    /// </summary>
+    /// 包括AB包路径、预制体路径
+    private static List<string> m_ConfigFile = new List<string>();
 
     /// <summary>
     /// 存储本地存在的MD5
@@ -57,7 +76,7 @@ public class BundleEditor
     public static void Build(bool hotFix = false, string abmd5Path = "", string hotCount = "1")
     {
         DataEditor.AllXmlToBinary();
-        m_ConfigFil.Clear();
+        m_ConfigFile.Clear();
         m_AllFileAB.Clear();
         m_AllFileDir.Clear();
         m_AllPrefabDir.Clear();
@@ -72,7 +91,7 @@ public class BundleEditor
             {
                 m_AllFileDir.Add(fileDir.ABName, fileDir.Path);
                 m_AllFileAB.Add(fileDir.Path);
-                m_ConfigFil.Add(fileDir.Path);
+                m_ConfigFile.Add(fileDir.Path);
             }
         }
 
@@ -81,7 +100,7 @@ public class BundleEditor
         {
             string path = AssetDatabase.GUIDToAssetPath(allStr[i]);
             EditorUtility.DisplayProgressBar("查找Prefab", "Prefab:" + path, i * 1.0f / allStr.Length);
-            m_ConfigFil.Add(path);
+            m_ConfigFile.Add(path);
             if (!ContainAllFileAB(path))
             {
                 GameObject obj = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -159,10 +178,13 @@ public class BundleEditor
     }
 
     /// <summary>
-    /// 筛选有改变的资源，并拷贝热更后/已改变的资源
+    /// 筛选、拷贝热更后/有改变的资源
     /// </summary>
     /// <param name="abmd5Path"></param>
     /// <param name="hotCount"></param>
+    /// 1、读取以往MD5文件；2、对当前ab资源生成新MD5；
+    /// 3、比较MD5：MD5有变化的，对应文件资源有更新修改。
+    /// 4、记录热更的资源，并生成新的配置表
     static void ReadMd5Com(string abmd5Path,string hotCount)
     {
         m_PackedMd5.Clear();
@@ -201,7 +223,7 @@ public class BundleEditor
     }
 
     /// <summary>
-    /// 拷贝改变的AB包资源，及自动生成服务器配置表
+    /// 拷贝改变的AB包资源，生成服务器配置表
     /// </summary>
     /// <param name="changeList">已改变的资源列表</param>
     /// <param name="hotCount">热更次数</param>
@@ -393,7 +415,7 @@ public class BundleEditor
     }
 
     /// <summary>
-    /// 遍历文件夹里的文件名与设置的所有AB包进行检查判断
+    /// 遍历文件夹检查判断所有的AB包
     /// </summary>
     /// <param name="name"></param>
     /// <param name="strs"></param>
@@ -409,10 +431,11 @@ public class BundleEditor
     }
 
     /// <summary>
-    /// 是否包含在已经有的AB包里，做来做AB包冗余剔除
+    /// 是否包含在已有的AB包里
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
+    /// 判断当前ab包是否重复，用来做AB包冗余剔除
     static bool ContainAllFileAB(string path)
     {
         for (int i = 0; i < m_AllFileAB.Count; i++)
@@ -425,15 +448,15 @@ public class BundleEditor
     }
 
     /// <summary>
-    /// 是否有效路径
+    /// 是否是有效路径
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
     static bool ValidPath(string path)
     {
-        for (int i = 0; i < m_ConfigFil.Count; i++)
+        for (int i = 0; i < m_ConfigFile.Count; i++)
         {
-            if (path.Contains(m_ConfigFil[i]))
+            if (path.Contains(m_ConfigFile[i]))
             {
                 return true;
             }
@@ -443,10 +466,10 @@ public class BundleEditor
 
     /// <summary>
     /// 删除指定文件目录下的所有文件
-    /// 不包含递归的文件夹的删除
     /// </summary>
     /// <param name="fullPath">全路径</param>
     /// <returns></returns>
+    /// 非递归式的删除文件夹
     public static void DeleteAllFile(string fullPath)
     {
         if (Directory.Exists(fullPath))
