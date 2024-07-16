@@ -39,13 +39,13 @@ public class GameVersion
 }
 
 /// <summary>
-/// 热更/补丁包
+/// 热更/补丁包，原Patches
 /// </summary>
 [System.Serializable]
 public class Patch
 {
     /// <summary>
-    /// 当前补丁版本
+    /// 当前补丁版本，原Version
     /// </summary>
     /// 在这个版本是第几次补丁
     [XmlAttribute]
@@ -58,14 +58,14 @@ public class Patch
     public string Des;
 
     /// <summary>
-    /// 补丁包里的所有文件
+    /// 补丁包里的所有文件，原Files
     /// </summary>
     [XmlElement]    //注意这里是List元素，不是单个元素，用XmlElement，不用XmlAttribute
     public List<PatchFile> PatchFiles;
 }
 
 /// <summary>
-/// 补丁文件
+/// 补丁文件，原patch
 /// </summary>
 [System.Serializable]
 public class PatchFile
