@@ -1,0 +1,74 @@
+一、UI面板：
+1、Game窗口界面的分辨率调成1920x1080
+
+2、HotFixPanel面板
+（1）在场景GameStart的UIRoot/WndRoot节点下搭建CommonConfirm面板
+（2）WndRoot节点下新建EmptyObject，命名为HotFixPanel，
+（3）HotFixPanel下：
+新建黑色Image作为背景；
+新建白色Image作为进度条（ImageType设置为Filled，FillMethod设置为Horizontal）；
+新建白色Text显示加载进度；
+（4）HotFixPanel做成预制体，对预制体右键生成 UI离线数据
+HotFixPanel放到Assets/GameData/Prefabs/UGUI/Panel文件夹下做成预制体；
+不是离线数据，也不是特效离线数据，是UI离线数据；
+
+3、CommonConfirm面板：热更时共有的提示面板
+（1）在场景GameStart的UIRoot/WndRoot节点下搭建CommonConfirm面板
+（2）WndRoot节点下新建Image，命名CommonConfirm；
+（3）CommonConfirm下：
+新建Text，命名Title；
+新建Text，显示提示信息。
+新建button，命名ConfirmButton，用于确认按钮；
+新建button，命名CancleButton，用于取消按钮；
+（4）CommonConfirm面板做成预制体
+CommonConfirm面板放进Assets/GameData/Prefabs/UGUI/Item文件夹中做成预制体
+
+二、功能脚本：
+1、HotFixPanel面板相关：
+在Assets\Scripts\UGUI\Panel文件夹下，新建HotFixPanel.cs脚本
+在Assets\Scripts\UGUI\Window文件夹下，新建HotFixUi.cs脚本
+把HotFixPanel.cs挂到HotFixPanel身上，并进行属性设置绑定；
+
+2、CommonConfirm面板相关：
+CommonConfirm面板视为一个功能按钮
+在Assets\Scripts\UGUI\Item文件夹下，新建CommonConfirm.cs脚本
+把CommonConfirm.cs挂到CommonConfirm身上，并进行属性设置绑定；
+
+3、脚本继承关系：
+HotFixUi.cs继承Window.cs;
+CommonConfirm.cs继承BaseItem.cs；
+
+三、注册HotFix面板窗口
+1、ConStr.cs里添加常量：public const string HOTFIX = "HotFixPanel.prefab";
+2、在GameStart.cs脚本里RegisterUI方法里添加注册：
+UIManager.Instance.Register<HotFixUi>(ConStr.HOTFIX);
+
+四、完善HotFixUi.cs类
+1、HotFixUi.cs继承Window.cs，即public class HotFixUi : Window{}
+2、初始化：
+（1）绑定热更面板m_Panel = HotFixPanel；
+（2）设置初始显示m_Panel.m_Image，m_Panel.m_Text；
+3、注册/取消热更错误的回调：
+（1）创建热更错误回调方法ServerInfoError()，ItemError(string all)，
+（2）在Awake方法里注册错误回调事件：
+HotPatchManager.Instance.ServerInfoError += ServerInfoError;
+HotPatchManager.Instance.ItemError += ItemError;
+（3）在OnClose方法里取消错误回调事件的注册：
+HotPatchManager.Instance.ServerInfoError -= ServerInfoError;
+HotPatchManager.Instance.ItemError -= ItemError;
+4、添加检查热更方法：HotFix()
+提示玩家当前网络环境：当前是数据环境，要求提示是否继续下载等
+5、添加检查版本并提示是否进行热更的方法：CheckVersion()
+
+五、补BaseItem.cs内容
+原BaseItem.cs就空脚本（脚本新建后就没修改），这里完善补充BaseItem.cs脚本
+1、将Window.cs里添加button、Toggle事件监听，播放button、toggle声音，
+这四个方法复制到BaseItem.cs中
+2、复制的两个事件监听里对m_AllButton、m_AllToggle的条件判断语句删了；
+这里只是简单的添加事件；
+
+六、完善CommonConfirm.cs类
+1、CommonConfirm.cs继承BaseItem.cs，即：public class CommonConfirm : BaseItem{}
+2、添加绑定相关属性：m_Title，m_Des，m_ConfirmBtn，m_CancleBtn；
+3、添加功能方法：
+void Show(string title,string des,UnityAction confirmAction,UnityAction cancleAction){}

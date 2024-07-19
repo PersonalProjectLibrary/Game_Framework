@@ -35,6 +35,7 @@ public class GameStart : MonoSingleton<GameStart>
     {
         UIManager.Instance.Register<MenuUi>(ConStr.MENUPANEL);
         UIManager.Instance.Register<LoadingUi>(ConStr.LOADINGPANEL);
+        UIManager.Instance.Register<HotFixUi>(ConStr.HOTFIX);
     }
 
     //加载配置表
