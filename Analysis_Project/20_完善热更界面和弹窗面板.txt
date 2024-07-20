@@ -1,0 +1,23 @@
+HotFixPanel面板更新：
+1、显示加载速度的Text，命名为SpeedText，并进行拆分：
+复制SpeedText，命名为：，用于显示当前面板是什么进度，如：下载中...，解压中...等；
+而SpeedText仅显示，加载/下载等速度，如：3M/S，10Kb/S等
+
+2、新增Info信息面板：展现热更信息回顾
+HotFixPanel节点下新建Image，命名为Info；
+Info下新建Text，命名为Title，内容：热更内容；
+Info下新建ScrollView，将Content、Scrollbar删除；
+新建Text替代Content，显示热更信息；
+Text身上添加ContentSizeFitter组件，设置VerticalFit为PreferresSize；
+注：
+1）记得把ScrollView上的Content绑定换成Text；
+2）ScrollView上的Horizontal的Tog取消，只允许垂直方向拖拽，水平不可拖拽；
+3）初始设置Info面板是掩藏状态
+4）Info面板设置好后，记得Overrides下HotFixPanel，保证预制体同步；
+
+3、完善HotFixPanel.cs内容
+HotFixPanel.cs里，新增SliderTopText、InfoPanel、HotContentText成员变量，并在面板上进行属性绑定。
+
+4、最后重新生成下HotFixPanel的UI离线数据：选择预制体，右键点击    生成UI离线数据；
+
+
