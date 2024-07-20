@@ -51,6 +51,21 @@ public class GameStart : MonoSingleton<GameStart>
         UIManager.Instance.OnUpdate();
 	}
 
+    /// <summary>
+    /// 打开热更确认界面
+    /// </summary>
+    /// <param name="title"></param>
+    /// <param name="des"></param>
+    /// <param name="confirmAction"></param>
+    /// <param name="cancleAction"></param>
+    public static void OpenCommonConfirm(string title, string des, UnityEngine.Events.UnityAction confirmAction, UnityEngine.Events.UnityAction cancleAction)
+    {
+        GameObject commonObj = GameObject.Instantiate(Resources.Load<GameObject>("CommonConfirm")) as GameObject;
+        commonObj.transform.SetParent(UIManager.Instance.m_WndRoot, false);
+        CommonConfirm commonItem = commonObj.GetComponent<CommonConfirm>();
+        commonItem.Show(title, des, confirmAction,cancleAction);
+    }
+
     private void OnApplicationQuit()
     {
 #if UNITY_EDITOR

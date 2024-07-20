@@ -13,6 +13,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// </summary>
     private string m_CurVersion;
     /// <summary>
+    /// 外部获取的当前版本号
+    /// </summary>
+    public string CurVersion {  get { return m_CurVersion; } }
+    /// <summary>
     /// 当前热更包名
     /// </summary>
     private string m_CurPackName;

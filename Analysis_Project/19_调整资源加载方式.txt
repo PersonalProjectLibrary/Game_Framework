@@ -1,0 +1,73 @@
+目前热更界面的所有资源，都不应该由AssetBundle下载：
+1、基于当前项目框架，热更的条件：
+热更是根据服务器上当前的Patch的包，来决定哪些东西是不是热更，
+在加载之前，服务器上的热更包是没有拿到的；
+所以目前热更界面的所有资源，都不应该由AssetBundle下载，应该从本地进行加载。
+
+2、由于加载顺序：
+AssetBundle的初始化，加载完后调用我们自己写的资源加载框架进行加载热更界面或弹出窗口，会出现问题：
+（1）没有热更前：
+GameStart.cs初始化里，直接调用AssetBundleManager里的LoadAssetBundleConfig()方法，
+进行本地加载ab配置表；
+（2）通过热更加载：
+不应该从继续从LoadAssetBundleConfig()加载，
+应该从AssetBundleManager里的加了热更方式的LoadAssetBundle(string name)加载。
+
+3、更新资源加载方法：
+（1）修改更新LoadAssetBundleConfig()方法，添加热更情况下加载ab配置表情况
+原：
+string configPath = ABLoadPath + m_ABConfigABName;//本地ab配置表路径
+改：
+string configPath = ABLoadPath + m_ABConfigABName;//本地ab配置表路径
+string hotConfigPath = HotPatchManager.Instance.ComputeABPath(m_ABConfigABName);//热更情况下的AB配置路径
+configPath = string.IsNullOrEmpty(hotConfigPath) ? configPath : hotConfigPath;
+
+（2）修改ab配置表加载时机：
+原GameStart.cs的Awake()里直接加载配置表：AssetBundleManager.Instance.LoadAssetBundleConfig();
+改：
+方法1：热更完再加载ab配置表
+方法2：先从原有资源里读取加载ab配置表，然后热更完后再加载一遍ab配置表；
+第二种方法要考虑：
+再次加载ab配置表时，要把先前所存的东西，包括加载的ab包全部删了，重新进行加载。
+不过可能会因此存在资源漏加载的情况。
+
+注：采用方法1，热更后再进行AssetBundleManager.Instance.LoadAssetBundleConfig();加载ab配置表
+这里热更加载界面、弹窗就不能用项目的UI框架直接写入，放到Resource下进行Prefab加载。
+而放到Resource下加载，不论是方法1加载，还是方法2的热更完后的加载，
+热更加载界面、弹窗都是不能通过热更改变的（热更前使用加载了），得大版本修改时才能改变。
+
+4、将热更加载界面、弹窗，放到Resource下通过加载Prefab加载：
+（1）将放在Assets/GameData/Prefabs/UGUI/Item下的CommonConfirm.prefab，
+和放在Assets/GameData/Prefabs/UGUI/Panel下的HotFixPanel.prefab，
+放到Assets\Resources文件夹下。
+（2）在GameStart.cs里写方便调用的静态方法：
+OpenCommonConfirm(string title, string des, UnityAction confirmAction, UnityAction cancleAction)，加载Resource下的热更加载界面、弹窗；
+
+5、补CommonConfirm.cs功能：
+点击热更弹窗的确认/取消按钮后，要销毁弹窗，这里将事件改成lambda写法，加上销毁自身的语句：
+AddButtonClickListener(m_ConfirmBtn, confirmAction);
+AddButtonClickListener(m_CancelBtn, cancleAction);
+改为：
+AddButtonClickListener(m_ConfirmBtn, () => {
+    confirmAction();
+    Destroy(gameObject);
+});
+AddButtonClickListener(m_CancelBtn, ()=> { 
+    cancleAction();
+    Destroy(gameObject);
+});
+
+6、完善HotFixUi.cs里提示面板的设置：
+（1）HotFix()里提示网络错误的功能逻辑：
+GameStart.OpenCommonConfirm("网络连接失败", "网络连接失败，请检查网络连接是否正常", () => { Application.Quit(); }, () => { Application.Quit(); });
+（2）CheckVersion()里提示玩家是否确定热更下载：
+1）新增点击确认下载和取消下载的方法：OnClickStartDownLoad(), OnClickCancleDownLoad()；
+2）完善显示热更提示弹窗：
+GameStart.OpenCommonConfirm("热更确定", string.Format("当前版本为{0}，有{1:F}M大小热更包，是否确定下载？",HotPatchManager.Instance.CurVersion,HotPatchManager.Instance.LoadSumSize/1024.0f), OnClickStartDownLoad, OnClickCancleDownLoad);
+（3）完善OnClickStartDownLoad()里显示弹窗进行下载确认：
+1）新增开始下载的方法：StartDownLoad()；
+2）GameStart.OpenCommonConfirm("下载确认", "当前使用的是手机流量。是否继续下载", StartDownLoad, OnClickCancleDownLoad);
+
+注：这里在HotPatchManager.cs里添加公开的CurVersion变量，获取私有变量m_CurVersion；
+
+

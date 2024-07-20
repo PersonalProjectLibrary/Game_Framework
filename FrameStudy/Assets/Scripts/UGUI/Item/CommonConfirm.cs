@@ -21,7 +21,15 @@ public class CommonConfirm : BaseItem
     {
         m_Title.text = title;
         m_Des.text = des;
-        AddButtonClickListener(m_ConfirmBtn, confirmAction);
-        AddButtonClickListener(m_CancelBtn, cancleAction);
+        AddButtonClickListener(m_ConfirmBtn, () => {
+            confirmAction();
+            Destroy(gameObject);
+        });
+        AddButtonClickListener(m_CancelBtn, ()=> { 
+            cancleAction();
+            Destroy(gameObject);
+        });
     }
+
+
 }

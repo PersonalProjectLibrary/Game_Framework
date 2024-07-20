@@ -33,7 +33,10 @@ public class AssetBundleManager : Singleton<AssetBundleManager>
 #endif
 
         m_ResouceItemDic.Clear();
-        string configPath = ABLoadPath + m_ABConfigABName;
+        string configPath = ABLoadPath + m_ABConfigABName;//本地ab配置表路径
+        string hotConfigPath = HotPatchManager.Instance.ComputeABPath(m_ABConfigABName);//热更情况下的AB配置路径
+        configPath = string.IsNullOrEmpty(hotConfigPath) ? configPath : hotConfigPath;
+
         AssetBundle configAB = AssetBundle.LoadFromFile(configPath);
         TextAsset textAsset = configAB.LoadAsset<TextAsset>(m_ABConfigABName);
         if (textAsset == null)
