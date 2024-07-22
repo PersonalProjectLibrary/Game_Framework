@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class GameStart : MonoSingleton<GameStart>
 {
@@ -10,24 +11,51 @@ public class GameStart : MonoSingleton<GameStart>
     {
         base.Awake();
         GameObject.DontDestroyOnLoad(gameObject);
-        AssetBundleManager.Instance.LoadAssetBundleConfig();
+        
         ResourceManager.Instance.Init(this);
         ObjectManager.Instance.Init(transform.Find("RecyclePoolTrs"), transform.Find("SceneTrs"));
 
         //热更新初始化，使HotPatchManager可使用协程进行服务器数据的获取
         HotPatchManager.Instance.Init(this);
+
+        UIManager.Instance.Init(transform.Find("UIRoot") as RectTransform, transform.Find("UIRoot/WndRoot") as RectTransform, transform.Find("UIRoot/UICamera").GetComponent<Camera>(), transform.Find("UIRoot/EventSystem").GetComponent<EventSystem>());
     }
     // Use this for initialization
     void Start ()
     {
+        UIManager.Instance.PopUpWnd(ConStr.HOTFIX,resource:true);
+    }
+
+    /// <summary>
+    /// 进入游戏
+    /// </summary>
+    /// <param name="progress">进度条显示</param>
+    /// <param name="text">下载、更新等速度文本内容</param>
+    /// <returns></returns>
+    public IEnumerator StartGame(Image progress, Text text)
+    {
+        progress.fillAmount = 0;
+        yield return null;
+        text.text = "加载本地数据... ...";
+
+        AssetBundleManager.Instance.LoadAssetBundleConfig();
+        progress.fillAmount = 0.2f;
+        yield return null;
+        text.text = "加载数据表... ...";
+
         LoadConfiger();
+        progress.fillAmount = 0.7f;
+        yield return null;
+        text.text = "加载配置... ...";
 
-        UIManager.Instance.Init(transform.Find("UIRoot") as RectTransform, transform.Find("UIRoot/WndRoot") as RectTransform, transform.Find("UIRoot/UICamera").GetComponent<Camera>(), transform.Find("UIRoot/EventSystem").GetComponent<EventSystem>());
         RegisterUI();
+        progress.fillAmount = 0.9f;
+        yield return null;
+        text.text = "初始化地图... ...";//text的内容根据需求自定义设定填写即可
 
-        GameMapManager.Instance.Init(this);
-        //加载场景
-        GameMapManager.Instance.LoadScene(ConStr.MENUSCENE);
+        GameMapManager.Instance.Init(this);//初始化完成
+        progress.fillAmount = 1f;
+        yield return null;
     }
 
     //注册UI窗口

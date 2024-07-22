@@ -624,7 +624,7 @@ GameObject:
   - component: {fileID: 8072616611899753463}
   - component: {fileID: 8072616611899753460}
   m_Layer: 5
-  m_Name: ImageSlider
+  m_Name: ProgressImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -740,8 +740,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0ff7db1155519e45876c34d1737274b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Image: {fileID: 8072616611899753460}
-  m_Text: {fileID: 8072616611369446066}
+  m_ProgressImage: {fileID: 8072616611899753460}
+  m_SpeedText: {fileID: 8072616611369446066}
   m_SliderTopText: {fileID: 569064080}
   m_InfoPanel: {fileID: 196331335}
   m_HotContentText: {fileID: 1690189736}

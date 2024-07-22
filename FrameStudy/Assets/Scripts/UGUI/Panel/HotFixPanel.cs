@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 public class HotFixPanel : MonoBehaviour
 {
-    public Image m_Image;//进度条ImageSlider
-    public Text m_Text;//速度Text
+    public Image m_ProgressImage;//进度条ImageSlider
+    public Text m_SpeedText;//速度Text
     public Text m_SliderTopText;//提示信息Text
 
     [Header("热更信息界面")]

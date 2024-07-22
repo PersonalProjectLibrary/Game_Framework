@@ -144,7 +144,7 @@ public class UIManager : Singleton<UIManager>
     /// <param name="para2"></param>
     /// <param name="para3"></param>
     /// <returns></returns>
-    public Window PopUpWnd(string wndName, bool bTop = true, params object[] paralist)
+    public Window PopUpWnd(string wndName, bool bTop = true,bool resource =false, params object[] paralist)
     {
         Window wnd = FindWndByName<Window>(wndName);
         if (wnd == null)
@@ -160,7 +160,10 @@ public class UIManager : Singleton<UIManager>
                 return null;
             }
 
-            GameObject wndObj = ObjectManager.Instance.InstantiateObject(m_UIPrefabPath + wndName, false, false);
+            GameObject wndObj = null;
+            if (resource) wndObj = GameObject.Instantiate(Resources.Load<GameObject>(wndName.Replace(".prefab", "")));
+            else wndObj = ObjectManager.Instance.InstantiateObject(m_UIPrefabPath + wndName, false, false);
+
             if (wndObj == null)
             {
                 Debug.Log("创建窗口Prefab失败：" + wndName);
@@ -199,10 +202,10 @@ public class UIManager : Singleton<UIManager>
     /// </summary>
     /// <param name="name"></param>
     /// <param name="destory"></param>
-    public void CloseWnd(string name, bool destory = false)
+    public void CloseWnd(string name, bool destory = false, bool resource = false)
     {
         Window wnd = FindWndByName<Window>(name);
-        CloseWnd(wnd, destory);
+        CloseWnd(wnd, destory,resource);
     }
 
     /// <summary>
@@ -210,7 +213,7 @@ public class UIManager : Singleton<UIManager>
     /// </summary>
     /// <param name="window"></param>
     /// <param name="destory"></param>
-    public void CloseWnd(Window window, bool destory = false)
+    public void CloseWnd(Window window, bool destory = false, bool resource = false)
     {
         if (window != null)
         {
@@ -221,15 +224,19 @@ public class UIManager : Singleton<UIManager>
                 m_WindowDic.Remove(window.Name);
                 m_WindowList.Remove(window);
             }
+            if (!resource)
+            {
+                if (destory)
+                {
+                    ObjectManager.Instance.ReleaseObject(window.GameObject, 0, true);
+                }
+                else
+                {
+                    ObjectManager.Instance.ReleaseObject(window.GameObject, recycleParent: false);
+                }
+            }
+            else GameObject.Destroy(window.GameObject);
 
-            if (destory)
-            {
-                ObjectManager.Instance.ReleaseObject(window.GameObject, 0, true);
-            }
-            else
-            {
-                ObjectManager.Instance.ReleaseObject(window.GameObject, recycleParent: false);
-            }
             window.GameObject = null;
             window = null;
         }
@@ -252,7 +259,7 @@ public class UIManager : Singleton<UIManager>
     public void SwitchStateByName(string name,bool bTop = true,params object[] paralist)
     {
         CloseAllWnd();
-        PopUpWnd(name, bTop, paralist);
+        PopUpWnd(name, bTop,false, paralist);
     }
 
     /// <summary>

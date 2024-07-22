@@ -1,0 +1,77 @@
+一、HotFixUi.cs：
+1、更新Awake()
+m_Panel.m_Text.text = string.Format("下载中。。。{0:F}M/S", 0);
+改：
+m_Panel.m_SpeedText.text = string.Format("{0:F}M/S", 0);
+（这里将m_Text重命名为m_SpeedText）
+2、实现StartDownLoad()
+（1）这里获取更新信息：m_Panel.m_HotContentText.text = HotPatchManager.Instance.CurrentPatch.Des;
+（这里将HotPatchManager.cs里新增CurrentPatch属性，用于外部获取m_CurrentPatch）
+（2）新增下载热更后执行的回调StartOnFinish()
+GameStart.Instance.StartCoroutine(HotPatchManager.Instance.StartDownLoadAB(StartOnFinish));
+3、新增StartOnFinish()
+（1）用于：下载完成后的执行的回调；或无下载直接进入游戏的回调；
+（2）StartDownLoad()里进行热更下载调用
+（3）CheckVersion()里非热更，直接进入游戏的条件里进行调用
+4、完善CheckVersion()
+完善非热更条件里，直接进入游戏的功能：执行StartOnFinish()；
+5、重写OnUpdate()：实现界面上显示的：下载、检查等的速度
+（1）override void OnUpdate()，添加OnUpdate()；
+（2）将HotPatchManager.cs里private m_StartDownload改为public StartDownload
+（3）新增成员：m_SumTime=0；
+作用：记录保存累计下载时间；
+在Awake里置0；在OnUpdate的计算下载速度里进行累加；
+（4）计算显示速度
+
+二、GameStart.cs：
+6、新增IEnumerator StartGame(Image progress, Text text)协程
+方便进入游戏一系列初始化提示显示
+7、调整初始化顺序：
+将Awake()里的AssetBundleManager.Instance.LoadAssetBundleConfig();放进Start()里实现；
+将Start()里的UIManager.Instance.Init(...) ；放到Awake()里执行；
+将Start()里的加载场景放到HotFixUi.cs的OnClose()里；
+8、完善协程StartGame(Image progress, Text text）
+（1）将Start()逻辑代码全部移入协程中;Start()中无逻辑代码
+（2）设置进度条加载状态、更新加载进度文本的内容（加载数据、配置表、初始化地图等等提示信息）
+
+三、继续更新HotFixUi.cs：
+9、新建OnFinish()协程
+（1）HotFixUi.cs的StartOnFish()里开启调用StartGame(Image progress, Text text）协程；
+yield return GameStart.Instance.StartCoroutine(GameStart.Instance.StartGame(m_Panel.m_ProgressImage, m_Panel.m_SliderTopText));
+（2）这里重命名绑定了下HotFixPanel的image，脚本里的image改为ProgressImage，预制体里的ImageSlider改为ProgerssImage，并重新绑定，更新了UI离线数据
+（3）在StartGame协程结束后，关闭更新面板
+UIManager.Instance.CloseWnd(this);
+10、实现StartOnFinish()
+开启OnFinish()协程
+
+原先UIMananger.cs里的CloseWnd()、PopUpWnd()都是针对从AssetBundle里加载的；
+但热更面板弹窗是从Resource里加载的，这里需要新增下加载方式
+四、UIMananger.cs
+11、更新CloseWnd(...)
+（1）添加参数bool resource = false
+CloseWnd(string name, bool destory = false, bool resource = false){};
+CloseWnd(Window window, bool destory = false, bool resource = false){};
+（2）针对不同加载方式进行不同处理，在删除/关闭窗口前判断加载方式：
+非resource，原方式释放；
+resource方式，直接Destory；
+（3）相关修改：
+HotFixUi.cs的OnFinish(...)里更新CloseWnd(...):
+UIManager.Instance.CloseWnd(this,resource:true);
+UIManager.cs的
+12、更新PopUpWnd(...)
+（1）添加参数bool resource = false
+PopUpWnd(string wndName, bool bTop = true,bool resource =false, params object[] paralist){};
+（2）针对不同加载方式进行不同处理，在生成wndObj处根据不同加载方式，不同方式生成：
+非resource，原方式生成wndObj；
+resource方式，实例化目标界面：
+if (resource) wndObj = GameObject.Instantiate(Resources.Load<GameObject>(wndName.Replace(".prefab", "")));
+（3）相关修改：
+1）UIManager.cs的SwitchstateByName(...)里更新PopUpWnd(...)：
+PopUpWnd(name, bTop,false, paralist);
+2）GameMapManager.cs的LoadScene(...)里更新PopUpWnd(...)：
+UIManager.Instance.PopUpWnd(ConStr.LOADINGPANEL, true,false, name);
+
+五、完善GameStart.cs：
+13、更新Start()，Resource打开热更界面
+UIManager.Instance.PopUpWnd(ConStr.HOTFIX,resource:true);
+

@@ -50,9 +50,13 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// </summary>
     private GameVersion m_GameVersion;
     /// <summary>
-    /// 当前热更补丁Patch
+    /// 当前热更Patch
     /// </summary>
     private Patch m_CurrentPatch;
+    /// <summary>
+    /// 当前使用的Patch
+    /// </summary>
+    public Patch CurrentPatch { get { return m_CurrentPatch; }}
 
     /// <summary>
     /// 热更的所有东西，每次热更前记得清空下
@@ -89,7 +93,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// 是否开始下载资源
     /// </summary>
     /// 开始下载时进行开启，MD5码校验后关闭
-    private bool m_StartDownload = false;
+    public bool StartDownload = false;
     /// <summary>
     /// 服务器上要下载的资源的MD5
     /// </summary>
@@ -396,7 +400,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     public IEnumerator StartDownLoadAB(Action callback,List<PatchFile> allPatchFile = null)
     {
         m_AlreadyDownList.Clear();
-        m_StartDownload = true;
+        StartDownload = true;
         if(!Directory.Exists(m_DownloadPath)) Directory.CreateDirectory(m_DownloadPath);
         //要下载的资源信息Patch，记录在m_DownLoadList里，
         //根据m_DownLoadList，把Patch解析成DownLoadAssetBundle格式存储
@@ -464,7 +468,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             m_DownLoadMD5Dic.Clear();
             if(callBack != null)
             {
-                m_StartDownload = false;
+                StartDownload = false;
                 callBack();
             }
             if (LoadOver != null) LoadOver();
@@ -475,7 +479,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             if (m_TryDownCount >= DOWNLOADCOUNT)
             {
                 string allName = "";//记录下载失败的文件名
-                m_StartDownload = false;//结束下载
+                StartDownload = false;//结束下载
                 foreach(PatchFile patchFile in downLoadList)
                 {
                     allName += patchFile.Name + ";";
