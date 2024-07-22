@@ -101,7 +101,7 @@ public class HotFixUi : Window
     IEnumerator OnFinish()
     {
         yield return GameStart.Instance.StartCoroutine(GameStart.Instance.StartGame(m_Panel.m_ProgressImage, m_Panel.m_SliderTopText));
-        UIManager.Instance.CloseWnd(this,resource:true);
+        UIManager.Instance.CloseWnd(this);
     }
 
     public override void OnUpdate()

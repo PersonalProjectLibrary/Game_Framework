@@ -1,0 +1,38 @@
+
+一、Window.cs
+1、新增变量Resource：
+是否是从Resource里加载的，默认false；
+public bool Resource { get; set; } = false;
+
+二、UIManager.cs
+2、更新PopUpWnd(...)
+新增设置：wnd.Resource = resource;
+
+3、更新CloseWnd(...)
+（1）方法修改
+将
+CloseWnd(string name, bool destory = false, bool resource = false)
+{
+    Window wnd = FindWndByName<Window>(name);
+    CloseWnd(wnd, destory,resource);
+}
+CloseWnd(Window window, bool destory = false, bool resource = false){
+    ...
+   if (!resource){...}
+    ...
+}
+改为：
+public void CloseWnd(string name, bool destory = false)
+{
+    Window wnd = FindWndByName<Window>(name);
+    CloseWnd(wnd, destory);
+}
+CloseWnd(Window window, bool destory = false, bool resource = false){
+    ...
+   if (!window.Resource){...}
+    ...
+}
+这样就不影响CloseAllWnd()的使用
+（2）相关修改
+更新HotFixUi.cs里OnFinish()的CloseWnd(...)：
+UIManager.Instance.CloseWnd(this);

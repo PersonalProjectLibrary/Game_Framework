@@ -180,6 +180,7 @@ public class UIManager : Singleton<UIManager>
             wnd.Transform = wndObj.transform;
             wnd.Name = wndName;
             wnd.Awake(paralist);
+            wnd.Resource = resource;
             wndObj.transform.SetParent(m_WndRoot, false);
 
             if (bTop)
@@ -202,10 +203,10 @@ public class UIManager : Singleton<UIManager>
     /// </summary>
     /// <param name="name"></param>
     /// <param name="destory"></param>
-    public void CloseWnd(string name, bool destory = false, bool resource = false)
+    public void CloseWnd(string name, bool destory = false)
     {
         Window wnd = FindWndByName<Window>(name);
-        CloseWnd(wnd, destory,resource);
+        CloseWnd(wnd, destory);
     }
 
     /// <summary>
@@ -213,7 +214,7 @@ public class UIManager : Singleton<UIManager>
     /// </summary>
     /// <param name="window"></param>
     /// <param name="destory"></param>
-    public void CloseWnd(Window window, bool destory = false, bool resource = false)
+    public void CloseWnd(Window window, bool destory = false)
     {
         if (window != null)
         {
@@ -224,7 +225,7 @@ public class UIManager : Singleton<UIManager>
                 m_WindowDic.Remove(window.Name);
                 m_WindowList.Remove(window);
             }
-            if (!resource)
+            if (!window.Resource)
             {
                 if (destory)
                 {

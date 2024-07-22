@@ -14,6 +14,9 @@ public class Window
     //名字
     public string Name { get; set; }
 
+    //窗口面板是否从Resource里加载
+    public bool Resource { get; set; } = false;
+
     //所有的Button
     protected List<Button> m_AllButton = new List<Button>();
 
