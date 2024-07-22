@@ -1,0 +1,14 @@
+一、HotFixUi.cs
+1、SeverInfoError()，服务器列表下载出错：
+GameStart.OpenCommonConfirm("服务器列表获取失败", "服务器列表获取失败，请检查网络连接是否正常？尝试重新下载！", CheckVersion, Application.Quit);
+
+2、新增ReDownload()，下载资源过程中下载失败后，重新下载资源：
+HotPatchManager.Instance.CheckVersion((hot) =>
+{
+    if (hot) StartDownLoad();
+    else StartOnFinish();
+});
+
+3、ItemError()，资源下载过程中出错：
+GameStart.OpenCommonConfirm("资源下载失败", string.Format("{0}等资源下载失败，请重新尝试下载！", all), ReDownLoad,Application.Quit);
+

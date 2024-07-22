@@ -116,16 +116,32 @@ public class HotFixUi : Window
     }
 
     /// <summary>
-    /// 服务器错误回调
+    /// 服务器列表下载出错的回调
     /// </summary>
     void ServerInfoError()
     {
-
+        GameStart.OpenCommonConfirm("服务器列表获取失败", "服务器列表获取失败，请检查网络连接是否正常？尝试重新下载！", CheckVersion, Application.Quit);
     }
 
-    //资源下载失败回调
+    /// <summary>
+    /// 资源下载到一半出错的回调
+    /// </summary>
+    /// <param name="all"></param>
+    /// 
     void ItemError(string all)
     {
+        GameStart.OpenCommonConfirm("资源下载失败", string.Format("{0}等资源下载失败，请重新尝试下载！", all), ReDownLoad,Application.Quit);
+    }
 
+    /// <summary>
+    /// 重新下载
+    /// </summary>
+    void ReDownLoad()
+    {
+        HotPatchManager.Instance.CheckVersion((hot) =>
+        {
+            if (hot) StartDownLoad();
+            else StartOnFinish();
+        });
     }
 }
