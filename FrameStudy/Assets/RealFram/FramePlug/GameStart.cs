@@ -19,6 +19,8 @@ public class GameStart : MonoSingleton<GameStart>
         HotPatchManager.Instance.Init(this);
 
         UIManager.Instance.Init(transform.Find("UIRoot") as RectTransform, transform.Find("UIRoot/WndRoot") as RectTransform, transform.Find("UIRoot/UICamera").GetComponent<Camera>(), transform.Find("UIRoot/EventSystem").GetComponent<EventSystem>());
+
+        RegisterUI();
     }
     // Use this for initialization
     void Start ()
@@ -48,7 +50,6 @@ public class GameStart : MonoSingleton<GameStart>
         yield return null;
         text.text = "加载配置... ...";
 
-        RegisterUI();
         progress.fillAmount = 0.9f;
         yield return null;
         text.text = "初始化地图... ...";//text的内容根据需求自定义设定填写即可

@@ -16,3 +16,5 @@ com.XiaoMi.ProductName;		//小米包名
 然后点击工具栏：测试-测试Version写入；进行测试实验。
 
 
+
+

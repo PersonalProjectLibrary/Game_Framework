@@ -59,7 +59,7 @@ public class BundleEditor
     /// </summary>
     private static Dictionary<string,ABMD5Base> m_PackedMd5 = new Dictionary<string,ABMD5Base>();
 
-    [MenuItem("Tools/打包")]
+    [MenuItem("Tools/非热更打包，更新MD5")]
     public static void NormalBuild()
     {
         Build();//标准打包，非热更打包
@@ -253,7 +253,7 @@ public class BundleEditor
             patchFile.Size = files[i].Length / 1024.0f;
             patchFile.Platform = EditorUserBuildSettings.activeBuildTarget.ToString();
             //搭建本地服务器后，完善地址如下
-            patchFile.Url = "http://127.0.0.1/AssetBundle" + PlayerSettings.bundleVersion + "/" + hotCount + "/" + files[i].Name;
+            patchFile.Url = "http://127.0.0.1/AssetBundle/" + PlayerSettings.bundleVersion + "/" + hotCount + "/" + files[i].Name;
             patch.PatchFiles.Add(patchFile);
         }
 

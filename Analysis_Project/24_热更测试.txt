@@ -1,0 +1,57 @@
+一、UIManager.cs
+1、SwitchStateByName(...)更新：
+改为：
+SwitchStateByName(string name,bool bTop = true,bool resource = false,params object[] paralist)
+{
+        CloseAllWnd();
+        PopUpWnd(name, bTop,resource, paralist);
+}
+
+二、Start场景里的HotFixPanel面板删除
+
+三、查看配置服务器列表
+注：之前有重命名ServerInfo.cs里成员变量名，注意更新SeverInfo.xml和Patch.xml
+
+四、BundleEditor.cs
+CopyABAndGenerateXML(...)里修改patchFile.Url，改为：
+patchFile.Url = "http://127.0.0.1/AssetBundle/" + PlayerSettings.bundleVersion + "/" + hotCount + "/" + files[i].Name;
+（原AssetBundle和bundleVersion中间少个分隔符，Patch.xml里的Url生成错误）
+
+五、热更资源下载位置
+C:\Users\Administrator\AppData\LocalLow\TTT\RealName
+其中：
+Administrator是对应电脑用户名;
+AppData，正常看不到，是隐藏文件夹，注意文件设置勾选显示；
+TTT是项目名，可从Unity的File/BuildSettings/ProjectSetting/Player里查看CompanyName;
+
+六、运行报错
+1、初始运行报错：找不到窗口对应的脚本，窗口名是：HotFixPanel.prefab
+修改：
+将GameStart.cs的StartGame(...)里的RegisterUI()移到Awake()里；
+要提前注册UI，不应该放到进入游戏时才注册。
+
+2、提示服务器列表下载失败
+解决方法：打开启动本地或远程服务器。
+
+3、xml无法转为二进制
+解决方法：检查服务器SeverInfo.xml的名称、格式，和项目中ServerInfo.cs里成员名称、格式是否一致。
+
+七、整理项目
+BundleEditor.cs
+1、修改NormalBuild()的MenuItem，
+原：Tools/打包；改为：Tools/非热更打包，更新MD5；
+注：
+（1）这个打包不是热更打包，是正常项目内容（开发时）更新时，或初版本首次打包时，
+进行对项目的打包。会更新项目中的Version和ABMD5信息；
+（2）而热更打包，是相对原有项目内容有修改，相对原MD5有更改时的记录打包。
+是基于Version和ABMD5信息，对差异（有修改、新增、删除的）文件进行打包。
+（3）如果是刷新本地项目资源，后面以当前状态做热更，应该先非热更打包下。
+后面热更有变化，使用热更打包。
+
+2、更新项目资源状态，后续基于当前状态、当前资源文件的MD5做热更测试
+（1）删除FrameStudy/Hot文件夹下之前的热更包；
+（2）点击 Tools/非热更打包，更新MD5；进行资源打包
+这里更新了项目中的Version和ABMD5信息；
+
+
+

@@ -1,6 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Patchs xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" PatchVersion="1">
-  <Files Name="assetbundleconfig" Url="http://127.0.0.1/AssetBundle0.1/1/assetbundleconfig" Platform="StandaloneWindows64" Md5="930b7edfb7a0840a8ed484f983c473c7" Size="2.2890625" />
-  <Files Name="StandaloneWindows64" Url="http://127.0.0.1/AssetBundle0.1/1/StandaloneWindows64" Platform="StandaloneWindows64" Md5="4504573daa65db2e2289a9da538b32d1" Size="1.85253906" />
-  <Files Name="ugui" Url="http://127.0.0.1/AssetBundle0.1/1/ugui" Platform="StandaloneWindows64" Md5="c015ad9d48796e1af6c1fca7051e4b45" Size="206.511719" />
-</Patchs>

@@ -257,10 +257,10 @@ public class UIManager : Singleton<UIManager>
     /// <summary>
     /// 切换到唯一窗口
     /// </summary>
-    public void SwitchStateByName(string name,bool bTop = true,params object[] paralist)
+    public void SwitchStateByName(string name,bool bTop = true,bool resource = false,params object[] paralist)
     {
         CloseAllWnd();
-        PopUpWnd(name, bTop,false, paralist);
+        PopUpWnd(name, bTop,resource, paralist);
     }
 
     /// <summary>
