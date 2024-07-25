@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml;
+using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -28,7 +30,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// 在Init()里设置，StartDownLoadAB()里使用
     private MonoBehaviour m_Mono;
     /// <summary>
-    /// 服务器配置表下载后存储位置
+    /// 服务器配置表下载后存储位置，带文件名和后缀
     /// </summary>
     private string m_ServerXmlPath = Application.persistentDataPath + "/ServerInfo.xml";
     /// <summary>
@@ -37,7 +39,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     private ServerInfo m_ServerInfo;
 
     /// <summary>
-    /// 本地以往的服务器配置表存储位置
+    /// 本地以往的服务器配置表存储位置，带文件名和后缀
     /// </summary>
     private string m_LocalXmlPath = Application.persistentDataPath + "/LocalInfo.xml";
     /// <summary>
@@ -276,13 +278,75 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             Debug.Log("Download Error" + webRequest.error);//超时后会进入
         else
         {
-            //把下载的数据写成文件
-            FileTool.CreateFile(m_ServerXmlPath,webRequest.downloadHandler.data);
-            if (File.Exists(m_ServerXmlPath))
+            
+            FileTool.CreateFile(m_ServerXmlPath,webRequest.downloadHandler.data);//把下载的数据写成文件
+            if (File.Exists(m_ServerXmlPath))//把xml文件反序列化为类
+            {
                 m_ServerInfo = BinarySerializeOpt.XmlDeserialize(m_ServerXmlPath, typeof(ServerInfo)) as ServerInfo;
+                //m_ServerInfo = ReadServerInfoXml(m_ServerXmlPath);
+                //Debug.Log("Patchs：" + m_ServerInfo.GameVersions[0].Patchs.Length);
+            }
             else Debug.LogError("热更配置读取错误！");
         }
         if(callBack != null)callBack();
+    }
+
+    /// <summary>
+    /// 根据xml结构来解析，而不是反序列化解析xml
+    /// </summary>
+    /// <param name="xmlPath"></param>
+    /// <returns></returns>
+    private ServerInfo ReadServerInfoXml(string xmlPath)
+    {
+        if (!File.Exists(xmlPath)) return null;
+        ServerInfo serInfo = new ServerInfo();
+        //加载XML文档
+        XmlDocument xmlDoc = new XmlDocument();
+        xmlDoc.Load(xmlPath);//注：用xmlDoc.LoadXml(xmlPath);会因为xml的不同格式，导致无法正常解析，而Load支持解析多种格式，
+
+        //通过节点名称来获取元素，结果为XmlNodeList类型，即获取xml所有信息，而不是单个节点
+        XmlNodeList gVersionsNode = xmlDoc.GetElementsByTagName("GameVersions");//xmlDoc(xml文件)-- root(ServerInfo类)-- GameVersions
+        if (gVersionsNode != null&& gVersionsNode.Count > 0)
+        {
+            GameVersion[] gVersions = new GameVersion[gVersionsNode.Count];
+            for(int i = 0; i < gVersionsNode.Count; i++)
+            {
+                GameVersion gameVersion = new GameVersion();//GameVersion-- (Version, Patchs)
+                gameVersion.Version = gVersionsNode[i].Attributes["Version"].Value;
+                XmlNodeList patchsNode = xmlDoc.GetElementsByTagName("Patchs");
+                if (patchsNode != null&& patchsNode.Count > 0)
+                {
+                    Patch[] patchs = new Patch[patchsNode.Count];//Patch-- (PatchVersion,Des,PatchFiles)
+                    for (int j = 0; j < patchsNode.Count; j++)
+                    {
+                        Patch patch = new Patch();
+                        patch.PatchVersion = int.Parse(patchsNode[i].Attributes["PatchVersion"].InnerText);
+                        patch.Des = patchsNode[i].Attributes["Des"].InnerText;
+                        XmlNodeList patchFilesNode = xmlDoc.GetElementsByTagName("PatchFiles");
+                        if(patchFilesNode!=null&& patchFilesNode.Count > 0)
+                        {
+                            List<PatchFile> patchFiles = new List<PatchFile>();//PatchFiles-- (Name,Url,Platform,Md5,Size)
+                            for(int k = 0; k < patchFilesNode.Count; k++)
+                            {
+                                PatchFile patchFile = new PatchFile();
+                                patchFile.Name = patchFilesNode[k].Attributes["Name"].InnerText;
+                                patchFile.Url = patchFilesNode[k].Attributes["Url"].InnerText;
+                                patchFile.Platform = patchFilesNode[k].Attributes["Platform"].InnerText;
+                                patchFile.Md5 = patchFilesNode[k].Attributes["Md5"].InnerText;
+                                patchFile.Size = float.Parse(patchFilesNode[k].Attributes["Size"].InnerText);
+                                patchFiles.Add(patchFile);
+                            }
+                            patch.PatchFiles = patchFiles;
+                        }
+                        patchs[j] = patch;
+                    }
+                    gameVersion.Patchs = patchs;
+                }
+                gVersions[i] = gameVersion;
+            }
+            serInfo.GameVersions = gVersions;
+        }
+        return serInfo;
     }
 
     /// <summary>

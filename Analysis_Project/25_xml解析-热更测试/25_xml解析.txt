@@ -1,0 +1,129 @@
+1、存在问题：
+xml配置表能正常从服务器上下载，但无补丁文件下载更新；
+
+2、排查：可正常获取游戏版本，但patchs获取为null
+
+3、初步怀疑是xml反序列化错误，导致xml反序列化为SeverInfo.cs时，
+反序列SeverInfo里用到的Patch类时不能正常反序列出来。
+
+4、对应代码位置：
+HotPatchManager.cs里CheckVersion()里m_Mono.StartCoroutine(ReadXml(() =>{...})中;
+执行到ReadXml()的
+if (File.Exists(m_ServerXmlPath))
+{
+    m_ServerInfo = BinarySerializeOpt.XmlDeserialize(m_ServerXmlPath, typeof(ServerInfo)) as ServerInfo;
+}
+这里不能正确解析出m_ServerInfo类；
+
+5、解决方法：
+根据SeverInfo的结构，对SeverInfo进行xml解析
+m_ServerInfo = BinarySerializeOpt.XmlDeserialize(m_ServerXmlPath, typeof(ServerInfo)) as ServerInfo;
+改为：
+m_ServerInfo = ReadServerInfoXml(m_ServerXmlPath);
+
+在HotPatchManager.cs里新增ReadServerInfoXml(string xmlPath)方法，用于专门解析ServerInfoXml;
+
+/// <summary>
+/// 根据xml结构来解析，而不是反序列化解析xml
+/// </summary>
+/// <param name="xmlPath"></param>
+/// <returns></returns>
+private ServerInfo ReadServerInfoXml(string xmlPath)
+{
+    if (!File.Exists(xmlPath)) return null;
+    ServerInfo serInfo = new ServerInfo();
+    //加载XML文档
+    XmlDocument xmlDoc = new XmlDocument();
+    xmlDoc.Load(xmlPath);//注：用xmlDoc.LoadXml(xmlPath);会因为xml的不同格式，导致无法正常解析，而Load支持解析多种格式，
+
+    //通过节点名称来获取元素，结果为XmlNodeList类型，即获取xml所有信息，而不是单个节点
+    XmlNodeList gVersionsNode = xmlDoc.GetElementsByTagName("GameVersions");//xmlDoc(xml文件)-- root(ServerInfo类)-- GameVersions
+    if (gVersionsNode != null&& gVersionsNode.Count > 0)
+    {
+        GameVersion[] gVersions = new GameVersion[gVersionsNode.Count];
+        for(int i = 0; i < gVersionsNode.Count; i++)
+        {
+            GameVersion gameVersion = new GameVersion();//GameVersion-- (Version, Patchs)
+            gameVersion.Version = gVersionsNode[i].Attributes["Version"].Value;
+            XmlNodeList patchsNode = xmlDoc.GetElementsByTagName("Patchs");
+            if (patchsNode != null&& patchsNode.Count > 0)
+            {
+                Patch[] patchs = new Patch[patchsNode.Count];//Patch-- (PatchVersion,Des,PatchFiles)
+                for (int j = 0; j < patchsNode.Count; j++)
+                {
+                    Patch patch = new Patch();
+                    patch.PatchVersion = int.Parse(patchsNode[i].Attributes["PatchVersion"].InnerText);
+                    patch.Des = patchsNode[i].Attributes["Des"].InnerText;
+                    XmlNodeList patchFilesNode = xmlDoc.GetElementsByTagName("PatchFiles");
+                    if(patchFilesNode!=null&& patchFilesNode.Count > 0)
+                    {
+                        List<PatchFile> patchFiles = new List<PatchFile>();//PatchFiles-- (Name,Url,Platform,Md5,Size)
+                        for(int k = 0; k < patchFilesNode.Count; k++)
+                        {
+                            PatchFile patchFile = new PatchFile();
+                            patchFile.Name = patchFilesNode[k].Attributes["Name"].InnerText;
+                            patchFile.Url = patchFilesNode[k].Attributes["Url"].InnerText;
+                            patchFile.Platform = patchFilesNode[k].Attributes["Platform"].InnerText;
+                            patchFile.Md5 = patchFilesNode[k].Attributes["Md5"].InnerText;
+                            patchFile.Size = float.Parse(patchFilesNode[k].Attributes["Size"].InnerText);
+                            patchFiles.Add(patchFile);
+                        }
+                        patch.PatchFiles = patchFiles;
+                    }
+                    patchs[j] = patch;
+                }
+                gameVersion.Patchs = patchs;
+            }
+            gVersions[i] = gameVersion;
+        }
+        serInfo.GameVersions = gVersions;
+    }
+    return serInfo;
+}
+
+注：解析xml时，使用xmlDoc.Load(xmlPath); 而不是用xmlDoc.LoadXml(xmlPath);
+第一种有多个重载，适应不同格式的xml文件，第二种存在xml格式不同无法解析xml文件的情况。
+
+6、解决结果：
+还是无法正常解析，获取到的Patchs=null；
+
+7、再次检查xml和SeverInfo.cs以及相关解析类和api用法
+怀疑xml文件的属性名错误，应该是Patchs，而不是Patch
+即xml的节点：<Patch PatchVersion="1" Des="测试1">	格式错误
+应是               <Patchs PatchVersion="1" Des="测试1">
+
+注：打包单个Patch包时，是从Patch类打包的，Patch.xml里Patch的节点名是Patch
+读SeverInfo配置信息时，是从SeverInfo类开始读的
+SeverInfo.xml里单个Patch是放在Patchs里的，Patch的节点名对应的是Patchs；
+故更新SeverInfo.xml，把新Patch包信息复制进SeverInof.xml里时，注意将Patch改为Patchs
+
+Patch.xml里：
+<Patch PatchVersion="3">//本次更新的Patch包
+  <PatchFiles Name="1" Url="..." Platform="..." Md5="..." Size="..." />
+  <PatchFiles Name="2" Url="..." Platform="..." Md5="..." Size="..." />
+  <PatchFiles Name="3" Url="..." Platform="..." Md5="..." Size="..." />
+</Patch>
+
+SeverInfo.xml里：
+<ServerInfo>
+  <GameVersions Version="0.1">
+    <Patchs PatchVersion="1" Des="测试1">//每次更新的Patch包
+      <PatchFiles Name="..." Url="..." Platform="..." Md5="..." Size="..." />
+      <PatchFiles Name="..." Url="..." Platform="..." Md5="..." Size=".." />
+    </Patchs>
+   <Patchs PatchVersion="3" Des="测试3">//最新的Patch包，Patch.xml里命名的Patch这里改成Patchs
+      <PatchFiles Name="1" Url="..." Platform="..." Md5="..." Size="..." />
+      <PatchFiles Name="2" Url="..." Platform="..." Md5="..." Size="..." />
+      <PatchFiles Name="3" Url="..." Platform="..." Md5="..." Size="..." />
+    </Patchs>
+  </GameVersions>
+</ServerInfo>
+
+8、解决方法，修改SeverInfo.xml里的节点名Patch为Patchs；
+可正常获取补丁包信息，并根据xml里的patchs信息，正确下载热更资源文件
+
+注，在Patch修改为Patchs后，两种解析xml方式测试，均可正常解析xml文件；
+方法一、视频里的序列化与反序列化xml；
+方法二、这次新增的根据xml文件结构，直接解析xml文件：ReadServerInfoXml(string xmlPath)；
+
+

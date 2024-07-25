@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServerInfo>
+  <GameVersions Version="0.1">
+    <Patchs PatchVersion="1" Des="测试1">
+      <PatchFiles Name="attack" Url="http://127.0.0.1/AssetBundle/0.1/1/attack" Platform="StandaloneWindows64" Md5="4c022c1763a884357ae94e09a7dad730" Size="667.097656" />
+      <PatchFiles Name="StandaloneWindows64" Url="http://127.0.0.1/AssetBundle/0.1/1/StandaloneWindows64" Platform="StandaloneWindows64" Md5="0639f8dacfe2a2addc124867ffbfd225" Size="1.85253906" />
+    </Patchs>
+  </GameVersions>
+</ServerInfo>

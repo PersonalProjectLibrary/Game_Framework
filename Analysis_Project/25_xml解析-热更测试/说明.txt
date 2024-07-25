@@ -1,0 +1,11 @@
+25_xml解析.txt为本次项目修改更新说明
+
+ServerInfo.xml是放在本地服务器上的配置表
+
+Patch.xml是本次打包出来的热更Patch信息，已复制进ServerInfo.xml中
+Patch.xml和本次热更资源一起打包出来，一般和本次热更资源放入服务器AssetBundle文件夹里对应热更文件夹中
+也可以不放，热更时有ServerInfo.xml，Patch.xml不会被读取也不会被下载，
+只是配置ServerInfo.xml时用到本次Patch.xml文件信息。
+
+AssetBundle文件夹及其内部文件资源是放在本地器上的本次热更资源
+
