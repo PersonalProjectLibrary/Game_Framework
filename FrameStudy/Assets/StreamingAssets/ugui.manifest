@@ -1,0 +1,25 @@
+ManifestFileVersion: 0
+CRC: 3697253650
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: db2e4d6fa215acced59807684c591c1d
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: f267fd2d8bcb1179236b6179ac5313bc
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: db2e4d6fa215acced59807684c591c1d
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameData/UGUI/test2.png
+- Assets/GameData/UGUI/Test1.png
+- Assets/GameData/UGUI/HotTest.PNG
+- Assets/GameData/UGUI/test3.png
+Dependencies: []
