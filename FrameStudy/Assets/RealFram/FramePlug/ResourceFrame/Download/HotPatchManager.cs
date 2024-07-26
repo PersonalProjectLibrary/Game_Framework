@@ -284,7 +284,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             {
                 m_ServerInfo = BinarySerializeOpt.XmlDeserialize(m_ServerXmlPath, typeof(ServerInfo)) as ServerInfo;
                 //m_ServerInfo = ReadServerInfoXml(m_ServerXmlPath);
-                //Debug.Log("Patchs：" + m_ServerInfo.GameVersions[0].Patchs.Length);
+                Debug.Log("Patch：" + m_ServerInfo.GameVersions[0].Patchs.Length);
             }
             else Debug.LogError("热更配置读取错误！");
         }
@@ -305,7 +305,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
         xmlDoc.Load(xmlPath);//注：用xmlDoc.LoadXml(xmlPath);会因为xml的不同格式，导致无法正常解析，而Load支持解析多种格式，
 
         //通过节点名称来获取元素，结果为XmlNodeList类型，即获取xml所有信息，而不是单个节点
-        XmlNodeList gVersionsNode = xmlDoc.GetElementsByTagName("GameVersions");//xmlDoc(xml文件)-- root(ServerInfo类)-- GameVersions
+        XmlNodeList gVersionsNode = xmlDoc.GetElementsByTagName("GameVersion");//xmlDoc(xml文件)-- root(ServerInfo类)-- GameVersions
         if (gVersionsNode != null&& gVersionsNode.Count > 0)
         {
             GameVersion[] gVersions = new GameVersion[gVersionsNode.Count];
@@ -313,7 +313,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             {
                 GameVersion gameVersion = new GameVersion();//GameVersion-- (Version, Patchs)
                 gameVersion.Version = gVersionsNode[i].Attributes["Version"].Value;
-                XmlNodeList patchsNode = xmlDoc.GetElementsByTagName("Patchs");
+                XmlNodeList patchsNode = xmlDoc.GetElementsByTagName("Patch");
                 if (patchsNode != null&& patchsNode.Count > 0)
                 {
                     Patch[] patchs = new Patch[patchsNode.Count];//Patch-- (PatchVersion,Des,PatchFiles)
@@ -322,10 +322,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
                         Patch patch = new Patch();
                         patch.PatchVersion = int.Parse(patchsNode[i].Attributes["PatchVersion"].InnerText);
                         patch.Des = patchsNode[i].Attributes["Des"].InnerText;
-                        XmlNodeList patchFilesNode = xmlDoc.GetElementsByTagName("PatchFiles");
+                        XmlNodeList patchFilesNode = xmlDoc.GetElementsByTagName("PatchFile");
                         if(patchFilesNode!=null&& patchFilesNode.Count > 0)
                         {
-                            List<PatchFile> patchFiles = new List<PatchFile>();//PatchFiles-- (Name,Url,Platform,Md5,Size)
+                            List<PatchFile> patchFiles = new List<PatchFile>();//PatchFile-- (Name,Url,Platform,Md5,Size)
                             for(int k = 0; k < patchFilesNode.Count; k++)
                             {
                                 PatchFile patchFile = new PatchFile();

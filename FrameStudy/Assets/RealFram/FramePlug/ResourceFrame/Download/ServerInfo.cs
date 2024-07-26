@@ -12,7 +12,7 @@ public class ServerInfo
     /// <summary>
     /// 记录所有版本信息
     /// </summary>
-    [XmlElement("GameVersions")]     //注意这里是数组元素，不是单个元素，用XmlElement，不用XmlAttribute
+    [XmlElement("GameVersion")]
     public GameVersion[] GameVersions;
 }
 
@@ -32,7 +32,7 @@ public class GameVersion
     /// <summary>
     /// 该版本的所有热更补丁
     /// </summary>
-    [XmlElement]    //注意这里是数组元素，不是单个元素，用XmlElement，不用XmlAttribute
+    [XmlElement("Patch")]    //注意这里是数组元素，不是单个元素，用XmlElement，不用XmlAttribute
     public Patch[] Patchs;
 
     //游戏的渠道类型（这里暂时没添加）
@@ -58,9 +58,9 @@ public class Patch
     public string Des;
 
     /// <summary>
-    /// 补丁包里的所有文件，原Files
+    /// 补丁包里的所有文件
     /// </summary>
-    [XmlElement]    //注意这里是List元素，不是单个元素，用XmlElement，不用XmlAttribute
+    [XmlElement("PatchFile")]
     public List<PatchFile> PatchFiles;
 }
 

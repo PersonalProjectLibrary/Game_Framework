@@ -1,0 +1,119 @@
+一、格式说明：
+1、原GameVersion.cs里Patch集合，命名为Patchs，且XmlElement没有设置
+同理Patch.cs里PatchFile集合，命名为PatchFiles，XmlElement没有设置
+而SeverInof.cs里GameVersion集合，命名为GameVersions，
+虽然XmlElement有设置，但也还是设置为复数GameVersions。
+导致SeverInfo.xml文件里对应属性命名是复数形式：
+
+2、脚本类：
+class ServerInfo
+{
+    [XmlElement("GameVersions")]
+    public GameVersion[] GameVersions;
+}
+[System.Serializable]
+public class GameVersion
+{
+    [XmlAttribute]  //不写参数，默认参数是变量，等价于[XmlAttribute("Version")]
+    public string Version;
+    [XmlElement]
+    public Patch[] Patchs;
+}
+[System.Serializable]
+public class Patch
+{
+    [XmlAttribute]
+    public int PatchVersion;
+    [XmlAttribute]
+    public string Des;
+    [XmlElement]
+    public List<PatchFile> PatchFiles;
+}
+
+3、对应xml格式：
+<ServerInfo>
+  <GameVersions Version="0.1">//这里是GameVersions，不是GameVersion
+    <Patchs PatchVersion="1" Des="测试1">//同理是Patchs，不是Patch
+      <PatchFiles Name="..." Url="..." Platform="..." Md5="..." Size="..." />//同理是PatchFiles，不是PatchFile
+    </Patchs>
+  </GameVersions>
+</ServerInfo>
+
+二、存在问题
+1、热更包时，从Patch.cs类开始序列化为xml；
+对应xml文件命名是Patch，而不是Patchs；
+导致若直接把Patch.xml热更信息复制到SeverInfo.xml里时，因属性名不匹配导致热更信息读取失败。
+如上上次提交记录的xml解析问题。
+
+2、脚本类：
+public class Patch
+{
+    [XmlAttribute]
+    public int PatchVersion;
+    [XmlAttribute]
+    public string Des;
+    [XmlElement]
+    public List<PatchFile> PatchFiles;
+}
+3、生成的xml格式：
+（1）Patch.xml：
+<Patch PatchVersion="1">
+  <PatchFiles Name="..." Url="..." Platform="..." Md5="..." Size="..." />
+</Patch>
+（2）SeverInfo.xml：
+<ServerInfo>
+  <GameVersions Version="0.1">
+    <Patchs PatchVersion="1" Des="...">
+      <PatchFiles Name="..." Url="..." Platform="..." Md5="..." Size="..." />
+    </Patchs>
+  </GameVersions>
+</ServerInfo>
+
+三、优化
+1、设置SeverInfo.cs对应属性的XmlElement，设置为单数，这样对应的xml节点名也是单数
+2、脚本类：
+class ServerInfo
+{
+    [XmlElement("GameVersion")]//设置为单数，对应xml名就是GameVersion，而不是GameVersions
+    public GameVersion[] GameVersions;
+}
+[System.Serializable]
+public class GameVersion
+{
+    [XmlAttribute]
+    public string Version;
+    [XmlElement("Patch")]//设置为单数，对应xml名就是Patch，而不是Patchs
+    public Patch[] Patchs;
+}
+[System.Serializable]
+public class Patch
+{
+    [XmlAttribute]
+    public int PatchVersion;
+    [XmlAttribute]
+    public string Des;
+    [XmlElement("PatchFile")]//设置为单数，对应xml名就是PatchFile，而不是PatchFiles
+    public List<PatchFile> PatchFiles;
+}
+
+3、对应xml格式：
+<ServerInfo>
+  <GameVersion Version="0.1">
+    <Patch PatchVersion="1" Des="测试1">
+      <PatchFile Name="..." Url="..." Platform="..." Md5="..." Size="..." />
+    </Patch>
+  </GameVersion>
+</ServerInfo>
+
+这样可以把热更补丁包Patch.xml信息直接复制进SeverInfo.xml里了。
+
+4、对应根据xml结构解析的：HotPatchManager.cs里的ReadServerInfoXml()也进行修改：
+原：
+XmlNodeList gVersionsNode = xmlDoc.GetElementsByTagName("GameVersions");
+XmlNodeList patchsNode = xmlDoc.GetElementsByTagName("Patchs");
+XmlNodeList patchFilesNode = xmlDoc.GetElementsByTagName("PatchFiles");
+可改为：
+XmlNodeList gVersionsNode = xmlDoc.GetElementsByTagName("GameVersion");
+XmlNodeList patchsNode = xmlDoc.GetElementsByTagName("Patch");
+XmlNodeList patchFilesNode = xmlDoc.GetElementsByTagName("PatchFile");
+即可正常解析新格式设置的SeverInfo.xml了。

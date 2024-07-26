@@ -103,7 +103,7 @@ public class ResourceManager : Singleton<ResourceManager>
     /// 设置从本地加载还是ab包加载
     /// </summary>
     /// ab包加载时：AssetStreaming文件夹下放入ab资源
-    public bool m_LoadFormAssetBundle = false;//true为ab包加载，false为本地加载
+    public bool m_LoadFormAssetBundle = true;//true为ab包加载，false为本地加载
     //缓存使用的资源列表
     public Dictionary<uint, ResouceItem> AssetDic { get; set; } = new Dictionary<uint, ResouceItem>();
     //缓存引用计数为零的资源列表，达到缓存最大的时候释放这个列表里面最早没用的资源
