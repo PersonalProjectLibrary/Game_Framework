@@ -50,7 +50,7 @@ public class BuildApp
     /// 临时测试打包版本号功能是否正常使用
     /// 打包后可查看：Assets/Resources/Version.txt
     /// </summary>
-    [MenuItem("Tools/测试Version写入")]
+    [MenuItem("测试/测试Version写入")]
     public static void TVersion()
     {
         SaveVersion(PlayerSettings.bundleVersion, PlayerSettings.applicationIdentifier);

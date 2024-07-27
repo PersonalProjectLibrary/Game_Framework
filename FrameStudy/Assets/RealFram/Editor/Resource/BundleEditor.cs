@@ -59,14 +59,17 @@ public class BundleEditor
     /// </summary>
     private static Dictionary<string,ABMD5Base> m_PackedMd5 = new Dictionary<string,ABMD5Base>();
 
-    [MenuItem("Tools/测试重复加密")]
+    [MenuItem("测试/测试重复加密")]
     public static void TestAESEnc()
     {
         //filePath带文件名和后缀，设置的密钥
         AES.AESFileEncrypt(Application.dataPath + "/GameData/Data/Xml/AESFileEncrptyData.xml", "Ocean");
     }
 
-    [MenuItem("Tools/非热更打包，更新MD5")]
+    /// <summary>
+    /// 非热更打包，更新MD5
+    /// </summary>
+    [MenuItem("Tools/打项目包")]
     public static void NormalBuild()
     {
         Build();//标准打包，非热更打包

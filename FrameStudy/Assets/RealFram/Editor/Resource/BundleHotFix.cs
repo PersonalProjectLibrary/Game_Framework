@@ -10,8 +10,8 @@ public class BundleHotFix : EditorWindow
     /// 进行热更包打包
     /// </summary>
     /// 编辑器菜单下添加打包热更包按钮
-    [MenuItem("Tools/打包热更包")]
-    static void Init()
+    [MenuItem("Tools/打热更包")]
+    static void PackHotFixPatch()
     {
         BundleHotFix window = (BundleHotFix)EditorWindow.GetWindow(typeof(BundleHotFix), false, "热更包界面", true);//创建热更包界面
         window.Show();//打开当前界面

@@ -6,7 +6,7 @@ using System.IO;
 
 public class TestEditor
 {
-    [MenuItem("TTT/TTTT")]
+    [MenuItem("TTT/JenkinsTest")]
     public static void JenkinsTest()
     {
         FileInfo fileInfo = new FileInfo(Application.dataPath + "/测试.txt");
@@ -19,13 +19,13 @@ public class TestEditor
 
     private static Sprite ttt;
 
-    [MenuItem("Tools/测试加载")]
+    [MenuItem("测试/测试加载")]
     public static void TestLoad()
     {
         ttt = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/GameData/UGUI/Test1.png");
     }
 
-    [MenuItem("Tools/测试卸载")]
+    [MenuItem("测试/测试卸载")]
     public static void TestUnLoad()
     {
         Resources.UnloadAsset(ttt);

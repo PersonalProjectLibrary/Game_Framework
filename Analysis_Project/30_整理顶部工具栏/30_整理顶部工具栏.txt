@@ -1,0 +1,63 @@
+过多测试功能放置在顶部工具栏的Tools里，这里将部分功能移到TTT里
+一、原标题栏：
+1、原：Tools下有
+测试加载；
+测试卸载；
+Xml——Xml转成二进制；Excel转Xml；
+测试——测试读取xml；测试写入Excel；测试已有类进行反射；测试已有数据进行反射；
+测试Version写入；
+测试重复加密；
+非热更包打包，更新MD5；
+打包热更包；
+
+2、原：TTT下有
+TTTT，仅有这唯一功能，
+
+3、标题栏上无 “测试”这个选项；
+
+二、整理修改：Tools部分功能移到新增的“测试”选项里
+1、TestEditor.cs里写的，标题栏“TTT”下的：TTTT，改名为：JenkinsTest；
+[MenuItem("TTT/TTTT")]
+public static void JenkinsTest(){}；
+改为
+[MenuItem("TTT/JenkinsTest")]
+public static void JenkinsTest(){};
+
+2、BundleEditor.cs里写的，标题栏下“Tools”下的：非热更打包，更新MD5，改名为：打项目包
+[MenuItem("Tools/非热更打包，更新MD5")]
+public static void NormalBuild(){}
+改为
+[MenuItem("Tools/打项目包")]
+public static void NormalBuild(){}
+
+3、BundleHotFix.cs里写的，标题栏下“Tools”下的：打包热更包，改名为：打热更包
+[MenuItem("Tools/打包热更包")]
+static void Init(){}
+改为
+[MenuItem("Tools/打热更包")]
+static void PackHotFixPatch(){}
+
+4、BuildApp.cs里写的，标题栏“Tools”下的：测试Version写入，放到标题栏 “测试” 下
+[MenuItem("Tools/测试Version写入")]
+public static void TVersion(){}
+改为
+[MenuItem("测试/测试Version写入")]
+public static void TVersion(){}
+
+5、TestEditor.cs里写的，标题栏 “Tools”下的：测试加载，测试卸载，放到标题栏“测试”下
+[MenuItem("Tools/测试加载")]
+public static void TestLoad(){}
+[MenuItem("Tools/测试卸载")]
+public static void TestUnLoad()
+改为
+[MenuItem("测试/测试加载")]
+public static void TestLoad(){}
+[MenuItem("测试/测试卸载")]
+public static void TestUnLoad()
+
+6、BundleEditor.cs里写的，标题栏下“Tools”下的：测试重复加密，放到标题栏“测试”下
+[MenuItem("Tools/测试重复加密")]
+public static void TestAESEnc(){}
+改为
+[MenuItem("测试/测试重复加密")]
+public static void TestAESEnc(){}
