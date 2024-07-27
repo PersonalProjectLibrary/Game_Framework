@@ -1,0 +1,37 @@
+1、Assets\RealFram\FramePlug\BaseFrame文件夹下，放入AES加密解密的脚本AES.cs
+这里是siki学院老师提供网上找到AES脚本。
+
+2、往AES.cs里添加项目使用的功能方法
+因项目中有特定需求，网上找到脚本功能有点不能直接拿来用，
+所有一般会在基础上写项目使用的加密解密方法，中间调用AES.cs原有写好的加密解密方法。
+
+项目里是对文件加密解密
+原AES是对string和byte两种格式的数据进行加密解密。
+原方法：
+string AESEncrypt(string EncryptString, string EncryptKey)
+byte[] AESEncrypt(byte[] EncryptByte, string EncryptKey)
+string AESDecrypt(string DecryptString, string DecryptKey)
+byte[] AESDecrypt(byte[] DecryptByte, string DecryptKey)
+新增方法：
+void AESFileEncrypt(string path, string EncrptyKey)
+void AESFileDecrypt(string path, string EncrptyKey)
+byte[] AESFileByteDecrypt(string path, string EncrptyKey)
+
+3、避免重复多次加密/不知道有没有加密过的情况，这里对加密的文件添加字节头：string AESHead = "AESEncrypt";
+若文件存在字节头，则表明加密过，反之没有，避免重复多次加密。
+
+4、对AESFileEncrypt(...)方法测试，测试能否避免重复加密：
+（1）将Assets/GameDatas/Data/Xml文件夹里的MonsterData复制，改名为AESFileEncrptyData，
+方便后续用于测试加密功能。
+
+（2）在BundleEditor.cs里添加测试加密方法；写的方法放到顶部工具栏Tools下
+[MenuItem("Tools/测试重复加密")]
+void TestAESEnc(){...}
+
+（3）点击顶部工具栏Tools下的 测试重复加密 按钮后，
+可打开Assets/GameDatas/Data/Xml文件夹里的AESFileEncrptyData.xml文件，
+可以发现文件内容已被加密，不可读文字，且文件内容最开头是有AESEncrypt这个字符 。
+
+（4）再次点击顶部工具栏Tools下的 测试重复加密 按钮，控制台打印输出：
+...AESFileEncrptyData.xml已经加密过了
+
