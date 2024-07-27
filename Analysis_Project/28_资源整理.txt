@@ -1,0 +1,9 @@
+1、将Assets/StreamingAssets里的ab资源情况。
+后续需要ab加载资源的话，可非热更打包后，把AssetBundle（Assets的同级目录下的文件夹）里更新生成的ab资源再复制到Assets/StreamingAssets即可。
+这里就不在项目Assets/StreamingAssets里放置ab资源了，减少项目大小。
+
+2、将Assets\RealFram\FramePlug\ResourceFrame\Download里的HotPatchManager.cs一些没用的早期注释删除。
+
+3、将Assets\RealFram\FramePlug\ResourceFrame里，
+ResourceManager.cs里设置本地加载还是ab包加载的bool变量m_LoadFormAssetBundle改回为false；
+当前测试直接本地项目加载，后续需要从ab包加载，再修改为true即可；

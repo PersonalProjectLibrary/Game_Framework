@@ -104,7 +104,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// <summary>
     /// 服务器列表获取错误回调
     /// </summary>
-    public Action ServerInfoError;//视频021里还没有添加，后面也没有见到添加该回调，到视频026开头可发现那里已添加这个回调
+    public Action ServerInfoError;
     /// <summary>
     /// 重复下载次数
     /// </summary>
@@ -193,15 +193,12 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
                     File.Move(m_ServerXmlPath, m_LocalXmlPath);//将服务器热更xml名改换为本地热更xml名
                 }
             }
-            //视频022尾部里添加但没写完，023视频里都没有继续完善（没剪出来），后面变成直接使用ComputeDownload();
             else ComputeDownload();//服务器信息与本地信息完全一致，检查本地patch资源与服务器patch资源是否一致
 
             //计算资源大小
             LoadFileCount = m_DownLoadList.Count;
             LoadSumSize = m_DownLoadList.Sum(x=>x.Size);
 
-            //这里没有进行文件对比，后续添加，这里临时代码做获取所有热更包后的处理
-            //这次改为计算下载资源，而不是所有热更资源，这里将m_HotFixDic.Count>0改为m_DownLoadList.Count>0
             if (hotCallBack!=null)hotCallBack(m_DownLoadList.Count>0);
 
         }));
@@ -275,16 +272,16 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
         webRequest.timeout = 30;//设置30秒超时时间
         yield return webRequest.SendWebRequest();//等待请求结束，下载结束
         if (webRequest.result == UnityWebRequest.Result.ConnectionError) 
-            Debug.Log("Download Error" + webRequest.error);//超时后会进入
+            Debug.Log("Download Error" + webRequest.error);//超时报错
         else
         {
             
             FileTool.CreateFile(m_ServerXmlPath,webRequest.downloadHandler.data);//把下载的数据写成文件
             if (File.Exists(m_ServerXmlPath))//把xml文件反序列化为类
             {
-                m_ServerInfo = BinarySerializeOpt.XmlDeserialize(m_ServerXmlPath, typeof(ServerInfo)) as ServerInfo;
-                //m_ServerInfo = ReadServerInfoXml(m_ServerXmlPath);
-                Debug.Log("Patch：" + m_ServerInfo.GameVersions[0].Patchs.Length);
+                m_ServerInfo = BinarySerializeOpt.XmlDeserialize(m_ServerXmlPath, typeof(ServerInfo)) as ServerInfo;//方法一解析xml
+                //m_ServerInfo = ReadServerInfoXml(m_ServerXmlPath);//方法二解析服务器配置表
+                //Debug.Log("Patch：" + m_ServerInfo.GameVersions[0].Patchs.Length);
             }
             else Debug.LogError("热更配置读取错误！");
         }
