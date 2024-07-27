@@ -41,7 +41,7 @@ public class AES
                         return;
                     }
                     //加密并且写入字节头，fs表示的是： FileStream文件流
-                    fs.Seek(0, SeekOrigin.Begin);
+                    fs.Seek(0, SeekOrigin.Begin);//下面读之前要把光标置为0位置！！！不然可能后续出现不正确读写操作
                     byte[] buffer = new byte[fs.Length];//存储字节流数据的字节数组buffer
                     fs.Read(buffer, 0, Convert.ToInt32(fs.Length));//把fs文件内容从头读到尾，读出到buffer里
                     fs.Seek(0, SeekOrigin.Begin);//把操作字节流的光标放到起始0位置
@@ -66,10 +66,8 @@ public class AES
     /// <param name="EncrptyKey"></param>
     public static void AESFileDecrypt(string path, string EncrptyKey)
     {
-        if (!File.Exists(path))
-        {
-            return;
-        }
+        if (!File.Exists(path)) return;
+
         try
         {
             using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite))
@@ -79,14 +77,14 @@ public class AES
                     byte[] headBuff = new byte[10];
                     fs.Read(headBuff, 0, headBuff.Length);
                     string headTag = Encoding.UTF8.GetString(headBuff);
-                    if (headTag == AESHead)
+                    if (headTag == AESHead)//确定有加密过再进行解密修改文件
                     {
                         byte[] buffer = new byte[fs.Length - headBuff.Length];
-                        fs.Read(buffer, 0, Convert.ToInt32(fs.Length - headBuff.Length));
-                        fs.Seek(0, SeekOrigin.Begin);
-                        fs.SetLength(0);
-                        byte[] DecBuffer = AESDecrypt(buffer, EncrptyKey);
-                        fs.Write(DecBuffer, 0, DecBuffer.Length);
+                        fs.Read(buffer, 0, Convert.ToInt32(fs.Length - headBuff.Length));//将字节流数据读到buffer中
+                        fs.Seek(0, SeekOrigin.Begin);//处理字节流字节的光标放到起始0位置处
+                        fs.SetLength(0);//清空字节流
+                        byte[] DecBuffer = AESDecrypt(buffer, EncrptyKey);//对加密文件解密
+                        fs.Write(DecBuffer, 0, DecBuffer.Length);//将解密后的数据写进字节流
                     }
                 }
             }
