@@ -7,14 +7,14 @@
 对之前加密的Assets/GameDatas/Data/Xml文件夹里的AESFileEncrptyData.xml文件进行解密。
 
 （2）添加解密测试函数：
-在BundleEditor.cs里添加测试加密方法；写的方法放到顶部工具栏 测试 下
+在BundleEditor.cs里添加测试解密方法；写的方法放到顶部工具栏 测试 下
 [MenuItem("测试/测试AES解密")]
 void TestAESDec(){...}
 
 （3）修改加密方法在菜单栏上的命名：
 对BundleEditor.cs里添加测试加密方法在菜单栏上的显示名修改
-[MenuItem("测试/测试AES解密")]
-void TestAESEnc(){...}
+[MenuItem("测试/测试加密")]
+void TestAESEnc(){...} 
 改为
 [MenuItem("测试/测试AES加密")]
 void TestAESEnc(){...}

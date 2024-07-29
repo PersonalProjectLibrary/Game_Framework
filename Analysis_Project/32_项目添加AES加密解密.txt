@@ -1,0 +1,26 @@
+继续完善AES.cs里功能；
+
+1、AESFileByteDecrypt()：
+由于AESFileDecrypt(...)方法不使用运行时使用。这里一般使用：AESFileByteDecrypt(...)
+
+2、往项目添加加密解密AB包的函数：
+在BundleEditor.cs里添加AB包加密解密方法；写的方法放到顶部工具栏 Tools 下
+[MenuItem("Tools/加密AB包")]
+public static void AES_EncryptAB(){}
+[MenuItem("Tools/解密AB包")]
+public static void AES_DecryptAB()
+这里的解密使用的是AESFileDecrypt(...)方法，不是AESFileByteDecrypt()；
+
+3、对项目里的ab包进行加密解密操作：
+在打完ab资源包后，对ab包的加密。
+在在BundleEditor.cs里BunildAssetBundle()方法里，打包完毕后添加加密方法的调用
+static void BunildAssetBundle(){
+	...
+	AES_EncryptAB();
+}
+
+4、点击菜单栏里 ”Tools/打项目包“，进行项目打包。或点击菜单栏里 ”Tools/加密AB包“
+然后可以去项目Assets的同级目录文件AssetsBundle里查看打包的ab包资源文件
+可以发现文件已被加密。
+后面还可以点击菜单栏里 ”Tools/解密AB包“，对加密的AB资源进行解密。
+

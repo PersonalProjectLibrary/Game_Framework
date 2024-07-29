@@ -62,30 +62,65 @@ public class BundleEditor
     [MenuItem("测试/测试AES加密")]
     public static void TestAESEnc()
     {
-        //filePath带文件名和后缀，设置的密钥
         AES.AESFileEncrypt(Application.dataPath + "/GameData/Data/Xml/TestAESData.xml", "Ocean");
     }
 
     [MenuItem("测试/测试AES解密")]
     public static void TestAESDec()
     {
-        //filePath带文件名和后缀，设置的密钥
         AES.AESFileDecrypt(Application.dataPath + "/GameData/Data/Xml/TestAESData.xml", "Ocean");
     }
 
+    [MenuItem("测试/测试AES_Byte解密")]
+    public static void TestAES_ByteDec()
+    {
+        AES.AESFileByteDecrypt(Application.dataPath + "/GameData/Data/Xml/TestAESData.xml", "Ocean");
+    }
+
+    [MenuItem("Tools/加密AB包")]
+    public static void AES_EncryptAB()
+    {
+        DirectoryInfo directory = new DirectoryInfo(m_BunleTargetPath);//获取打包AB时放置打包结果的文件夹
+        FileInfo[] files = directory.GetFiles("*", SearchOption.AllDirectories); //获取文件夹里所有的文件
+        for(int i = 0; i < files.Length; i++)
+        {
+            if (!files[i].Name.EndsWith("meta") && !files[i].Name.EndsWith("manifest"))
+            {
+                AES.AESFileEncrypt(files[i].FullName, "Ocean");//密钥Ocean，可自定义设置，设置不同密钥，加密结果不同
+            }
+        }
+        Debug.Log("加密完成！");
+
+    }
+    [MenuItem("Tools/解密AB包")]
+    public static void AES_DecryptAB()
+    {
+        DirectoryInfo directory = new DirectoryInfo(m_BunleTargetPath);//获取打包AB时放置打包结果的文件夹
+        FileInfo[] files = directory.GetFiles("*", SearchOption.AllDirectories); //获取文件夹里所有的文件
+        for (int i = 0; i < files.Length; i++)
+        {
+            if (!files[i].Name.EndsWith("meta") && !files[i].Name.EndsWith("manifest"))
+            {
+                AES.AESFileDecrypt(files[i].FullName, "Ocean");//密钥Ocean，可自定义设置，设置不同密钥，加密结果不同
+            }
+        }
+        Debug.Log("解密完成！");
+
+    }
+
     /// <summary>
-    /// 非热更打包，更新MD5
+    /// 对整个项目资源进行打包，生成/更新资源的MD5码，非热更打包
     /// </summary>
     [MenuItem("Tools/打项目包")]
     public static void NormalBuild()
     {
-        Build();//标准打包，非热更打包
+        Build();
     }
 
     /// <summary>
-    /// 打包
-    /// 参数不加，是非热更打包
-    /// 使用参数，是进行热更打包
+    /// 打包：
+    /// 1、参数不加，打标准包，是对项目进行打包，生成/更新资源的Md5码
+    /// 2、使用参数，打热更包，是有更新修改的资源单独打包，对原有资源Md5不做修改
     /// </summary>
     /// <param name="hotFix">是否热更打包</param>
     /// <param name="abmd5Path">热更的md5版本信息路径</param>
@@ -338,6 +373,8 @@ public class BundleEditor
         {
             Debug.Log("AssetBundle 打包完毕");
         }
+
+        AES_EncryptAB();//在打包完毕后对AB包进行加密
     }
 
     static void WriteData(Dictionary<string ,string> resPathDic)

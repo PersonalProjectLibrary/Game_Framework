@@ -96,15 +96,12 @@ public class AES
     }
 
     /// <summary>
-    /// 文件界面，传入文件路径，返回字节
+    /// 文件解密，传入文件路径，返回字节
     /// </summary>
     /// <returns></returns>
     public static byte[] AESFileByteDecrypt(string path, string EncrptyKey)
     {
-        if (!File.Exists(path))
-        {
-            return null;
-        }
+        if (!File.Exists(path)) return null;
         byte[] DecBuffer = null;
         try
         {
@@ -119,7 +116,7 @@ public class AES
                     {
                         byte[] buffer = new byte[fs.Length - headBuff.Length];
                         fs.Read(buffer, 0, Convert.ToInt32(fs.Length - headBuff.Length));
-                        DecBuffer = AESDecrypt(buffer, EncrptyKey);
+                        DecBuffer = AESDecrypt(buffer, EncrptyKey);//不对字节流进行处理，只是获取解密后的数据
                     }
                 }
             }
@@ -129,7 +126,7 @@ public class AES
             Debug.LogError(e);
         }
 
-        return DecBuffer;
+        return DecBuffer;//把解密后的数据返回出去
     }
 
 //*********************************************AES里原有的加密解密方法函数*******************************************************
