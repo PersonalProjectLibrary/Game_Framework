@@ -14,13 +14,8 @@ public class AssetBundleManager : Singleton<AssetBundleManager>
     //AssetBundleItem类对象池
     protected ClassObjectPool<AssetBundleItem> m_AssetBundleItemPool = ObjectManager.Instance.GetOrCreatClassPool<AssetBundleItem>(500);
 
-    protected string ABLoadPath
-    {
-        get
-        {
-            return Application.streamingAssetsPath + "/";
-        }
-    }
+    protected string ABLoadPath{ get { return Application.streamingAssetsPath + "/";}}
+
     /// <summary>
     /// 加载ab配置表
     /// </summary>
@@ -37,7 +32,11 @@ public class AssetBundleManager : Singleton<AssetBundleManager>
         string hotConfigPath = HotPatchManager.Instance.ComputeABPath(m_ABConfigABName);//热更情况下的AB配置路径
         configPath = string.IsNullOrEmpty(hotConfigPath) ? configPath : hotConfigPath;
 
-        AssetBundle configAB = AssetBundle.LoadFromFile(configPath);
+        //解密获得解密后的byte数组,并用解密好的AB包加载资源
+        byte[] abDecBytes = AES.AESFileByteDecrypt(configPath, "Ocean");
+        //AssetBundle configAB = AssetBundle.LoadFromFile(configPath);
+        AssetBundle configAB = AssetBundle.LoadFromMemory(abDecBytes);
+
         TextAsset textAsset = configAB.LoadAsset<TextAsset>(m_ABConfigABName);
         if (textAsset == null)
         {
@@ -58,14 +57,9 @@ public class AssetBundleManager : Singleton<AssetBundleManager>
             item.m_AssetName = abBase.AssetName;
             item.m_ABName = abBase.ABName;
             item.m_DependAssetBundle = abBase.ABDependce;
-            if (m_ResouceItemDic.ContainsKey(item.m_Crc))
-            {
+            if (m_ResouceItemDic.ContainsKey(item.m_Crc)) 
                 Debug.LogError("重复的Crc 资源名:" + item.m_AssetName + " ab包名：" + item.m_ABName);
-            }
-            else
-            {
-                m_ResouceItemDic.Add(item.m_Crc, item);
-            }
+            else m_ResouceItemDic.Add(item.m_Crc, item);
         }
         return true;
     }
@@ -116,10 +110,13 @@ public class AssetBundleManager : Singleton<AssetBundleManager>
         if (!m_AssetBundleItemDic.TryGetValue(crc, out item))
         {
             AssetBundle assetBundle = null;
-            //string fullPath = ABLoadPath + name;//本地ab包位置+ab包名
             string hotABPath = HotPatchManager.Instance.ComputeABPath(name);//热更加载获得AB包路径
             string fullPath = string.IsNullOrEmpty(hotABPath)?ABLoadPath + name: hotABPath;
-            assetBundle = AssetBundle.LoadFromFile(fullPath);
+
+            //解密获得解密后的byte数组,并用解密好的AB包加载资源
+            byte[] abDecBytes = AES.AESFileByteDecrypt(fullPath, "Ocean");
+            //assetBundle = AssetBundle.LoadFromFile(fullPath);
+            assetBundle = AssetBundle.LoadFromMemory(abDecBytes);
 
             if (assetBundle == null)
             {

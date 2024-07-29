@@ -1,0 +1,58 @@
+一、manifest文件只是方便开发人员观看的，可以删除，没必要存在。
+这里我们在打包后加密前删除manifest文件。
+
+在BundleEditor.cs里添加DeleteManifestFile()函数，在BunildAssetBundle()里调用
+BunildAssetBundle(){
+        ... ...
+        DeleteManifestFile();//删除没必要存在的Manifest文件
+        AES_EncryptAB();//在打包完毕后对AB包进行加密
+}
+
+二、整理BundleEditor.cs
+如：
+BunildAssetBundle()里的测试用的Debug语句：
+Debug.Log("此AB包：" + allBundles[i] + "下面包含的资源文件路径：" + allBundlePath[j]);
+删除。
+
+CopyABAndGenerateXML()里赋值patch数据，
+原patch.PatchVersion = 1
+改为
+private static int curPatchVersion = 1;
+patch.PatchVersion = curPatchVersion;
+
+三、项目中添加对AB包的解密
+1、AssetBundleManager.cs里bool LoadAssetBundleConfig()里；
+在获取文件路径configPath后，获取解密的byte数组，并用解密好的AB包加载资源：
+原：
+configPath = string.IsNullOrEmpty(hotConfigPath) ? configPath : hotConfigPath;
+AssetBundle configAB = AssetBundle.LoadFromFile(configPath);
+改：
+configPath = string.IsNullOrEmpty(hotConfigPath) ? configPath : hotConfigPath;
+byte[] abDecBytes = AES.AESFileByteDecrypt(configPath, "Ocean");
+AssetBundle configAB = AssetBundle.LoadFromMemory(abDecBytes);
+
+2、AssetBundleManager.cs里AssetBundle LoadAssetBundle()；
+在获取文件路径fullPath后，获取解密的byte数组，并用解密好的AB包加载资源：
+原：
+string fullPath = string.IsNullOrEmpty(hotABPath)?ABLoadPath + name: hotABPath;
+assetBundle = AssetBundle.LoadFromFile(fullPath);
+改：
+string fullPath = string.IsNullOrEmpty(hotABPath)?ABLoadPath + name: hotABPath;
+byte[] abDecBytes = AES.AESFileByteDecrypt(fullPath, "Ocean");
+assetBundle = AssetBundle.LoadFromMemory(abDecBytes);
+
+四、测试项目热更（包含ab资源的加密解密过程）
+1、将ResourceManager.cs里的变量 bool LoadFromAssetBundle 改为 true，后面测试热更，资源从ab包里加载;
+2、点击顶部菜单栏“Tools/打包项目包”，对项目进行打包
+3、把Asset同级目录下AssetBundle文件夹里StandaloneWindows64里的ab资源包复制到Assets\StreamingAssets文件夹下
+4、修改项目中某个资源，这里修改Assets\GameData\Modle\benghuai文件夹里的Avatar_Kiana_C1_Texture_Face_Color_Common.png
+5、然后点击菜单栏“Tools/打热更包”，进行热更包打包
+6、把Asset同级目录下Hot文件夹里StandaloneWindows64里的热更打包出来的ab资源放到服务器上
+并修改服务器上热更文件配置表：ServerInfo.xml，把热更Patch.xml信息复制进去。
+7、本地还原修改的资源，项目还原到热更前状态，
+即还原Assets\GameData\Modle\benghuai文件夹里的Avatar_Kiana_C1_Texture_Face_Color_Common.png文件。
+8、打开本地服务器，保证网络正常
+9、点击项目运行，查看带ab包加密解密的热更是否正常加载显示。
+
+注：运行时，点击项目场景下生成加载的对象，对象身上挂的脚本变成白色文件图片，则说明是从ab包加载的。
+

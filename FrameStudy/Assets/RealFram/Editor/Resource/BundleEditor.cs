@@ -10,6 +10,7 @@ using NUnit.Framework;
 
 public class BundleEditor
 {
+    private static int curPatchVersion = 1;//这里默认1，可自行修改
     /// <summary>
     /// 打的包生成的地址
     /// </summary>
@@ -85,9 +86,7 @@ public class BundleEditor
         for(int i = 0; i < files.Length; i++)
         {
             if (!files[i].Name.EndsWith("meta") && !files[i].Name.EndsWith("manifest"))
-            {
                 AES.AESFileEncrypt(files[i].FullName, "Ocean");//密钥Ocean，可自定义设置，设置不同密钥，加密结果不同
-            }
         }
         Debug.Log("加密完成！");
 
@@ -100,9 +99,7 @@ public class BundleEditor
         for (int i = 0; i < files.Length; i++)
         {
             if (!files[i].Name.EndsWith("meta") && !files[i].Name.EndsWith("manifest"))
-            {
                 AES.AESFileDecrypt(files[i].FullName, "Ocean");//密钥Ocean，可自定义设置，设置不同密钥，加密结果不同
-            }
         }
         Debug.Log("解密完成！");
 
@@ -135,10 +132,7 @@ public class BundleEditor
         ABConfig abConfig = AssetDatabase.LoadAssetAtPath<ABConfig>(ABCONFIGPATH);
         foreach (ABConfig.FileDirABName fileDir in abConfig.m_AllFileDirAB)
         {
-            if (m_AllFileDir.ContainsKey(fileDir.ABName))
-            {
-                Debug.LogError("AB包配置名字重复，请检查！");
-            }
+            if (m_AllFileDir.ContainsKey(fileDir.ABName)) Debug.LogError("AB包配置名字重复，请检查！");
             else
             {
                 m_AllFileDir.Add(fileDir.ABName, fileDir.Path);
@@ -172,11 +166,10 @@ public class BundleEditor
         }
 
         foreach (string name in m_AllFileDir.Keys) SetABName(name, m_AllFileDir[name]);
-
         foreach (string name in m_AllPrefabDir.Keys) SetABName(name, m_AllPrefabDir[name]);
 
-        //打包AB资源包
-        BunildAssetBundle();
+        BunildAssetBundle();//打包AB资源包
+
         //清除旧AB资源包
         string[] oldABNames = AssetDatabase.GetAllAssetBundleNames();
         for (int i = 0; i < oldABNames.Length; i++)
@@ -245,10 +238,7 @@ public class BundleEditor
         {
             BinaryFormatter bf = new BinaryFormatter();
             ABMD5 abmd5 = bf.Deserialize(fileStream) as ABMD5;
-            foreach(ABMD5Base abmd5Base in abmd5.ABMD5List)
-            {
-                m_PackedMd5.Add(abmd5Base.Name, abmd5Base);
-            }
+            foreach(ABMD5Base abmd5Base in abmd5.ABMD5List) m_PackedMd5.Add(abmd5Base.Name, abmd5Base);
         }
         
         List<string> changeList = new List<string>();//记录已改变的资源
@@ -261,12 +251,15 @@ public class BundleEditor
                 string name = files[i].Name;
                 string md5 = MD5Manager.Instance.BuildFileMd5(files[i].FullName);//本次根据ab包的资源信息，新打包的MD5文件
                 ABMD5Base abmd5Base = null;//存储本地同名的md5
-                if (!m_PackedMd5.ContainsKey(name)) changeList.Add(name);//已经打包的MD5文件夹中不含有此版本的MD5，此次是新版本打包的MD5
+                //已经打包的MD5文件夹中不含有此版本的MD5，此次是新版本打包的MD5
+                if (!m_PackedMd5.ContainsKey(name)) changeList.Add(name);
                 else
                 {
-                    if(m_PackedMd5.TryGetValue(name,out abmd5Base))//在过去打包的MD5中找到同版本号的MD5文件
+                    //在过去打包的MD5中找到同版本号的MD5文件
+                    if (m_PackedMd5.TryGetValue(name,out abmd5Base))
                     {
-                        if(md5!=abmd5Base.Md5)changeList.Add(name);//旧版本的MD5和这次打包的MD5数据不一样，说明资源更新了
+                        //旧版本的MD5和这次打包的MD5数据不一样，说明资源更新了
+                        if (md5!=abmd5Base.Md5)changeList.Add(name);
                     }
                 }
             }
@@ -283,10 +276,10 @@ public class BundleEditor
     {
         //热更资源文件夹不存在，则生成热更资源文件夹
         if(!Directory.Exists(m_HotPath))Directory.CreateDirectory(m_HotPath);
-        //删除文件夹里已有的AB包
-        DeleteAllFile(m_HotPath);
-        //拷贝这次改变的AB包
-        foreach (string str in changeList)
+        
+        DeleteAllFile(m_HotPath);//删除文件夹里已有的AB包
+        
+        foreach (string str in changeList)//拷贝这次改变的AB包
         {
             if (!str.EndsWith(".manifest")) File.Copy(m_BunleTargetPath + "/" + str, m_HotPath + "/" + str);
         }
@@ -295,7 +288,7 @@ public class BundleEditor
         FileInfo[] files = directory.GetFiles("*",SearchOption.AllDirectories);
         //ServerInfo是总配置表，我们不从总配置表生成，只需每次从单个热更总包开始生成拷贝
         Patch patch = new Patch();
-        patch.PatchVersion = 1;//这么默认1，可自行修改
+        patch.PatchVersion = curPatchVersion;
         patch.PatchFiles = new List<PatchFile>();
         for (int i = 0; i < files.Length; i++)
         {
@@ -349,8 +342,6 @@ public class BundleEditor
             {
                 if (allBundlePath[j].EndsWith(".cs"))
                     continue;
-
-                Debug.Log("此AB包：" + allBundles[i] + "下面包含的资源文件路径：" + allBundlePath[j]);
                 resPathDic.Add(allBundlePath[j], allBundles[i]);
             }
         }
@@ -365,16 +356,23 @@ public class BundleEditor
         WriteData(resPathDic);
 
         AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(m_BunleTargetPath, BuildAssetBundleOptions.ChunkBasedCompression, EditorUserBuildSettings.activeBuildTarget);
-        if (manifest == null)
-        {
-            Debug.LogError("AssetBundle 打包失败！");
-        }
-        else
-        {
-            Debug.Log("AssetBundle 打包完毕");
-        }
-
+        if (manifest == null) Debug.LogError("AssetBundle 打包失败！");
+        else Debug.Log("AssetBundle 打包完毕");
+        DeleteManifestFile();//删除没必要存在的Manifest文件
         AES_EncryptAB();//在打包完毕后对AB包进行加密
+    }
+
+    /// <summary>
+    /// 删除Manifest文件
+    /// </summary>
+    static void DeleteManifestFile()
+    {
+        DirectoryInfo directoryInfo = new DirectoryInfo(m_BunleTargetPath);
+        FileInfo[] files = directoryInfo.GetFiles("*",SearchOption.AllDirectories);
+        for (int i = 0; i < files.Length; i++)
+        {
+            if (files[i].Name.EndsWith(".manifest")) File.Delete(files[i].FullName);
+        }
     }
 
     static void WriteData(Dictionary<string ,string> resPathDic)

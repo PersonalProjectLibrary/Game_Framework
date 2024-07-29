@@ -24,3 +24,5 @@ static void BunildAssetBundle(){
 可以发现文件已被加密。
 后面还可以点击菜单栏里 ”Tools/解密AB包“，对加密的AB资源进行解密。
 
+先加密AB包再打包，或直接打包项目（打包里有加密AB包操作）都可以
+
