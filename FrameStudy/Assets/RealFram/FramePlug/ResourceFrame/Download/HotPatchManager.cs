@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -128,6 +129,31 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     private DownLoadAssetBundle m_CurDownload = null;
 
     /// <summary>
+    /// 原包记录的MD5码
+    /// </summary>
+    private Dictionary<string,ABMD5Base> m_PackedMd5 = new Dictionary<string,ABMD5Base>();
+    /// <summary>
+    /// 安卓平台下，资源解压的文件路径
+    /// </summary>
+    private string m_UnPackPath = Application.persistentDataPath + "/Origin";
+    /// <summary>
+    /// 存储记录要解压的文件
+    /// </summary>
+    private List<string> m_UnPackedList = new List<string>();
+    /// <summary>
+    /// 是否开始解压
+    /// </summary>
+    public bool StartUnPack = false;
+    /// <summary>
+    /// 解压文件总大小
+    /// </summary>
+    public float UnPackSumSize { get; set; } = 0;
+    /// <summary>
+    /// 已解压文件总大小
+    /// </summary>
+    public float AlreadyUnPackSize {  get; set; } = 0;
+
+    /// <summary>
     /// 初始化绑定m_Mono
     /// </summary>
     /// <param name="mono"></param>
@@ -136,6 +162,86 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     public void Init(MonoBehaviour mono)
     {
         m_Mono = mono;
+        ReadMD5();
+    }
+
+    /// <summary>
+    /// 计算解压文件
+    /// </summary>
+    /// <returns></returns>
+    public bool ComputeUnpackFile()
+    {
+        if(!Directory.Exists(m_UnPackPath))Directory.CreateDirectory(m_UnPackPath);//先判断解压地址存不存在
+        //把解压的文件存到List中
+        m_UnPackedList.Clear();
+        foreach (string fileName in m_PackedMd5.Keys)
+        {
+            string filePath = m_UnPackPath + "/" + fileName;
+            if (!File.Exists(filePath)) m_UnPackedList.Add(fileName);
+            else
+            {
+                string md5 = MD5Manager.Instance.BuildFileMd5(filePath);
+                if (m_PackedMd5[fileName].Md5 != md5) m_UnPackedList.Add(fileName);
+            }
+        }
+        //计算解压文件总大小
+        foreach (string fileName in m_UnPackedList)
+        {
+            if (m_PackedMd5.ContainsKey(fileName)) UnPackSumSize += m_PackedMd5[fileName].Size;
+        }
+        return m_UnPackedList.Count>0;//大于0，需要解压，不大于0，不需要解压
+    }
+
+    /// <summary>
+    /// 读取本地资源的MD5码
+    /// </summary>
+    void ReadMD5()
+    {
+        m_PackedMd5.Clear();
+        TextAsset md5 = Resources.Load<TextAsset>("ABMD5");
+        if (md5 == null)
+        {
+            Debug.LogError("未读取到本地MD5");
+            return;
+        }
+
+        using(MemoryStream stream = new MemoryStream(md5.bytes))//把md5的字节传到内存流里去
+        {
+            BinaryFormatter bf = new BinaryFormatter();//二进制序列化
+            ABMD5 abmd5 = bf.Deserialize(stream) as ABMD5;//二进制反序列化为ABMD5
+            foreach(ABMD5Base abmd5Basd in abmd5.ABMD5List) m_PackedMd5.Add(abmd5Basd.Name, abmd5Basd);
+        }
+    }
+
+    /// <summary>
+    /// 开始进行资源解压
+    /// </summary>
+    /// <param name="callback"></param>
+    /// UnityWebRequest除了获取网络请求，
+    /// 也可使用UnityWebRequest来对本地文件复制/解压。
+    public void StartUnPackFile(Action callBack)
+    {
+        StartUnPack = true;
+        m_Mono.StartCoroutine(UnPackToPresistentDataPath(callBack));
+    }
+
+    /// <summary>
+    /// 使用UnityWebRequest对本地文件解压
+    /// </summary>
+    /// <param name="callBack"></param>
+    /// <returns></returns>
+    IEnumerator UnPackToPresistentDataPath(Action callBack)
+    {
+        yield return null;
+    }
+
+    /// <summary>
+    /// 获取解压进度
+    /// </summary>
+    /// <returns></returns>
+    public float GetUnPackProgress()
+    {
+        return AlreadyUnPackSize/UnPackSumSize;
     }
 
     /// <summary>

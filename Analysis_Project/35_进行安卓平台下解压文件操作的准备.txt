@@ -1,0 +1,62 @@
+一、解压准备：
+原HotPatchManager.cs里热更流程：
+Init()后，热更计算ComputeDownload()，进行热更校验VerifyMD5()，从AssetStreaming文件夹下加载ab资源等；
+
+这里加入资源解压相关方法：
+将AssetStreaming里的文件拷贝到本地缓存、资源下载目录Application.persistentDataPath下面；
+
+1、设置解压文件路径：
+private string m_UnPackPath = Application.persistentDataPath + "/Origin";
+
+2、记录要解压的文件：
+private List<string> m_UnPackedList = new List<string>();
+
+注：
+需要把原包记录的Md5和解压文件夹下的Md5进行比较，确定哪些文件需要解压哪些文件夹不需要解压。
+之前解压的文件也可能被玩家修改，也要做个校验。
+
+3、调整ABMD5.cs位置
+从Assets/Scripts/Common文件夹下，
+移到Assets/RealFram/FramePlug/ResourceFrame/DownLoad文件夹下。
+
+4、记录原包记录的Md5码
+（1）记录存储Md5：
+private Dictionary<string,ABMD5Base> m_PackedMd5 = new Dictionary<string,ABMD5Base>();
+（2）读取原包Md5：
+ReadMD5(){}
+1）读取本地MD5文件，MD5文件所在位置：Assets/Resource文件夹里ABMD5.bytes
+2）函数使用位置：放入Init()方法里使用
+刚运行时就会执行Init()方法，反序列化速度也挺快的，不担心会影响到太多东西。
+
+5、判断是否需要解压，计算要解压的文件大小：bool ComputeUnPackFile()
+如果之前解压（资源拷贝进Application.persistentDataPath）过了，则就不需要再解压了。
+遍历原包的Md5码，即遍历m_PackedMd5：
+（1）文件存在解压文件夹中，校验对比，看再解压文件夹里的资源是否被修改。
+解压文件下的文件重新生成Md5码，对比生成的MD5码和原包里的MD5码是否一致，
+不一致说明此文件被修改过，需要在m_UnPackedList里记录，待后面重新解压。
+（2）文件不存在解压文件夹中，放到m_UnPackedList 中，
+后续遍历m_UnPackedList 对记录的文件进行解压到解压文件夹中。
+（3）函数使用位置：在hotFixUi.cs里进行解压计算，解压完后获取解压进度等信息。
+
+二、完善解压流程
+UI界面显示解压过程，还需要其他参数变量，如解压总资源大小，已解压大小，是否开始解压，解压速度等。
+HotPatchManager.cs里添加：
+1、解压的总大小：float UnPackSumSize{get;set;}=0;
+在ComputeUnPackFile()里获取，获取带解压文件列表后，返回bool值前，计算要解压文件的总大小。
+
+2、开始解压：StartUnPackFile(Action callback){}；
+使用UnityWebRequest来对本地文件复制解压。
+
+3、解压协程：IEnumerator UnPackToPresistentDataPath(Action callBack){}；
+
+4、设置错误处理事件，用于在解压过程中出错或解压成功后事件回调反馈
+解压文件计算到一半退出，重新进入还会进行文件校验，不用担心解压文件计算中断。
+主要是解压中解压到一半退出，要做错误抛出处理。
+
+5、是否已经开始解压：bool StartUnPack=false;
+在开始解压方法里设置为true；
+
+6、已解压文件总大小：float AlreadyUnPackSize{git;set;} =0;
+
+7、获取解压进度：float GetUnPackProgress(){}；
+在开始解压后执行使用。
