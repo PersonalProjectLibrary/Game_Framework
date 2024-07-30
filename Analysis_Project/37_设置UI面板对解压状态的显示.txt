@@ -1,0 +1,19 @@
+把解压信息放到UI界面里
+
+HotFixUi.cs
+1、Awake（）
+（1）删除/注释其中的语句：HotFix()；
+原先应检查热更，这里换成计算解压。
+（2）计算解压：
+修改UI面板内容提示改为“解压中”
+然后执行HotPatchManager.cs里的开始解压函数： 
+HotPatchManager.Instance.StartUnPackFile(()=>{HotFix();})；
+若是不需要解压，直接执行HotFix()；
+
+2、OnUpdate()
+做解压进度条：OnUpdate()里热更下载前，新增开始解压的进度条设置：
+if (HotPatchManager.Instance.StartUnPack){}
+
+注：除了解压时会设置进度条，更新m_SumTime；后续热更下载也会使用进度条，设置m_SumTime；
+故在解压完成后，重置m_SumTime；
+即在Awake()里解压开始后，热更下载前，设置m_SumTime=0；

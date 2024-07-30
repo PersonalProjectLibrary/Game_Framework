@@ -18,7 +18,16 @@ public class HotFixUi : Window
         m_Panel.m_SpeedText.text = string.Format("{0:F}M/S", 0);//初始下载进度0M/S；
         HotPatchManager.Instance.ServerInfoError += ServerInfoError;
         HotPatchManager.Instance.ItemError += ItemError;
-        HotFix();
+        //HotFix();
+        if (HotPatchManager.Instance.ComputeUnpackFile())
+        {
+            m_Panel.m_SliderTopText.text = "解压中...";
+            HotPatchManager.Instance.StartUnPackFile(() => {
+                m_SumTime = 0;//重置时间，避免解压后，后面下载速度的内容显示出问题。
+                HotFix();
+            });
+        }
+        else HotFix();
     }
 
     public override void OnClose()
@@ -106,6 +115,14 @@ public class HotFixUi : Window
 
     public override void OnUpdate()
     {
+        if (HotPatchManager.Instance.StartUnPack)
+        {
+            m_SumTime += Time.deltaTime;
+            m_Panel.m_ProgressImage.fillAmount = HotPatchManager.Instance.GetUnPackProgress();
+            float speed = (HotPatchManager.Instance.AlreadyUnPackSize / 1024.0f) / m_SumTime;
+            m_Panel.m_SpeedText.text = string.Format("{0:F} M/S",speed);
+        }
+
         if (HotPatchManager.Instance.StartDownload)
         {
             m_SumTime += Time.deltaTime;
