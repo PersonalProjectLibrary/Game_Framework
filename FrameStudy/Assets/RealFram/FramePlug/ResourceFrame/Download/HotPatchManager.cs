@@ -230,9 +230,27 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// </summary>
     /// <param name="callBack"></param>
     /// <returns></returns>
+    /// 将包里的原始资源解压到本地
     IEnumerator UnPackToPresistentDataPath(Action callBack)
     {
-        yield return null;
+        foreach (string fileName in m_UnPackedList)
+        {
+            UnityWebRequest unityWebRequest = UnityWebRequest.Get(Application.streamingAssetsPath + "/" + fileName);
+            unityWebRequest.timeout = 30;
+            yield return unityWebRequest.SendWebRequest();
+            if (unityWebRequest.result == UnityWebRequest.Result.ConnectionError) 
+                Debug.LogError("Unpack Error" + unityWebRequest.error);
+            else
+            {
+                byte[] bytes = unityWebRequest.downloadHandler.data;
+                FileTool.CreateFile(m_UnPackPath+"/"+fileName, bytes);
+            }
+            //解压完当前文件后，计算/更新已经解压的文件大小
+            if (m_PackedMd5.ContainsKey(fileName)) AlreadyUnPackSize += m_PackedMd5[fileName].Size;
+            unityWebRequest.Dispose();
+        }
+        if(callBack != null) callBack();
+        StartUnPack = false;
     }
 
     /// <summary>

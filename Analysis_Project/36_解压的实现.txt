@@ -1,0 +1,13 @@
+继续完善解压流程
+
+HotPatchManager.cs里
+解压：IEnumerator UnPackToPresistentDataPath(Action callBack){}；
+使用UnityWebRequest，遍历m_UnPackedList，对本地文件解压，
+将AssetStreaming里的原始资源解压到本地下载缓存Application.PresistentPath文件夹里;
+最后时设置是否解压的变量：StartUnPack = false;
+
+可后续优化添加保护处理：在解压一个文件后，进行校验下，写入有问题的情况下做个处理，比如重新解压等
+确保正常解压。可参考资源下载StartDownLoadAB()那里的错误处理：
+设置错误处理事件，用于在解压过程中出错或解压成功后事件回调反馈
+解压文件计算到一半退出，重新进入还会进行文件校验，不用担心解压文件计算中断。
+主要是解压中解压到一半退出，要做错误抛出处理。
