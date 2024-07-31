@@ -1,0 +1,34 @@
+
+修改调用了HotPatchManager.cs的ComputeABPath()获取ab包加载路径的相关脚本函数：
+
+1、AssetBundleManager.cs里LoadAssetBundleConfig()里使用获取ab包的路径：ABLoadPath
+修改ABLoadPath
+原：
+protected string ABLoadPath{ get { return Application.streamingAssetsPath + "/";}}
+改：
+protected string ABLoadPath{ get { return Application.persistentDataPath + "/Origin/";}}
+
+2、测试
+如果persistentDataPath对应的本地缓存目录C:\Users\电脑用户名\AppData\LocalLow\TTT\RealName
+里已经有解压文件，这里可以直接把Assets/StreamingAssets里在ab资源删了，确保是用解压后的资源运行的。
+如果本地缓存目录里还没有解压资源，可以先运行，下次运行前再删Assets/StreamingAssets里的ab资源，
+二次确认是加载解压文件夹下的资源，而不是使用本地或Assets/StreamingAssets里的ab资源
+
+注：解压时不需要网络，可无网络直接解压本地Assets/StreamingAssets里的ab资源
+
+3、报错
+NullReferenceException:Object reference not set to an instance of an Object
+(at HotPatchManager.cs：ReadXml()403)
+
+检查发现：服务器上的ServerInfo.xml文件下载内容为空。
+进一步确认是webRequest.downloadHandler.data==null
+
+原因：网络不好，不能正常获取服务器数据。
+
+解决方法：后面关机后打开电脑，重新运行，发现正常下载ServerInfo.xml文件，正常进行解压热更。
+
+4、后续将Assets/StreamingAssets里的ab资源删除，
+再运行，也可正常加载项目（包括热更下载的资源也能正常显示加载），
+正常从解压文件夹Application.presistentPath
+或者说本地缓存文件夹C:\Users\电脑用户名\AppData\LocalLow\TTT\RealName加载资源运行
+

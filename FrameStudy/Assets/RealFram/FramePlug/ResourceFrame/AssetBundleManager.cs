@@ -14,7 +14,13 @@ public class AssetBundleManager : Singleton<AssetBundleManager>
     //AssetBundleItem类对象池
     protected ClassObjectPool<AssetBundleItem> m_AssetBundleItemPool = ObjectManager.Instance.GetOrCreatClassPool<AssetBundleItem>(500);
 
-    protected string ABLoadPath{ get { return Application.streamingAssetsPath + "/";}}
+    protected string ABLoadPath
+    {
+        get{
+            return Application.persistentDataPath + "/Origin/";
+            //return Application.streamingAssetsPath + "/";
+        }
+    }
 
     /// <summary>
     /// 加载ab配置表
