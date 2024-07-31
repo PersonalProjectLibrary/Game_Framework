@@ -1,0 +1,23 @@
+一、准备工作：
+1、开启服务器
+2、配置服务器配置表（可没有Patch，即不进行资源下载，也可配置热更包）
+3、将Assets同级目录AssetBundle里，StandaloneWindows64里的ab资源
+复制到Assets/StreamingAssets里（若之前复制过，则不需要再拷贝复制了）
+4、打开本地缓存目录：C:\Users\电脑用户名\AppData\LocalLow\TTT\RealName\Origin
+方便后面运行查看解压效果。
+5、运行项目。
+
+二、运行项目：
+报错1、
+SerializationException: The ObjectManager found an invalid number of fixups. 
+This usually indicates a problem in the Formatter.
+ (at GameStart.cs:Awake() 19 ，HotPatchManager.cs: Init()162、ReadMD5()211)
+原因：执行ReadMD5()时，ABMD5反序列化出错
+解决：
+参考BundleEditor.cs的ReadMdCom()里文件流读取ABMD5文件，
+HotPatchManager.cs里写的ReadMD5()没有问题。
+这里重新打包项目，更新ABMD5，再运行项目，可看到项目正常运行。
+并且打开本地缓存目录：C:\Users\电脑用户名\AppData\LocalLow\TTT\RealName可看到新增Origin文件夹
+打开Origin文件夹，可看到从Assets/StreamingAssets复制过来的资源
+
+

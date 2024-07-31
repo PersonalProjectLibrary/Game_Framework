@@ -166,7 +166,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     }
 
     /// <summary>
-    /// 计算解压文件
+    /// 计算需要解压的文件
     /// </summary>
     /// <returns></returns>
     public bool ComputeUnpackFile()
