@@ -1,0 +1,30 @@
+
+1、对于HotFixUi.cs里从Awake()里
+就有进行解压：if (HotPatchManager.Instance.ComputeUnpackFile()){}
+其中ComputeUnpackFile()就有MD5码的校验。
+这个计算解压文件的过程可能会有点慢，可以把ComputeUnpackFile()做成协程使用。
+不过项目里没有进行处理，这里仅提供一个优化思路。
+
+
+
+2、做平台区分处理：
+（1）如果是Editor下，不需要进行解压热更，直接进入游戏StartOnFinish()即可；
+在HotFixUi.cs的Awake()里做平台区分：是热更解压，还是直接进入游戏。
+（2）解压只针对Android平台下，如果是ISO和PC下，不需要进行解压；
+1）在计算解压处：HotPatchManager.cs的ComputeUnpackFile()里做平台区分。
+2）同时资源加载也对应区分：
+ISO和PC是加载Assets/StreamingAssets里的资源
+Android是加载Application.persistentDataPath也就是本地缓存目录C:\Users\电脑用户名\AppData\LocalLow\TTT\RealName里的资源。
+对应修改：AssetBundleManager.cs里的ABLoadPath；
+原：
+protected string ABLoadPath{ get { return Application.persistentDataPath + "/Origin/";}}
+改：
+protected string ABLoadPath{
+        get{
+#if UNITY_ANDROID
+            return Application.persistentDataPath + "/Origin/";
+#else
+            return Application.streamingAssetsPath + "/";
+#endif
+        }
+}

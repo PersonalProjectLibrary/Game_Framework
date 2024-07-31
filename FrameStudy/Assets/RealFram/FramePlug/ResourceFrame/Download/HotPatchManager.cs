@@ -171,7 +171,8 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// <returns></returns>
     public bool ComputeUnpackFile()
     {
-        if(!Directory.Exists(m_UnPackPath))Directory.CreateDirectory(m_UnPackPath);//先判断解压地址存不存在
+#if UNITY_ANDROID
+        if (!Directory.Exists(m_UnPackPath))Directory.CreateDirectory(m_UnPackPath);//先判断解压地址存不存在
         //把解压的文件存到List中
         m_UnPackedList.Clear();
         foreach (string fileName in m_PackedMd5.Keys)
@@ -190,6 +191,9 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             if (m_PackedMd5.ContainsKey(fileName)) UnPackSumSize += m_PackedMd5[fileName].Size;
         }
         return m_UnPackedList.Count>0;//大于0，需要解压，不大于0，不需要解压
+#else
+        return false;
+#endif
     }
 
     /// <summary>

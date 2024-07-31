@@ -17,8 +17,11 @@ public class AssetBundleManager : Singleton<AssetBundleManager>
     protected string ABLoadPath
     {
         get{
+#if UNITY_ANDROID
             return Application.persistentDataPath + "/Origin/";
-            //return Application.streamingAssetsPath + "/";
+#else
+            return Application.streamingAssetsPath + "/";
+#endif
         }
     }
 

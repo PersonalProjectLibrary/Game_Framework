@@ -18,7 +18,9 @@ public class HotFixUi : Window
         m_Panel.m_SpeedText.text = string.Format("{0:F}M/S", 0);//初始下载进度0M/S；
         HotPatchManager.Instance.ServerInfoError += ServerInfoError;
         HotPatchManager.Instance.ItemError += ItemError;
-        //HotFix();
+#if UNITY_EDITOR
+        StartOnFinish();
+#else
         if (HotPatchManager.Instance.ComputeUnpackFile())
         {
             m_Panel.m_SliderTopText.text = "解压中...";
@@ -28,6 +30,7 @@ public class HotFixUi : Window
             });
         }
         else HotFix();
+#endif
     }
 
     public override void OnClose()
