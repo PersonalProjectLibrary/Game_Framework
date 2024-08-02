@@ -19,7 +19,8 @@ public class HotFixUi : Window
         HotPatchManager.Instance.ServerInfoError += ServerInfoError;
         HotPatchManager.Instance.ItemError += ItemError;
 #if UNITY_EDITOR
-        StartOnFinish();
+        HotFix();
+        //StartOnFinish();
 #else
         if (HotPatchManager.Instance.ComputeUnpackFile())
         {

@@ -1,0 +1,58 @@
+Bug原因：
+上回版本，做了版本区分，
+其中HotFixUi.cs的Awake()里，设置成：
+编辑器下，直接进入游戏，不进行热更；其他平台下才进行热更。
+
+Bug修改：将StartOnFinish()改为HotFix()；再运行项目则可正常进行资源热更。
+原：
+    public override void Awake(params object[] paralist)
+    {
+        ... ...
+#if UNITY_EDITOR
+        StartOnFinish();
+#else
+        if (HotPatchManager.Instance.ComputeUnpackFile())
+        {
+            ... ...
+            HotFix();
+            });
+        }
+        else HotFix();
+#endif
+    }
+改为：
+    public override void Awake(params object[] paralist)
+    {
+        ... ...
+#if UNITY_EDITOR
+        HotFix();
+        //StartOnFinish();
+#else
+        if (HotPatchManager.Instance.ComputeUnpackFile())
+        {
+            ... ...
+            HotFix();
+            });
+        }
+        else HotFix();
+#endif
+    }
+
+更直观代码修改处，可查看同文件夹里的“解决项目不热更的bug”截屏
+
+项目热更：
+一、准备
+1、项目StreamingAssets里放置了打包的ab资源，
+2、ResourceManager.cs里设置m_LoadFormAssetBundle设置为true；
+3、对应的ServerInfo.xml和热更资源也放进当前文件夹的“放在服务器上的热更配置表和热更资源”文件夹中。
+可以不用打包项目里的资源和修改资源热更打包，
+直接把放在服务器上的热更配置表和热更资源”文件夹里的
+ServerInfo.xml和AssetBundle文件夹放到服务器根目录上。
+
+二、运行
+然后直接运行项目，查看项目运行时的资源热更情况。
+
+三、辅助检查资源热更情况：
+资源和配置表下载文件位置是Application.presistentPath，
+也就是C:\\Users\\[用户名]\\AppData\\LocalLow\\Unity\\TTT\\RealTest文件夹
+这里可查看配置表和热更资源是否成功下载
