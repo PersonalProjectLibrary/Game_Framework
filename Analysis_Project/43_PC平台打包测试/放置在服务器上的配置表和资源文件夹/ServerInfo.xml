@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ServerInfo>
+	<GameVersion Version="0.1">
+		<Patch PatchVersion="1" Des="打包测试">
+  			<PatchFile Name="attack" Url="http://127.0.0.1/AssetBundle/0.1/1/attack" Platform="StandaloneWindows64" Md5="2141f1a3549b937afedbe36f89c6fbb8" Size="666.509766" />
+  			<PatchFile Name="StandaloneWindows64" Url="http://127.0.0.1/AssetBundle/0.1/1/StandaloneWindows64" Platform="StandaloneWindows64" Md5="0da32f77d937ed4be5785ea4dcaac9fa" Size="1.86914063" />
+  			<PatchFile Name="ugui" Url="http://127.0.0.1/AssetBundle/0.1/1/ugui" Platform="StandaloneWindows64" Md5="0b460be9fdea7edd8b737fdafc344cb2" Size="236.509766" />
+</Patch>
+	</GameVersion>
+</ServerInfo>
