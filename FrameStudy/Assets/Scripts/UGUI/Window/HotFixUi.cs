@@ -18,10 +18,8 @@ public class HotFixUi : Window
         m_Panel.m_SpeedText.text = string.Format("{0:F}M/S", 0);//初始下载进度0M/S；
         HotPatchManager.Instance.ServerInfoError += ServerInfoError;
         HotPatchManager.Instance.ItemError += ItemError;
-#if UNITY_EDITOR
-        HotFix();
-        //StartOnFinish();
-#else
+
+#if UNITY_EDITOR||UNITY_ANDIORD
         if (HotPatchManager.Instance.ComputeUnpackFile())
         {
             m_Panel.m_SliderTopText.text = "解压中...";
@@ -31,6 +29,8 @@ public class HotFixUi : Window
             });
         }
         else HotFix();
+#else
+        HotFix();
 #endif
     }
 
@@ -47,16 +47,13 @@ public class HotFixUi : Window
     void HotFix()
     {
         //检查网络环境
-        if(Application.internetReachability == NetworkReachability.NotReachable)//当前网络不正常
+        if (Application.internetReachability == NetworkReachability.NotReachable)//当前网络不正常
         {
             //提示网络错误，检测网络连接是否正常
-            GameStart.OpenCommonConfirm("网络连接失败", "网络连接失败，请检查网络连接是否正常", () => { Application.Quit(); }, () => { Application.Quit(); });
+            GameStart.OpenCommonConfirm("网络连接失败",
+                "请检查网络连接是否正常。\n点击“确认”按钮，直接退出游戏；\n点击“取消”按钮，非联网下进入游戏", OnClickCancleDownLoad, StartOnFinish);
         }
-        else
-        {
-            //检查当前版本
-            CheckVersion();
-        }
+        else CheckVersion();//检查当前版本
     }
 
     void CheckVersion()
@@ -66,12 +63,16 @@ public class HotFixUi : Window
             if (hot)
             {
                 //提示玩家是否确定热更下载
-                GameStart.OpenCommonConfirm("热更确定", string.Format("当前版本为{0}，有{1:F}M大小热更包，是否确定下载？",HotPatchManager.Instance.CurVersion,HotPatchManager.Instance.LoadSumSize/1024.0f), OnClickStartDownLoad, OnClickCancleDownLoad);
+                GameStart.OpenCommonConfirm("热更确定", string.Format("当前版本为{0}，\n有{1:F}M大小热更包，是否确定下载？",
+                    HotPatchManager.Instance.CurVersion,HotPatchManager.Instance.LoadSumSize/1024.0f), OnClickStartDownLoad,OnClickCancleDownLoad);
             }
             else StartOnFinish();//直接进入游戏
         });
     }
 
+    /// <summary>
+    /// 确认是否下载热更资源
+    /// </summary>
     void OnClickStartDownLoad()
     {
         //手机下，要看是否是数据流量
@@ -79,15 +80,23 @@ public class HotFixUi : Window
         {
             if (Application.internetReachability == NetworkReachability.ReachableViaCarrierDataNetwork)//数据流量网
             {
-                GameStart.OpenCommonConfirm("下载确认", "当前使用的是手机流量。是否继续下载", StartDownLoad, OnClickCancleDownLoad);
+                GameStart.OpenCommonConfirm("下载确认", "当前使用的是手机流量。是否继续下载？", StartDownLoad, OnClickCancleDownLoad);
             }
         }
         else StartDownLoad();//其他平台直接下载
     }
 
+    /// <summary>
+    /// 点击取消按钮，退出游戏
+    /// </summary>
     void OnClickCancleDownLoad()
     {
+        Debug.Log("退出游戏");
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
         Application.Quit();
+#endif
     }
 
     /// <summary>
@@ -113,6 +122,7 @@ public class HotFixUi : Window
 
     IEnumerator OnFinish()
     {
+        Debug.Log("进入游戏");
         yield return GameStart.Instance.StartCoroutine(GameStart.Instance.StartGame(m_Panel.m_ProgressImage, m_Panel.m_SliderTopText));
         UIManager.Instance.CloseWnd(this);
     }
@@ -141,7 +151,13 @@ public class HotFixUi : Window
     /// </summary>
     void ServerInfoError()
     {
-        GameStart.OpenCommonConfirm("服务器列表获取失败", "服务器列表获取失败，请检查网络连接是否正常？尝试重新下载！", CheckVersion, Application.Quit);
+        GameStart.OpenCommonConfirm("服务器列表获取失败", "服务器列表获取失败：\n请检查网络连接是否正常？", 
+            CheckVersion,() =>
+            {
+                GameStart.OpenCommonConfirm("服务器列表获取失败",
+                    "是否直接进入游戏？\n点击“确认”按钮，非联网下进入游戏；\n点击“取消”按钮，直接退出游戏", 
+                    StartOnFinish, OnClickCancleDownLoad);
+            });
     }
 
     /// <summary>
@@ -151,7 +167,7 @@ public class HotFixUi : Window
     /// 
     void ItemError(string all)
     {
-        GameStart.OpenCommonConfirm("资源下载失败", string.Format("{0}等资源下载失败，请重新尝试下载！", all), ReDownLoad,Application.Quit);
+        GameStart.OpenCommonConfirm("资源下载失败", string.Format("{0}\n等资源下载失败，请重新尝试下载！", all), ReDownLoad, OnClickCancleDownLoad);
     }
 
     /// <summary>
@@ -159,6 +175,7 @@ public class HotFixUi : Window
     /// </summary>
     void ReDownLoad()
     {
+        Debug.Log("重新下载");
         HotPatchManager.Instance.CheckVersion((hot) =>
         {
             if (hot) StartDownLoad();

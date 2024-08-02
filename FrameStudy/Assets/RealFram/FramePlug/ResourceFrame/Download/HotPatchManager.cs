@@ -103,7 +103,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// 用于下载后MD5校验，在设置m_DownLoadList时一起设置
     private Dictionary<string,string> m_DownLoadMD5Dic = new Dictionary<string,string>();
     /// <summary>
-    /// 服务器列表获取错误回调
+    /// 服务器列表获取错误回调，HotFixUi.cs里有实现使用
     /// </summary>
     public Action ServerInfoError;
     /// <summary>
@@ -115,7 +115,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// </summary>
     private const int DOWNLOADCOUNT = 4;
     /// <summary>
-    /// 重复下载失败回调
+    /// 重复下载失败回调，HotFixUi.cs里有实现使用
     /// </summary>
     public Action<string> ItemError;
     /// <summary>
@@ -171,8 +171,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// <returns></returns>
     public bool ComputeUnpackFile()
     {
-#if UNITY_ANDROID
-        if (!Directory.Exists(m_UnPackPath))Directory.CreateDirectory(m_UnPackPath);//先判断解压地址存不存在
+        if (!Directory.Exists(m_UnPackPath)) Directory.CreateDirectory(m_UnPackPath);//先判断解压地址存不存在
         //把解压的文件存到List中
         m_UnPackedList.Clear();
         foreach (string fileName in m_PackedMd5.Keys)
@@ -190,10 +189,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
         {
             if (m_PackedMd5.ContainsKey(fileName)) UnPackSumSize += m_PackedMd5[fileName].Size;
         }
-        return m_UnPackedList.Count>0;//大于0，需要解压，不大于0，不需要解压
-#else
-        return false;
-#endif
+        return m_UnPackedList.Count > 0;//大于0，需要解压，不大于0，不需要解压
     }
 
     /// <summary>
@@ -225,6 +221,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// 也可使用UnityWebRequest来对本地文件复制/解压。
     public void StartUnPackFile(Action callBack)
     {
+        Debug.Log("开始解压");
         StartUnPack = true;
         m_Mono.StartCoroutine(UnPackToPresistentDataPath(callBack));
     }
@@ -255,6 +252,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
         }
         if(callBack != null) callBack();
         StartUnPack = false;
+        Debug.Log("解压完成");
     }
 
     /// <summary>
@@ -300,8 +298,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
                 if(ServerInfoError != null) ServerInfoError();
                 return;
             }
-            //读取所有游戏版本，找当前版本
-            foreach(GameVersion gameVersion in m_ServerInfo.GameVersions)
+            foreach(GameVersion gameVersion in m_ServerInfo.GameVersions)//读取所有游戏版本，找当前版本
             {
                 if(gameVersion.Version == m_CurVersion)
                 {
@@ -311,8 +308,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             }
             GetHotAB();//获取服务器上所有可能需要的热更资源
 
-            //判断是否需要热更
-            if(CheckLocalAndServerPatch())
+            if(CheckLocalAndServerPatch())//判断是否需要热更
             {
                 ComputeDownload();//计算要下载的热更包
                 if (File.Exists(m_ServerXmlPath))
@@ -339,8 +335,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// 比较本地配置表与服务器配置表，判断是否需要更新
     bool CheckLocalAndServerPatch()
     {
-        //本地不存在配置表，即首次进行热更
-        if (!File.Exists(m_LocalXmlPath)) return true;
+        if (!File.Exists(m_LocalXmlPath)) return true;//本地不存在配置表，即首次进行热更
 
         //本地有服务器配置表，反序列化本地配置表
         m_LocalInfo = BinarySerializeOpt.XmlDeserialize(m_LocalXmlPath,typeof(ServerInfo)) as ServerInfo;
@@ -370,6 +365,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// 读Assets/Resources下的Version.txt文件
     void ReadVersion()
     {
+        Debug.Log("检查版本");
         TextAsset versionText = Resources.Load<TextAsset>("Version");
         if (versionText == null)
         {
@@ -399,11 +395,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
         UnityWebRequest webRequest = UnityWebRequest.Get(xmlUrl);
         webRequest.timeout = 30;//设置30秒超时时间
         yield return webRequest.SendWebRequest();//等待请求结束，下载结束
-        if (webRequest.result == UnityWebRequest.Result.ConnectionError) 
-            Debug.Log("Download Error" + webRequest.error);//超时报错
+        if (webRequest.result == UnityWebRequest.Result.ConnectionError)
+            Debug.Log("网络超时\nDownLoad Error：" + webRequest.error);
         else
         {
-            
             FileTool.CreateFile(m_ServerXmlPath,webRequest.downloadHandler.data);//把下载的数据写成文件
             if (File.Exists(m_ServerXmlPath))//把xml文件反序列化为类
             {
@@ -411,7 +406,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
                 //m_ServerInfo = ReadServerInfoXml(m_ServerXmlPath);//方法二解析服务器配置表
                 //Debug.Log("Patch：" + m_ServerInfo.GameVersions[0].Patchs.Length);
             }
-            else Debug.LogError("热更配置读取错误！");
+            else Debug.Log("热更配置读取错误！");
         }
         if(callBack != null)callBack();
     }
@@ -485,14 +480,10 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
         {
             //获取这个版本里的最后一次热更，累积热更比较麻烦，这里所有的热更都是基于当前初始版本做的热更
             Patch lastPatch = m_GameVersion.Patchs[m_GameVersion.Patchs.Length - 1];
-            //热更不能为空，热更包也不能为空
-            if(lastPatch != null && lastPatch.PatchFiles != null)
+            if(lastPatch != null && lastPatch.PatchFiles != null)//热更不能为空，热更包也不能为空
             {
                 //获取所有热更的热更包，这里简单获取，没有做热更一半，文件夹里东西被改变了等情况的处理，后面再做处理
-                foreach (PatchFile patchFile in lastPatch.PatchFiles)
-                {
-                    m_HotFixDic.Add(patchFile.Name, patchFile);
-                }
+                foreach (PatchFile patchFile in lastPatch.PatchFiles) m_HotFixDic.Add(patchFile.Name, patchFile);
             }
         }
     }
@@ -513,9 +504,8 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             m_CurrentPatch = m_GameVersion.Patchs[m_GameVersion.Patchs.Length - 1];
             if(m_CurrentPatch.PatchFiles!= null && m_CurrentPatch.PatchFiles.Count > 0)
             {
-                foreach (PatchFile patchFile in m_CurrentPatch.PatchFiles)
+                foreach (PatchFile patchFile in m_CurrentPatch.PatchFiles)//不同平台不一样
                 {
-                    //不同平台不一样
                     if ((Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor) && patchFile.Platform.Contains("StandaloneWindows64"))
                         AddDownloadList(patchFile);
                     else if ((Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.WindowsEditor) && patchFile.Platform.Contains("Android"))
@@ -535,8 +525,8 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     void AddDownloadList(PatchFile patchFile)
     {
         string filePath = m_DownloadPath + "/" + patchFile.Name;
-        //下载下的文件与本地文件对比，对比MD5码，看本地文件是否有被修改
-        if (File.Exists(filePath))
+        
+        if (File.Exists(filePath))//下载下的文件与本地文件对比，对比MD5码，看本地文件是否有被修改
         {
             string md5 = MD5Manager.Instance.BuildFileMd5(filePath);
             if (patchFile.Md5 != md5)//本地被修改过，重新下载
@@ -575,7 +565,8 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
         if (m_CurDownload != null)
         {
             PatchFile patchFile = FindPatchByGameName(m_CurDownload.FileName);
-            if (patchFile != null && !m_AlreadyDownList.Contains(patchFile)) curAlreadySize = m_CurDownload.GetProcess() * patchFile.Size;
+            if (patchFile != null && !m_AlreadyDownList.Contains(patchFile)) 
+                curAlreadySize = m_CurDownload.GetProcess() * patchFile.Size;
         }
         return alreadySize + curAlreadySize;
     }
@@ -588,6 +579,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
     /// <returns></returns>
     public IEnumerator StartDownLoadAB(Action callback,List<PatchFile> allPatchFile = null)
     {
+        Debug.Log("开始下载");
         m_AlreadyDownList.Clear();
         StartDownload = true;
         if(!Directory.Exists(m_DownloadPath)) Directory.CreateDirectory(m_DownloadPath);
@@ -599,9 +591,8 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
         if (allPatchFile == null) allPatchFile = m_DownLoadList;
 
         foreach (PatchFile patchFile in allPatchFile)
-        {
             downLoadAssetBundles.Add(new DownLoadAssetBundle(patchFile.Url, m_DownloadPath));
-        }
+
         foreach (DownLoadAssetBundle downLoadAB in downLoadAssetBundles)//根据DownLoadAssetBundle，下载AB资源
         {
             m_CurDownload = downLoadAB;//记录当前下载的资源，方便后面计算当前资源，已下载的资源大小
@@ -658,6 +649,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             if(callBack != null)
             {
                 StartDownload = false;
+                Debug.Log("下载结束");
                 callBack();
             }
             if (LoadOver != null) LoadOver();
@@ -669,11 +661,8 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
             {
                 string allName = "";//记录下载失败的文件名
                 StartDownload = false;//结束下载
-                foreach(PatchFile patchFile in downLoadList)
-                {
-                    allName += patchFile.Name + ";";
-                }
-                Debug.LogError("资源重复下载4次，MD5校验都失败，请检查资源：" + allName);
+                foreach (PatchFile patchFile in downLoadList) allName += patchFile.Name + ";";
+                Debug.Log("资源重复下载4次，MD5校验都失败，请检查资源：" + allName);
                 if (ItemError != null) ItemError(allName);
             }
             else
@@ -681,9 +670,7 @@ public class HotPatchManager : Singleton<HotPatchManager>//继承单例类
                 m_TryDownCount++;
                 m_DownLoadMD5Dic.Clear();//清空，不包含已经下载过的资源
                 foreach (PatchFile patchFile in downLoadList)
-                {
                     m_DownLoadMD5Dic.Add(patchFile.Name, patchFile.Md5);//更新为要重新下载的资源Md5
-                }
                 m_Mono.StartCoroutine(StartDownLoadAB(callBack,downLoadList)); //自动重新下载校验失败的文件
             }
         }
