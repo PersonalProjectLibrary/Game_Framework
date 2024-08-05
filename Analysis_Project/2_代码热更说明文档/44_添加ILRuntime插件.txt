@@ -1,0 +1,25 @@
+1、ILRuntime官方文档网站：
+https://ourpalm.github.io/ILRuntime/public/v1/guide/index.html
+
+2、ILRuntimeDemo地址：
+https://github.com/Ourpalm/ILRuntimeU3D
+
+3、ILRuntime下载导入使用说明：（个人博客）
+https://blog.csdn.net/weixin_43908355/article/details/140893191
+
+4、开启unity的不安全代码
+Assets文件夹下新建smcs.rsp文件，里面写入 -unsafe 
+PlayerSettings/Player里找到Allow 'unsafe' Code，进行勾选开启；
+
+5、安装ILRuntime
+（1）直接打开Package Manager即可找到ILRuntime
+（2）Package Manager里没有ILRuntime：
+项目的Packages/manifest.json中，添加ILRuntime的源信息
+"scopedRegistries": [
+  {
+    "name": "ILRuntime",
+    "url": "https://registry.npmjs.org",
+    "scopes": ["com.ourpalm"]
+  }
+],
+然后就可以通过Unity的Window，打开Package Manager菜单，找到ILRuntime；
