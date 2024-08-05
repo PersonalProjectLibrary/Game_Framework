@@ -70,3 +70,10 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# ILRuntime Demo's .Ggitignore
+Output/
+ILRuntimeDemo/Packages/packages-lock.json
+ILRuntimeDemo/.vsconfig
+/out
+ILRuntimeDemo/*.csproj
