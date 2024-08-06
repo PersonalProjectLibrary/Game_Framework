@@ -1,0 +1,55 @@
+1、Assets同级目录下，新建热更文件夹HotFixProject
+
+2、打开VS，创建新建项目：类库（.NET Framework） Visual C#
+不同版本VS可能不同，基于项目的平台，VS2022里选择的是：
+
+类库
+用于创建C#类库(.dll)的项目
+C# Windows 库
+
+这个选项来创建，地址放到新建的HotFixProject文件夹里，命名为：HotFix
+不勾选创建 ： 为解决方案创建目录
+版本原因没有这个选项，这里没有勾选：将解决解决方案和项目放在同一个目录中
+框架选择：.Net Framework 4.6（官方的早期文档上写：ILRuntime的解译引擎支持.Net 4.6编译的DLL）
+
+创建完成后，把类名 Class1重命名为 TestClass
+TestClass的引用库，也只留一个using System;
+
+3、添加Unity的dll引用：
+解决方案HotFix-引用-右键：添加引用-浏览-本地Unity安装目录，找
+UnityEngine.dll、UnityEngine.UI.dll、UnityEngine.WindModule.dll、UnityEngine.CoreModule.dll
+这4个dll进行添加
+
+注：
+（1）没看到HotFix的解决方案，可能是没打开 解决方案资源管理器；
+（2）可能会存在多个同名dll，可先随便选一个添加，
+后面发现里面没有所需要的方法内容，再换成其他同名dll。
+（3）也可能出现dll添加失败的情况，换其他的同名dll重新添加即可。
+
+4、添加当前项目生成的dll：
+所在文件位置：项目文件夹/Library/ScriptAssemblies
+添加4个dll：Assembly-CSharp.dll、Base.dll、Resource.dll、UIManager.dll
+
+5、对引用的这8个dll，设置属性：复制本地 false
+
+6、上面dll引用后，可以往cs脚本里添加using库了
+并写运行测试的函数
+
+这样HotFix工程基本上就设置好了
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
