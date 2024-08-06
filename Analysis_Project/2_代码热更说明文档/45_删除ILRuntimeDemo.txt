@@ -1,0 +1,4 @@
+考虑到后续AB包打包加载使用到StreamingAssets文件夹，
+这里选择把ILRuntimeDemo移出项目。
+
+仅保留ILRuntimeMenu脚本，放到Assets/Editor文件夹里。
