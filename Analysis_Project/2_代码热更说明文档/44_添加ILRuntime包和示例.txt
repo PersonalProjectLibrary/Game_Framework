@@ -23,3 +23,14 @@ PlayerSettings/Player里找到Allow 'unsafe' Code，进行勾选开启；
   }
 ],
 然后就可以通过Unity的Window，打开Package Manager菜单，找到ILRuntime；
+
+6、可能因为Unity账号失效、网络故障等，导致Manager找不到ILRuntime，
+检查网络和重新登录Unity和UnityHub账号来解决。
+
+7、添加ILRuntime的Demo示例
+下载ILRuntimeDemo后，
+（1）将Assets里的Samples文件夹复制到FrameStudy/Assets里，
+Samples整理后改为ILRuntimeDemo；
+（2）将Assets的StreamingAssets里的文件资源，复制到FrameStudy/Assets/StreamingAssets里；
+这样选择ILRuntime的一个示例，点击运行，即可看到控制台提示，说明正常运行。
+
