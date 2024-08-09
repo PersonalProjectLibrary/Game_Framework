@@ -1,0 +1,22 @@
+1、整个工程只有一个ILRuntime的AppDomain
+
+2、前面将HotFix.dll改为HotFix.dll.txt了，这里不用修改后缀，
+直接可以用LoadResource<TextAsset>(../HotFix.dll.txt)来加载dll了。
+
+3、pdb文件，是调试数据库，主要用于日志报错，
+主要editor下使用，其他平台需要也可以使用
+
+4、读取加载热更库
+使用System.IO里的MemoryStream读取dll和pdb的textAsset，
+然后载入到程序集：
+m_AppDomain.LoadAssembly(mp, md, new ILRuntime.Mono.Cecil.Pdb.PdbReaderProvider());
+
+5、添加函数InitializeILRuntime()：用于初始化注册ILRuntime的一些注册
+
+6、添加函数OnHotFixLoaded()：用于HotFix的热更加载
+在InitializeILRuntime()后进行调用
+
+
+
+
+

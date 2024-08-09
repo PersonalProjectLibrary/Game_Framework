@@ -20,6 +20,7 @@ Unity文件夹里只生成FixHot的Assets和dll，
 打开HotFix文件夹，
 将里面的HotFix.dll和HotFix.pdb改后缀为HotFix.dll.txt和HotFix.pdb.txt
 这样后面Unity就不会把这两文件当成脚本进行编译和打包成ab资源了
+即使这里不改，后面使用热更库，LoadResource<TextAsset>加载dll，也需要把后缀改为txt的
 
 5、修改unity打包设置
 Assets/RealFram/Editor/Resource/ABConfig的AllFileDirAB添加一项：
