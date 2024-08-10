@@ -36,7 +36,12 @@ public class GameStart : MonoSingleton<GameStart>
     /// <returns></returns>
     public IEnumerator StartGame(Image progress, Text text)
     {
-        progress.fillAmount = 0;
+        progress.fillAmount = 0f;
+        yield return null;
+        text.text = "加载dll... ...";
+        ILRuntimeManager.Instance.Init();
+
+        progress.fillAmount = 0.1f;
         yield return null;
         text.text = "加载本地数据... ...";
 

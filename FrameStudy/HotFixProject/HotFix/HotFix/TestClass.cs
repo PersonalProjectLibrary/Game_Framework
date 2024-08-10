@@ -7,7 +7,7 @@ namespace HotFix
     {
         public static void StaticFunTest()
         {
-            Debug.Log("TestClass StaticFunTest!!!!!!!!!!");
+            Debug.Log("TestClass StaticFunTest!!!!!");
         }
     }
 }

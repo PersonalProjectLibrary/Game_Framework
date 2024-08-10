@@ -1,0 +1,13 @@
+
+1、调用程序集里的方法：
+使用AppDomain程序集（程序集的不是C#的反射）写好的反射进行调用：
+m_AppDomain.Invoke(库名.类名,方法名,类的实例,参数);
+
+m_AppDomain.Invoke("HotFix.TestClass", "StaticFunTest", null,null);
+
+2、执行HotFix的热更加载
+在游戏的开始处就进行热更初始化，故在
+GameStart.cs的StartGame()里一开始就执行
+
+3、点击运行进行测试。
+

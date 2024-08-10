@@ -1,0 +1,107 @@
+
+一、解压错误：
+之前设置运行编辑器下对StreamingAsset里的资源进行解压
+
+忽略了：
+非AB包加载情况下，ReasourManager.cs的m_LoadFormAssetBundle=false时，
+StreamingAsset里无AB包资源文件的情况下
+无法对StreamingAsset里的资源解压的情况处理。
+
+这里修改BUG，HotFixUi.cs的Awake里，
+原：
+（1）安卓和编辑器下，直接判断是否解压，然后进行解压热更或直接热更。
+（2）非编辑器和安卓平台：不解压，直接热更；
+
+改成：
+划分更细平台区分
+（1）编辑器下：先判断是否从AB包加载，如果不是从ab包加载，直接热更不解压
+if(!ResourceManager.Instance.m_LoadFormAssetBundle) HotFix();
+如果是AB包加载，则继续执行，判断是否需要解压，然后进行解压热更或直接热更
+（2）安卓平台下：继续执行，判断是否需要解压，然后进行解压热更或直接热更
+（3）其他平台，不解压直接热更；
+
+这里顺便整理了下ResourceManager.cs的代码格式
+
+
+
+二、Unity is only able to load mdb or portable-pdb symbols
+https://blog.csdn.net/cqqqq/article/details/113785531
+这是因为生成的调试信息文件pdb的格式问题.
+如果是自己的c#库可以在生成选项中的高级生成设置中的调试信息项切换到可移植.
+
+
+
+三、BadImageFormatException: Format of the executable (.exe) or library (.dll) is invalid.
+ILRuntime.Mono.Cecil.PE.ImageReader.ReadImage ()
+1、HotFix.dll和HotFix.pdb的后缀不要用txt，改为bytes
+原：
+private const string DLLPATH = "Assets/GameData/Data/HotFix/HotFix.dll.txt";
+private const string PDBPATH = "Assets/GameData/Data/HotFix/HotFix.pdb.txt";
+改：
+private const string DLLPATH = "Assets/GameData/Data/HotFix/HotFix.dll.bytes";
+private const string PDBPATH = "Assets/GameData/Data/HotFix/HotFix.pdb.bytes";
+2、加载dll的流被关闭了。新版要求流不能关闭，也不能用using写法：
+原：
+void LoadHotFixAssembly()
+{
+    m_AppDomain = new AppDomain();
+    //读取热更资源的dll
+    TextAsset dllText = ResourceManager.Instance.LoadResource<TextAsset>(DLLPATH);
+    //读取PDB文件，调试数据库，主要用于日志报错
+    TextAsset pdbText = ResourceManager.Instance.LoadResource<TextAsset>(PDBPATH);
+    //读取加载热更库
+    using (MemoryStream md = new MemoryStream(dllText.txt))
+    {
+        using (MemoryStream mp = new MemoryStream(pdbText.txt))
+        {
+            //视频里旧版是m_AppDomain.LoadAssembly(mp, md, new Mono.Cecil.Pdb.PdbReaderProvider());
+            m_AppDomain.LoadAssembly(mp, md, new ILRuntime.Mono.Cecil.Pdb.PdbReaderProvider());
+        }
+    }
+    InitializeILRuntime();
+    OnHotFixLoaded();
+}
+改：
+    void LoadHotFixAssembly()
+    {
+        m_AppDomain = new ILRuntime.Runtime.Enviorment.AppDomain();
+        //读取热更资源的dll
+        TextAsset dllText = ResourceManager.Instance.LoadResource<TextAsset>(DLLPATH);
+        //读取PDB文件，调试数据库，主要用于日志报错
+        TextAsset pdbText = ResourceManager.Instance.LoadResource<TextAsset>(PDBPATH);
+        //读取加载热更库
+        MemoryStream md = new MemoryStream(dllText.bytes);
+        MemoryStream mp = new MemoryStream(pdbText.bytes);
+        try
+        {
+            m_AppDomain.LoadAssembly(md, mp, new ILRuntime.Mono.Cecil.Pdb.PdbReaderProvider());
+        }
+        catch
+        {
+            Debug.LogError("加载热更DLL失败，请确保已经通过VS打开HotFixProject/HotFix.sln编译过热更DLL");
+        }
+        InitializeILRuntime();
+        OnHotFixLoaded();
+    }
+
+
+
+
+四、HotFixLoad使用反射进行方法调用，报错实例不能为null
+NullReferenceException: instance should not be null!
+ILRuntime.Runtime.Enviorment.AppDomain.Invoke (ILRuntime.CLR.Method.IMethod m, System.Object instance, System.Object[] p) 
+
+原因：HotFix的脚本里的方法不是静态的
+原：
+public void StaticFunTest(){ Debug.Log("TestClass StaticFunTest!!!!!"); }
+改：
+public static void StaticFunTest(){ Debug.Log("TestClass StaticFunTest!!!!!"); }
+
+
+
+五、注意事项：
+1、每次修改HotFix热更工程内容后，需要重新生成dll和pdb文件。
+2、注意修改新的dll和pdb的后缀
+原文件：HotFix.dll、HotFix.pdb;
+改：HotFix.dll.bytes、HotFix.pdb.bytes;
+3、然后重新打包加密下项目，再运行项目测试。

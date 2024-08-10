@@ -129,9 +129,8 @@ public class ResourceManager : Singleton<ResourceManager>
     public void Init(MonoBehaviour mono)
     {
         for (int i = 0; i < (int)LoadResPriority.RES_NUM; i++)
-        {
             m_LoadingAssetList[i] = new List<AsyncLoadResParam>();
-        }
+
         m_Startmono = mono;
         m_Startmono.StartCoroutine(AsyncLoadCor());
     }
@@ -153,16 +152,10 @@ public class ResourceManager : Singleton<ResourceManager>
         List<ResouceItem> tempList = new List<ResouceItem>();
         foreach (ResouceItem item in AssetDic.Values)
         {
-            if (item.m_Clear)
-            {
-                tempList.Add(item);
-            }
+            if (item.m_Clear) tempList.Add(item);
         }
 
-        foreach (ResouceItem item in tempList)
-        {
-            DestoryResouceItme(item, true);
-        }
+        foreach (ResouceItem item in tempList) DestoryResouceItme(item, true);
         tempList.Clear();
     }
 
@@ -260,26 +253,18 @@ public class ResourceManager : Singleton<ResourceManager>
     /// <param name="path"></param>
     public void PreloadRes(string path)
     {
-        if (string.IsNullOrEmpty(path))
-        {
-            return;
-        }
+        if (string.IsNullOrEmpty(path)) return;
+
         uint crc = Crc32.GetCrc32(path);
         ResouceItem item = GetCacheResouceItem(crc, 0);
-        if (item != null)
-        {
-            return;
-        }
+        if (item != null) return;
 
         Object obj = null;
 #if UNITY_EDITOR
         if (!m_LoadFormAssetBundle)
         {
             item = AssetBundleManager.Instance.FindResourceItme(crc);
-            if (item != null && item.m_Obj != null)
-            {
-                obj = item.m_Obj as Object;
-            }
+            if (item != null && item.m_Obj != null) obj = item.m_Obj as Object;
             else
             {
                 if (item == null)
@@ -297,14 +282,8 @@ public class ResourceManager : Singleton<ResourceManager>
             item = AssetBundleManager.Instance.LoadResouceAssetBundle(crc);
             if (item != null && item.m_AssetBundle != null)
             {
-                if (item.m_Obj != null)
-                {
-                    obj = item.m_Obj;
-                }
-                else
-                {
-                    obj = item.m_AssetBundle.LoadAsset<Object>(item.m_AssetName);
-                }
+                if (item.m_Obj != null) obj = item.m_Obj;
+                else obj = item.m_AssetBundle.LoadAsset<Object>(item.m_AssetName);
             }
         }
 
@@ -322,10 +301,7 @@ public class ResourceManager : Singleton<ResourceManager>
     /// <returns></returns>
     public ResouceObj LoadResource(string path, ResouceObj resObj)
     {
-        if (resObj == null)
-        {
-            return null;
-        }
+        if (resObj == null) return null;
 
         uint crc = resObj.m_Crc == 0 ? Crc32.GetCrc32(path) : resObj.m_Crc;
 
@@ -341,10 +317,7 @@ public class ResourceManager : Singleton<ResourceManager>
         if (!m_LoadFormAssetBundle)
         {
             item = AssetBundleManager.Instance.FindResourceItme(crc);
-            if (item != null && item.m_Obj != null)
-            {
-                obj = item.m_Obj as Object;
-            }
+            if (item != null && item.m_Obj != null) obj = item.m_Obj as Object;
             else
             {
                 if (item == null)
@@ -362,14 +335,8 @@ public class ResourceManager : Singleton<ResourceManager>
             item = AssetBundleManager.Instance.LoadResouceAssetBundle(crc);
             if (item != null && item.m_AssetBundle != null)
             {
-                if (item.m_Obj != null)
-                {
-                    obj = item.m_Obj as Object;
-                }
-                else
-                {
-                    obj = item.m_AssetBundle.LoadAsset<Object>(item.m_AssetName);
-                }
+                if (item.m_Obj != null) obj = item.m_Obj as Object;
+                else obj = item.m_AssetBundle.LoadAsset<Object>(item.m_AssetName);
             }
         }
 
@@ -388,16 +355,12 @@ public class ResourceManager : Singleton<ResourceManager>
     /// <returns></returns>
     public T LoadResource<T>(string path) where T : UnityEngine.Object
     {
-        if (string.IsNullOrEmpty(path))
-        {
-            return null;
-        }
+        if (string.IsNullOrEmpty(path)) return null;
+
         uint crc = Crc32.GetCrc32(path);
         ResouceItem item = GetCacheResouceItem(crc);
-        if (item != null)
-        {
-            return item.m_Obj as T;
-        }
+
+        if (item != null) return item.m_Obj as T;
 
         T obj = null;
 #if UNITY_EDITOR
@@ -406,14 +369,8 @@ public class ResourceManager : Singleton<ResourceManager>
             item = AssetBundleManager.Instance.FindResourceItme(crc);
             if (item != null && item.m_AssetBundle != null)
             {
-                if (item.m_Obj != null)
-                {
-                    obj = (T)item.m_Obj;
-                }
-                else
-                {
-                    obj = item.m_AssetBundle.LoadAsset<T>(item.m_AssetName);
-                }
+                if (item.m_Obj != null) obj = (T)item.m_Obj;
+                else obj = item.m_AssetBundle.LoadAsset<T>(item.m_AssetName);
             }
             else
             {
@@ -432,14 +389,8 @@ public class ResourceManager : Singleton<ResourceManager>
             item = AssetBundleManager.Instance.LoadResouceAssetBundle(crc);
             if (item != null && item.m_AssetBundle != null)
             {
-                if (item.m_Obj != null)
-                {
-                    obj = item.m_Obj as T;
-                }
-                else
-                {
-                    obj = item.m_AssetBundle.LoadAsset<T>(item.m_AssetName);
-                }
+                if (item.m_Obj != null) obj = item.m_Obj as T;
+                else obj = item.m_AssetBundle.LoadAsset<T>(item.m_AssetName);
             }
         }
 
@@ -460,9 +411,7 @@ public class ResourceManager : Singleton<ResourceManager>
 
         ResouceItem item = null;
         if (!AssetDic.TryGetValue(resObj.m_Crc, out item) || null == item)
-        {
             Debug.LogError("AssetDic里不存在改资源：" + resObj.m_CloneObj.name + "  可能释放了多次");
-        }
 
         GameObject.Destroy(resObj.m_CloneObj);
 
@@ -480,18 +429,12 @@ public class ResourceManager : Singleton<ResourceManager>
     /// <returns></returns>
     public bool ReleaseResouce(Object obj, bool destoryObj = false)
     {
-        if (obj == null)
-        {
-            return false;
-        }
+        if (obj == null) return false;
 
         ResouceItem item = null;
         foreach (ResouceItem res in AssetDic.Values)
         {
-            if (res.m_Guid == obj.GetInstanceID())
-            {
-                item = res;
-            }
+            if (res.m_Guid == obj.GetInstanceID()) item = res;
         }
 
         if (item == null)
@@ -514,17 +457,12 @@ public class ResourceManager : Singleton<ResourceManager>
     /// <returns></returns>
     public bool ReleaseResouce(string path, bool destoryObj = false)
     {
-        if (string.IsNullOrEmpty(path))
-        {
-            return false;
-        }
+        if (string.IsNullOrEmpty(path)) return false;
 
         uint crc = Crc32.GetCrc32(path);
         ResouceItem item = null;
         if (!AssetDic.TryGetValue(crc, out item) || null == item)
-        {
             Debug.LogError("AssetDic里不存在改资源：" + path + "  可能释放了多次");
-        }
 
         item.RefCount--;
 
@@ -545,29 +483,17 @@ public class ResourceManager : Singleton<ResourceManager>
         //缓存太多，清除最早没有使用的资源
         WashOut();
 
-        if (item == null)
-        {
-            Debug.LogError("ResouceItem is null, path: " + path);
-        }
+        if (item == null) Debug.LogError("ResouceItem is null, path: " + path);
 
-        if (obj == null)
-        {
-            Debug.LogError("ResouceLoad Fail :  " + path);
-        }
+        if (obj == null) Debug.LogError("ResouceLoad Fail :  " + path);
 
         item.m_Obj = obj;
         item.m_Guid = obj.GetInstanceID();
         item.m_LastUseTime = Time.realtimeSinceStartup;
         item.RefCount += addrefcount;
         ResouceItem oldItme = null;
-        if (AssetDic.TryGetValue(item.m_Crc, out oldItme))
-        {
-            AssetDic[item.m_Crc] = item;
-        }
-        else
-        {
-            AssetDic.Add(item.m_Crc, item);
-        }
+        if (AssetDic.TryGetValue(item.m_Crc, out oldItme)) AssetDic[item.m_Crc] = item;
+        else AssetDic.Add(item.m_Crc, item);
     }
 
     /// <summary>
@@ -593,10 +519,7 @@ public class ResourceManager : Singleton<ResourceManager>
     /// <param name="destroy"></param>
     protected void DestoryResouceItme(ResouceItem item, bool destroyCache = false)
     {
-        if (item == null || item.RefCount > 0)
-        {
-            return;
-        }
+        if (item == null || item.RefCount > 0) return;
 
         if (!destroyCache)
         {
@@ -604,10 +527,7 @@ public class ResourceManager : Singleton<ResourceManager>
             return;
         }
 
-        if (!AssetDic.Remove(item.m_Crc))
-        {
-            return;
-        }
+        if (!AssetDic.Remove(item.m_Crc)) return;
 
         m_NoRefrenceAssetMapList.Remove(item);
 
@@ -659,18 +579,12 @@ public class ResourceManager : Singleton<ResourceManager>
     /// </summary>
     public void AsyncLoadResource(string path, OnAsyncObjFinish dealFinish, LoadResPriority priority, bool isSprite = false, object param1 = null, object param2 = null,object param3 =null, uint crc = 0)
     {
-        if (crc == 0)
-        {
-            crc = Crc32.GetCrc32(path);
-        }
+        if (crc == 0) crc = Crc32.GetCrc32(path);
 
         ResouceItem item = GetCacheResouceItem(crc);
         if (item != null)
         {
-            if (dealFinish != null)
-            {
-                dealFinish(path, item.m_Obj, param1, param2, param3);
-            }
+            if (dealFinish != null) dealFinish(path, item.m_Obj, param1, param2, param3);
             return;
         }
 
@@ -709,10 +623,7 @@ public class ResourceManager : Singleton<ResourceManager>
         if (item != null)
         {
             resObj.m_ResItem = item;
-            if (dealfinish != null)
-            {
-                dealfinish(path, resObj);
-            }
+            if (dealfinish != null) dealfinish(path, resObj);
             return;
         }
 
@@ -750,13 +661,9 @@ public class ResourceManager : Singleton<ResourceManager>
             for(int i = 0; i < (int)LoadResPriority.RES_NUM; i++)
             {
                 if (m_LoadingAssetList[(int)LoadResPriority.RES_HIGHT].Count > 0)
-                {
                     i = (int)LoadResPriority.RES_HIGHT;
-                }
                 else if (m_LoadingAssetList[(int)LoadResPriority.RES_MIDDLE].Count > 0)
-                {
                     i = (int)LoadResPriority.RES_MIDDLE;
-                }
 
                 List<AsyncLoadResParam> loadingList = m_LoadingAssetList[i];
                 if (loadingList.Count <= 0)
@@ -771,16 +678,10 @@ public class ResourceManager : Singleton<ResourceManager>
 #if UNITY_EDITOR
                 if (!m_LoadFormAssetBundle)
                 {
-                    if (loadingItem.m_Sprite)
-                    {
-                        obj = LoadAssetByEditor<Sprite>(loadingItem.m_Path);
-                    }
-                    else
-                    {
-                        obj = LoadAssetByEditor<Object>(loadingItem.m_Path);
-                    }
-                    //模拟异步加载
-                    yield return new WaitForSeconds(0.5f);
+                    if (loadingItem.m_Sprite) obj = LoadAssetByEditor<Sprite>(loadingItem.m_Path);
+                    else obj = LoadAssetByEditor<Object>(loadingItem.m_Path);
+                    
+                    yield return new WaitForSeconds(0.5f);//模拟异步加载
 
                     item = AssetBundleManager.Instance.FindResourceItme(loadingItem.m_Crc);
                     if (item == null)
@@ -796,19 +697,12 @@ public class ResourceManager : Singleton<ResourceManager>
                     if (item != null && item.m_AssetBundle != null)
                     {
                         AssetBundleRequest abRequest = null;
-                        if (loadingItem.m_Sprite)
-                        {
+                        if (loadingItem.m_Sprite) 
                             abRequest = item.m_AssetBundle.LoadAssetAsync<Sprite>(item.m_AssetName);
-                        }
-                        else
-                        {
-                            abRequest = item.m_AssetBundle.LoadAssetAsync(item.m_AssetName);
-                        }
+                        else abRequest = item.m_AssetBundle.LoadAssetAsync(item.m_AssetName);
+
                         yield return abRequest;
-                        if (abRequest.isDone)
-                        {
-                            obj = abRequest.asset;
-                        }
+                        if (abRequest.isDone) obj = abRequest.asset;
                         lastYiledTime = System.DateTime.Now.Ticks;
                     }
                 }
@@ -911,14 +805,10 @@ public class DoubleLinedList<T> where T : class, new()
     /// <returns></returns>
     public DoubleLinkedListNode<T> AddToHeader(DoubleLinkedListNode<T> pNode)
     {
-        if (pNode == null)
-            return null;
+        if (pNode == null) return null;
 
         pNode.prev = null;
-        if (Head == null)
-        {
-            Head = Tail = pNode;
-        }
+        if (Head == null) Head = Tail = pNode;
         else
         {
             pNode.next = Head;
@@ -950,14 +840,10 @@ public class DoubleLinedList<T> where T : class, new()
     /// <returns></returns>
     public DoubleLinkedListNode<T> AddToTail(DoubleLinkedListNode<T> pNode)
     {
-        if (pNode == null)
-            return null;
+        if (pNode == null) return null;
 
         pNode.next = null;
-        if (Tail == null)
-        {
-            Head = Tail = pNode;
-        }
+        if (Tail == null) Head = Tail = pNode;
         else
         {
             pNode.prev = Tail;
@@ -974,20 +860,15 @@ public class DoubleLinedList<T> where T : class, new()
     /// <param name="pNode"></param>
     public void RemoveNode(DoubleLinkedListNode<T> pNode)
     {
-        if (pNode == null)
-            return;
+        if (pNode == null) return;
 
-        if (pNode == Head)
-            Head = pNode.next;
+        if (pNode == Head) Head = pNode.next;
 
-        if (pNode == Tail)
-            Tail = pNode.prev;
+        if (pNode == Tail) Tail = pNode.prev;
 
-        if (pNode.prev != null)
-            pNode.prev.next = pNode.next;
+        if (pNode.prev != null) pNode.prev.next = pNode.next;
 
-        if (pNode.next != null)
-            pNode.next.prev = pNode.prev;
+        if (pNode.next != null) pNode.next.prev = pNode.prev;
 
         pNode.next = pNode.prev = null;
         pNode.t = null;
@@ -1001,29 +882,21 @@ public class DoubleLinedList<T> where T : class, new()
     /// <param name="pNode"></param>
     public void MoveToHead(DoubleLinkedListNode<T> pNode)
     {
-        if (pNode == null || pNode == Head)
-            return;
+        if (pNode == null || pNode == Head) return;
 
-        if (pNode.prev == null && pNode.next == null)
-            return;
+        if (pNode.prev == null && pNode.next == null) return;
 
-        if (pNode == Tail)
-            Tail = pNode.prev;
+        if (pNode == Tail) Tail = pNode.prev;
 
-        if (pNode.prev != null)
-            pNode.prev.next = pNode.next;
+        if (pNode.prev != null) pNode.prev.next = pNode.next;
 
-        if (pNode.next != null)
-            pNode.next.prev = pNode.prev;
+        if (pNode.next != null) pNode.next.prev = pNode.prev;
 
         pNode.prev = null;
         pNode.next = Head;
         Head.prev = pNode;
         Head = pNode;
-        if (Tail == null)
-        {
-            Tail = Head;
-        }
+        if (Tail == null) Tail = Head;
     }
 }
 
@@ -1069,10 +942,7 @@ public class CMapList<T> where T : class, new()
     /// </summary>
     public void Pop()
     {
-        if (m_DLink.Tail != null)
-        {
-            Remove(m_DLink.Tail.t);
-        }
+        if (m_DLink.Tail != null) Remove(m_DLink.Tail.t);
     }
 
     /// <summary>
@@ -1082,10 +952,8 @@ public class CMapList<T> where T : class, new()
     public void Remove(T t)
     {
         DoubleLinkedListNode<T> node = null;
-        if (!m_FindMap.TryGetValue(t, out node) || node == null)
-        {
-            return;
-        }
+        if (!m_FindMap.TryGetValue(t, out node) || node == null) return;
+
         m_DLink.RemoveNode(node);
         m_FindMap.Remove(t);
     }
@@ -1116,8 +984,7 @@ public class CMapList<T> where T : class, new()
     public bool Find(T t)
     {
         DoubleLinkedListNode<T> node = null;
-        if (!m_FindMap.TryGetValue(t, out node) || node == null)
-            return false;
+        if (!m_FindMap.TryGetValue(t, out node) || node == null) return false;
 
         return true;
     }
@@ -1130,8 +997,7 @@ public class CMapList<T> where T : class, new()
     public bool Reflesh(T t)
     {
         DoubleLinkedListNode<T> node = null;
-        if (!m_FindMap.TryGetValue(t, out node) || node == null)
-            return false;
+        if (!m_FindMap.TryGetValue(t, out node) || node == null)return false;
 
         m_DLink.MoveToHead(node);
         return true;

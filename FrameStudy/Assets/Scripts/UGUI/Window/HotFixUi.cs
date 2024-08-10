@@ -19,8 +19,9 @@ public class HotFixUi : Window
         HotPatchManager.Instance.ServerInfoError += ServerInfoError;
         HotPatchManager.Instance.ItemError += ItemError;
 
-#if UNITY_EDITOR||UNITY_ANDIORD
-        if (HotPatchManager.Instance.ComputeUnpackFile())
+#if UNITY_EDITOR //编辑器下看情况解压
+        if(!ResourceManager.Instance.m_LoadFormAssetBundle) HotFix();//不是AB包加载不解压
+        else if (HotPatchManager.Instance.ComputeUnpackFile())//AB包加载且解压文件数不为0
         {
             m_Panel.m_SliderTopText.text = "解压中...";
             HotPatchManager.Instance.StartUnPackFile(() => {
@@ -28,8 +29,20 @@ public class HotFixUi : Window
                 HotFix();
             });
         }
-        else HotFix();
-#else
+        else HotFix();//解压文件数为0
+
+#elif UNITY_ANDIORD //安卓平台必须解压
+        if (HotPatchManager.Instance.ComputeUnpackFile())//AB包加载且解压文件数不为0
+        {
+            m_Panel.m_SliderTopText.text = "解压中...";
+            HotPatchManager.Instance.StartUnPackFile(() => {
+                m_SumTime = 0;//重置时间，避免解压后，后面下载速度的内容显示出问题。
+                HotFix();
+            });
+        }
+        else HotFix();//解压文件数为0
+
+#else //其他平台不需要解压
         HotFix();
 #endif
     }
