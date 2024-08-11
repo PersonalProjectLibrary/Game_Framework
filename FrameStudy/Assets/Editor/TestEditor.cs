@@ -16,7 +16,6 @@ public class TestEditor
         sw.Dispose();
     }
 
-
     private static Sprite ttt;
 
     [MenuItem("测试/测试加载")]
@@ -28,7 +27,17 @@ public class TestEditor
     [MenuItem("测试/测试卸载")]
     public static void TestUnLoad()
     {
-        Resources.UnloadAsset(ttt);
-        //对引用进行了释放，但是还存在在编辑器内存
+        Resources.UnloadAsset(ttt);//对引用进行了释放，但是还存在在编辑器内存
+    }
+
+    private static string DLLPATH = "Assets/GameData/Data/HotFix/HotFix.dll";
+    private static string PDBPATH = "Assets/GameData/Data/HotFix/HotFix.pdb";
+
+    [MenuItem("Tools/修改热更dll为bytes")]
+    public static void ChangeDllName()
+    {
+        if(File.Exists(DLLPATH)) File.Move(DLLPATH, DLLPATH+ ".bytes");
+        if (File.Exists(PDBPATH)) File.Move(PDBPATH, PDBPATH + ".bytes");
+        AssetDatabase.Refresh();//刷新
     }
 }

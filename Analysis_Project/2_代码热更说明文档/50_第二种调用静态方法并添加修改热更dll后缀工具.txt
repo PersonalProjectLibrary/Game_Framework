@@ -1,0 +1,50 @@
+1、往HotFix工程的TestClass.cs里添加带参函数
+public static void StaticFuncTest2(int a){}
+
+2、重新生成dll文件，并注意修改文件后缀，添加.bytes；
+
+3、写工具，自动更新修改处理旧热更dll和新生成的热更dll文件：
+在Assets/Editor文件夹里的TestEditor.cs脚本里新增方法函数
+[MenuItem("Tools/修改热更dll为bytes")]
+public static void ChangeDllName(){}
+
+后续可直接点击菜单栏上的"Tools/修改热更dll为bytes"来直接修改dll，不用一个个手动修改
+
+4、第一种热更工程HotFix里静态方法的调用：每次先反射获取方法所在的类，然后再调用反射类里的方法
+m_AppDomain.Invoke("HotFix.TestClass", "StaticFunTest", null,null);
+
+5、第二种热更工程HotFix的静态函数的调用：先单独获取类，之后一直使用这个类来调用
+说明：
+ILRuntime里的IType可以代表任何一个类，IMethod可以代表类里的任何一个方法，
+GetMethod(方法名,方法参数个数)
+（1）先单独获取类，之后一直使用这个类来调用
+（2）根据方法名称和参数个数获取方法，GetMethod(方法名,方法参数个数)
+（3）使用程序集，执行目标函数
+
+先单独获取类：
+IType type = m_AppDomain.LoadedTypes["HotFix.TestClass"];
+
+1）0参函数调用
+IMethod method = type.GetMethod("StaticFunTest", 0);
+m_AppDomain.Invoke(method,null,null);
+
+2）1参函数调用
+IMethod method1 = type.GetMethod("StaticFuncTest2", 1);
+m_AppDomain.Invoke(method1, null, 5);
+
+3）多参函数，使用参数List调用
+IType intType = m_AppDomain.GetType(typeof(int));//获取热更工程里的int类型
+List<IType> paraList = new List<IType>();//参数List
+paraList.Add(intType);
+IMethod method2 = type.GetMethod("StaticFuncTest2", paraList,null);
+m_AppDomain.Invoke(method2 ,null,15);
+
+
+
+
+
+
+
+
+
+

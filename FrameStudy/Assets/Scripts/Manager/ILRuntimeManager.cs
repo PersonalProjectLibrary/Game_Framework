@@ -4,6 +4,8 @@ using UnityEngine;
 using ILRuntime.Runtime.Enviorment;
 using System.IO;
 using System;
+using ILRuntime.CLR.TypeSystem;
+using ILRuntime.CLR.Method;
 
 public class ILRuntimeManager : Singleton<ILRuntimeManager>
 {
@@ -81,8 +83,27 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
     /// </summary>
     void OnHotFixLoaded()
     {
-        Debug.Log("测试");
-        //第一个简单方法的调用
+        //第一种热更工程里方法的调用：每次先反射获取方法所在的类，然后再调用反射类里的方法
         m_AppDomain.Invoke("HotFix.TestClass", "StaticFunTest", null,null);
+
+        //第二种方法：先单独获取类，之后一直使用这个类来调用
+        IType type = m_AppDomain.LoadedTypes["HotFix.TestClass"];//ILRuntime里的IType可以代表任何一个类
+        //根据方法名称和参数个数获取方法，学习获取函数进行调用
+        //GetMethod(方法名,方法参数个数)
+
+        //第二种方法--1：调用无参函数
+        IMethod method = type.GetMethod("StaticFunTest", 0);//IMethod可以代表类里的任何一个方法
+        m_AppDomain.Invoke(method,null,null);//使用程序集，执行目标函数
+
+        //第二种方法--2：调用有参函数（传一个参数）
+        IMethod method1 = type.GetMethod("StaticFuncTest2", 1);
+        m_AppDomain.Invoke(method1, null, 5);
+
+        //第二种方法--3：调用有参函数（传多参数List）
+        IType intType = m_AppDomain.GetType(typeof(int));//获取热更工程里的int类型
+        List<IType> paraList = new List<IType>();//参数List
+        paraList.Add(intType);
+        IMethod method2 = type.GetMethod("StaticFuncTest2", paraList,null);
+        m_AppDomain.Invoke(method2 ,null,15);
     }
 }
