@@ -36,8 +36,18 @@ public class TestEditor
     [MenuItem("Tools/修改热更dll为bytes")]
     public static void ChangeDllName()
     {
-        if(File.Exists(DLLPATH)) File.Move(DLLPATH, DLLPATH+ ".bytes");
-        if (File.Exists(PDBPATH)) File.Move(PDBPATH, PDBPATH + ".bytes");
+        if (File.Exists(DLLPATH))
+        {
+            string targetPath = DLLPATH + ".bytes";
+            if(File.Exists(targetPath))File.Delete(targetPath);
+            File.Move(DLLPATH, targetPath);
+        }
+        if (File.Exists(PDBPATH))
+        {
+            string targetPath = PDBPATH + ".bytes";
+            if (File.Exists(targetPath)) File.Delete(targetPath);
+            File.Move(PDBPATH, targetPath);
+        }
         AssetDatabase.Refresh();//刷新
     }
 }

@@ -6,6 +6,7 @@ using System.IO;
 using System;
 using ILRuntime.CLR.TypeSystem;
 using ILRuntime.CLR.Method;
+using UnityEngine.Purchasing;
 
 public class ILRuntimeManager : Singleton<ILRuntimeManager>
 {
@@ -83,8 +84,11 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
     /// </summary>
     void OnHotFixLoaded()
     {
+        #region 热更工程静态方法调用：2种方法，4种写法
+        /*
+
         //第一种热更工程里方法的调用：每次先反射获取方法所在的类，然后再调用反射类里的方法
-        m_AppDomain.Invoke("HotFix.TestClass", "StaticFunTest", null,null);
+        m_AppDomain.Invoke("HotFix.TestClass", "StaticFunTest", null, null);
 
         //第二种方法：先单独获取类，之后一直使用这个类来调用
         IType type = m_AppDomain.LoadedTypes["HotFix.TestClass"];//ILRuntime里的IType可以代表任何一个类
@@ -93,7 +97,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
 
         //第二种方法--1：调用无参函数
         IMethod method = type.GetMethod("StaticFunTest", 0);//IMethod可以代表类里的任何一个方法
-        m_AppDomain.Invoke(method,null,null);//使用程序集，执行目标函数
+        m_AppDomain.Invoke(method, null, null);//使用程序集，执行目标函数
 
         //第二种方法--2：调用有参函数（传一个参数）
         IMethod method1 = type.GetMethod("StaticFuncTest2", 1);
@@ -103,7 +107,40 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         IType intType = m_AppDomain.GetType(typeof(int));//获取热更工程里的int类型
         List<IType> paraList = new List<IType>();//参数List
         paraList.Add(intType);
-        IMethod method2 = type.GetMethod("StaticFuncTest2", paraList,null);
-        m_AppDomain.Invoke(method2 ,null,15);
+        IMethod method2 = type.GetMethod("StaticFuncTest2", paraList, null);
+        m_AppDomain.Invoke(method2, null, 15);
+
+        */
+        #endregion
+
+        #region 实例化热更工程里的类，类似Unity里new一个类
+        //ILRuntime自带一些API来创建类，可以参考官方文档说明
+
+        //第一种实例化方式：直接实例化
+        object obj = m_AppDomain.Instantiate("HotFix.TestClass", null);//输出：无参构造，ID = 0
+        object obj2 = m_AppDomain.Instantiate("HotFix.TestClass", new object[] { 25 });//输出：带参构造，ID = 25
+
+        //第二种实例方式：使用IType实例化类，然后使用API创建类，API获取指定属性
+        IType type2 = m_AppDomain.LoadedTypes["HotFix.TestClass"];//先获取到类
+
+        //第二种实例方式，方法1：无参的构造
+        object obj3 = ((ILType)type2).Instantiate();//输出：无参构造，ID = 0
+
+        //第二种实例方式，方法2：无参构造，注：这里的get是ILRuntime的api
+        int id = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj3, null);
+        Debug.Log("id =" + id);//输出：id =0
+        //int id = (int)m_AppDomain.Invoke("HotFix.TestClass", "Get_ID", obj3, null);//会报错
+
+        //第二种实例方式，方法3：带参的构造
+        object[] args = new object[1] { 35 };//参数列表
+        object obj4 = ((ILType)type2).Instantiate(args);//输出：带参构造，ID = 35
+
+        //第二种实例方式，方法4：带参构造
+        int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, null);
+        Debug.Log("id2 =" + id2);//输出：id2 =35
+        //int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, args);//会报错
+        //int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, 55);//会报错
+
+        #endregion
     }
 }

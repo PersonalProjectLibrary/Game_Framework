@@ -1,0 +1,65 @@
+
+实例化热更工程里的类，类似Unity里new一个类
+
+ILRuntime自带一些API来创建类，可以参考官方文档说明
+
+一、热更工程HotFix的TestClass.cs里添加构造函数：
+private int m_Id = 0;//默认为0
+public int ID { get { return m_Id; } }
+1、无参构造函数：
+public TestClass(){Debug.Log("无参构造，ID = " + ID);}
+2、带参构造函数：
+public TestClass(int id) { 
+    m_Id = id; 
+    Debug.Log("带参构造，ID = " + ID);
+}
+
+二、优化更新修改热更dll后缀的方法
+如果存在HotFix.dll文件，则：
+1、如果HotFix.dll.bytes也存在，则删除HotFix.dll.bytes；
+2、将HotFix.dll文件改为HotFix.dll.bytes；
+同理HotFix.pdb文件；
+
+三、更新：
+热更工程生成dll；
+Unity里点击菜单栏“Tools/修改热更dll为bytes”更新dll；
+Unity里点击菜单栏“Tools/打包项目包”，更新项目ab资源设置（如更新MD5，加密）
+
+四、Unity工程里实例化热更工程HotFix的TestClass.cs类
+类似Unity里new一个类，
+ILRuntime自带一些API来创建类，可以参考官方文档说明
+两种实例化方式，6种实现方法：Instantiate与Invoke
+
+1、第一种实例化方式：直接实例化
+（1）无参构造，输出：无参构造，ID = 0
+        object obj = m_AppDomain.Instantiate("HotFix.TestClass", null);
+
+（2）带参构造，输出：带参构造，ID = 25
+        object obj2 = m_AppDomain.Instantiate("HotFix.TestClass", new object[] { 25 });
+
+2、第二种实例方式：使用IType实例化类，然后使用API创建类，API获取指定属性
+         IType type2 = m_AppDomain.LoadedTypes["HotFix.TestClass"];//先获取到类
+
+（1）Instantiate()无参的构造
+         object obj3 = ((ILType)type2).Instantiate();//输出：无参构造，ID = 0
+
+（2）Invoke()无参构造，注：这里的get是ILRuntime的api
+         int id = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj3, null);//无输出
+         Debug.Log("id =" + id);//输出：id =0
+        
+         //int id = (int)m_AppDomain.Invoke("HotFix.TestClass", "Get_ID", obj3, null);//会报错
+
+（3）Instantiate(args)带参的构造
+        object[] args = new object[1] { 35 };//参数列表
+        object obj4 = ((ILType)type2).Instantiate(args);//输出：带参构造，ID = 35
+
+（4）Invoke()带参构造
+        int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, null);
+        Debug.Log("id2 =" + id2);//输出：id2 =35
+        //int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, args);//会报错
+        //int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, 55);//会报错
+
+
+
+
+
