@@ -125,6 +125,17 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         });
         //委托转换后，对应的系统委托若之前没注册过，也要注册下
         m_AppDomain.DelegateManager.RegisterFunctionDelegate<int, string>();
+
+        //---------------------3、Unity自带事件注册，使用委托转换器---------------------
+        //注册Unity事件--UnityAction<bool>事件的注册，如Toggle事件
+        m_AppDomain.DelegateManager.RegisterDelegateConvertor<UnityEngine.Events.UnityAction<bool>>((a) =>
+        {
+            return new UnityEngine.Events.UnityAction<bool>((b) =>
+            {
+                ((System.Action<bool>)a)(b);
+            });
+        });
+        m_AppDomain.DelegateManager.RegisterMethodDelegate<bool>();
     }
 
     /// <summary>
@@ -217,10 +228,22 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
 
         #region 跨域委托--Unity主工程的委托
         //可热更工程里调用，也可Unity里调用，具体哪里调用无所谓，主要委托定义在主工程
+        /*
         m_AppDomain.Invoke("HotFix.TestDelegate", "Initialize2", null, null);//委托注册
         m_AppDomain.Invoke("HotFix.TestDelegate", "RunTest2", null, null);//委托调用
+        //*/
         #endregion
 
+        #region 跨域委托注册--Unity里直接使用注册过的热更事件
+        m_AppDomain.Invoke("HotFix.TestDelegate", "Initialize2", null, null);//委托注册
+        if (DelegateMethod != null) DelegateMethod(666);
+        if (DelegateFunction != null)
+        {
+            string str = DelegateFunction(789);
+            Debug.Log("DelegateFuntion："+str);
+        }
+        if (DelegateAction != null) DelegateAction("Ocean666");
+        #endregion
     }
 }
 
