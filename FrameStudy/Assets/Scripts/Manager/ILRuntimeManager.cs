@@ -86,7 +86,6 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
     {
         #region 热更工程静态方法调用：2种方法，4种写法
         /*
-
         //第一种热更工程里方法的调用：每次先反射获取方法所在的类，然后再调用反射类里的方法
         m_AppDomain.Invoke("HotFix.TestClass", "StaticFunTest", null, null);
 
@@ -109,13 +108,12 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         paraList.Add(intType);
         IMethod method2 = type.GetMethod("StaticFuncTest2", paraList, null);
         m_AppDomain.Invoke(method2, null, 15);
-
         */
         #endregion
 
         #region 实例化热更工程里的类，类似Unity里new一个类
         //ILRuntime自带一些API来创建类，可以参考官方文档说明
-
+        /*
         //第一种实例化方式：直接实例化
         object obj = m_AppDomain.Instantiate("HotFix.TestClass", null);//输出：无参构造，ID = 0
         object obj2 = m_AppDomain.Instantiate("HotFix.TestClass", new object[] { 25 });//输出：带参构造，ID = 25
@@ -140,7 +138,27 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         Debug.Log("id2 =" + id2);//输出：id2 =35
         //int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, args);//会报错
         //int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, 55);//会报错
+        */
+        #endregion
+
+        #region 调用泛型方法
+
+        //第一种调用泛型方法，专门的泛型API：InvokeGenericMethod();
+        IType stringType = m_AppDomain.GetType(typeof(string));//获取string类型
+        IType[] genericArguments = new IType[] { stringType };//构建用于泛型的string数组
+        //InvokeGenericMethod("类全名：库名.类名", "泛型方法名", 泛型数组, 泛型实例, 泛型参数);
+        m_AppDomain.InvokeGenericMethod("HotFix.TestClass", "GenericMethod", genericArguments, null, "Ocean");
+
+        //第二种调用泛型方法，使用IMethod()
+        IType type3 = m_AppDomain.LoadedTypes["HotFix.TestClass"];//先获取到类
+        IType stringType2 = m_AppDomain.GetType(typeof(string));//传参的类型
+        IType[] genericArguments2 = new IType[] { stringType2 };//泛型的类型
+        List<IType> paraList = new List<IType>() { stringType2 };//传参的List
+        //GetMethod("泛型方法名", 传进去的参数列表, 泛型类型);
+        IMethod method = type3.GetMethod("GenericMethod", paraList, genericArguments2);
+        m_AppDomain.Invoke(method, null, "Ocean2222222222222");//调用方法
 
         #endregion
+
     }
 }

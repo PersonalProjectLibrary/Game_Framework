@@ -1,0 +1,26 @@
+
+一、热更工程HotFix的TestClass.cs里添加泛型方法：
+这里方便使用测试，写静态的泛型方法（静态和非静态的泛型方法使用差不多）
+        public static void GenericMethod<T>(T t){Debug.Log("TestClass GenericMethod t=" + t);}
+
+二、更新：
+        HotFix热更工程生成dll；
+        Unity里点击菜单栏“Tools/修改热更dll为bytes”更新dll；
+
+三、Unity工程里使用热更工程HotFix的TestClass.cs里的委托
+
+1、第一种调用泛型方式：专门的泛型API
+        InvokeGenericMethod("类全名：库名.类名", "泛型方法名", 泛型数组, 泛型实例, 泛型参数);
+
+        IType stringType = m_AppDomain.GetType(typeof(string));//获取string类型
+        IType[] genericArguments = new IType[] { stringType };//构建用于泛型的string数组
+        m_AppDomain.InvokeGenericMethod("HotFix.TestClass", "GenericMethod", genericArguments, null, "Ocean");
+
+2、第二种调用泛型方法，使用IMethod
+        IType type3 = m_AppDomain.LoadedTypes["HotFix.TestClass"];//先获取到类
+        IType stringType2 = m_AppDomain.GetType(typeof(string));//传参的类型
+        IType[] genericArguments2 = new IType[] { stringType2 };//泛型的类型
+        List<IType> paraList = new List<IType>() { stringType2 };//传参的List
+        //GetMethod("泛型方法名", 传进去的参数列表, 泛型类型);
+        IMethod method = type3.GetMethod("GenericMethod", paraList, genericArguments2);
+        m_AppDomain.Invoke(method, null, "Ocean2222222222222");//调用方法

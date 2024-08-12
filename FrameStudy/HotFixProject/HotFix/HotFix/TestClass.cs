@@ -23,24 +23,32 @@ namespace HotFix
         }
         #endregion
 
-        //用于实例化此类的构造函数
+        #region 用于实例化此类的构造函数
         private int m_Id = 0;//默认为0
         public int ID { get { return m_Id; } }
 
         /// <summary>
         /// 无参构造函数
         /// </summary>
-        public TestClass() {
-            Debug.Log("无参构造，ID = " + ID);
-        }
+        public TestClass(){ Debug.Log("无参构造，ID = " + ID); }
 
         /// <summary>
         /// 带参构造函数
         /// </summary>
         /// <param name="id"></param>
-        public TestClass(int id){
+        public TestClass(int id)
+        {
             m_Id = id;
             Debug.Log("带参构造，ID = " + ID);
         }
+        #endregion
+
+        /// <summary>
+        /// 静态泛型方法
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="t"></param>
+        public static void GenericMethod<T>(T t) { Debug.Log("TestClass GenericMethod t=" + t); }
+
     }
 }
