@@ -1,0 +1,72 @@
+热更内部3种委托调用
+
+一、Unity工程里ILRuntimeManager.cs里添加委托函数：
+注：
+在ILRuntimeManager.cs文件里，ILRuntimeManager{}外面添加委托方法：
+ILRuntimeManager{}
+public delegate void TestDelegateMethod(int a);		//普通传参委托
+public delegate string TestDelegateFunction(int b);		//带返回值的委托
+
+二、热更工程HotFix新建测试委托的类：TestDelegate.cs
+1、新建委托类：
+解决方案--选中HotFix右键--添加新项--类：TestDelegate.cs
+生成的新类，类名处，删除关键字：internal，添加public
+public class TestDelegate{}
+
+2、热更工程添加对Unity项目里的委托使用
+为了方便测试，写成静态的方法，静态方法调用委托比较简单，不需要使用到类
+（1）添加委托变量
+1）使用系统自带的委托
+static Action<string> delegateAction;
+2）使用Unity项目里的委托
+static TestDelegateMethod delegateMethod;		//普通传参委托
+static TestDelegateFunction delegateFunction;		//带返回值的委托
+
+（2）委托里添加的方法函数
+static void Action(string str){ Debug.Log("TestDelegate Action str =" + str); }
+static void Method(int a) { Debug.Log("TestDelegate Method a =" + a); }
+static string Function(int b)
+{
+    Debug.Log("TestDelegate Function b =" + b);
+    return b.ToString();
+}
+（3）委托注册
+public static void Initialize()
+{
+    delegateAction = Action;
+    delegateMethod = Method;
+    delegateFunction = Function;
+}
+（4）委托调用
+public static void RunTest()
+{
+    if (delegateAction != null) delegateAction("Ocean");
+    if (delegateMethod != null) delegateMethod(55);
+    if (delegateFunction != null)
+    {
+        string str = delegateFunction(65);
+        Debug.Log("Runtest delegateFunction：" + str);
+    }
+}
+
+三、更新dll：
+1、HotFix热更工程生成dll；
+2、Unity里点击菜单栏“Tools/修改热更dll为bytes”更新dll；
+
+注：觉得原来菜单栏工具名：修改热更dll为bytes，不好看；
+改为：更新Hotfix的dll
+
+四、Unity工程里ILRuntimeManager.cs里调用委托函数：
+m_AppDomain.Invoke("HotFix.TestDelegate", "Initialize", null,null);
+m_AppDomain.Invoke("HotFix.TestDelegate", "RunTest", null, null);//委托调用
+
+五、运行输出：
+TestDelegate Action str =Ocean
+TestDelegate Method a =55
+TestDelegate Function b =65
+Runtest delegateFunction：65
+
+
+
+
+

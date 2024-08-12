@@ -142,7 +142,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         #endregion
 
         #region 调用泛型方法
-
+        /*
         //第一种调用泛型方法，专门的泛型API：InvokeGenericMethod();
         IType stringType = m_AppDomain.GetType(typeof(string));//获取string类型
         IType[] genericArguments = new IType[] { stringType };//构建用于泛型的string数组
@@ -157,8 +157,14 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //GetMethod("泛型方法名", 传进去的参数列表, 泛型类型);
         IMethod method = type3.GetMethod("GenericMethod", paraList, genericArguments2);
         m_AppDomain.Invoke(method, null, "Ocean2222222222222");//调用方法
-
+        */
         #endregion
 
+        //热更内部--使用委托调用
+        m_AppDomain.Invoke("HotFix.TestDelegate", "Initialize", null,null);//委托注册
+        m_AppDomain.Invoke("HotFix.TestDelegate", "RunTest", null, null);//委托调用
     }
 }
+
+public delegate void TestDelegateMethod(int a);//普通传参委托
+public delegate string TestDelegateFunction(int b);//带返回值的委托

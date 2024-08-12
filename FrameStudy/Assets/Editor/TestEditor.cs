@@ -33,7 +33,7 @@ public class TestEditor
     private static string DLLPATH = "Assets/GameData/Data/HotFix/HotFix.dll";
     private static string PDBPATH = "Assets/GameData/Data/HotFix/HotFix.pdb";
 
-    [MenuItem("Tools/修改热更dll为bytes")]
+    [MenuItem("Tools/更新Hotfix的dll")]
     public static void ChangeDllName()
     {
         if (File.Exists(DLLPATH))
