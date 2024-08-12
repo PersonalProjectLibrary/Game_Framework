@@ -1,0 +1,99 @@
+跨域委托--Unity主工程的委托
+
+可热更工程里调用，也可Unity里调用，具体哪里调用无所谓，主要委托定义在主工程
+
+一、在Unity的ILRuntimeManager.cs里添加用于跨域委托的委托变量
+public TestDelegateMethod DelegateMethod;
+public TestDelegateFunction DelegateFunction;
+public System.Action<string> DelegateAction;
+
+
+二、在热更工程HotFix的TestDelegate.cs里添加对Unity主工程里的委托的调用
+4、跨域委托--Unity主程序里的委托注册
+public static void Initialize2()
+{
+        ILRuntimeManager.Instance.DelegateAction = Action;
+        ILRuntimeManager.Instance.DelegateMethod = Method;
+        ILRuntimeManager.Instance.DelegateFunction = Function;
+}
+
+5、跨域委托--Unity主程序里的委托调用
+public static void RunTest2()
+{
+        if (ILRuntimeManager.Instance.DelegateAction != null) 
+            ILRuntimeManager.Instance.DelegateAction("Ocean");
+
+        if (ILRuntimeManager.Instance.DelegateMethod != null)
+            ILRuntimeManager.Instance.DelegateMethod(75);
+
+         if (ILRuntimeManager.Instance.DelegateFunction != null)
+         {
+            string str = ILRuntimeManager.Instance.DelegateFunction(85);
+            Debug.Log("RunTest2 delegateFunction：" + str);
+         }
+}
+
+三、更新热更DLL
+1、HotFix热更工程生成dll；
+2、Unity里点击菜单栏“Tools/修改热更dll为bytes”更新dll；
+
+
+四、跨域委托需要注册适配器，否则上面热更更新后直接运行会报错：
+KeyNotFoundException: 
+Cannot find Delegate Adapter for:HotFix.TestDelegate.Action(System.String str), 
+Please add following code:
+appdomain.DelegateManager.RegisterMethodDelegate<System.String>();
+
+五、解决报错，添加适配器
+在Unity的ILRuntimeManager.cs的InitializeILRuntime()里注册适配器
+void InitializeILRuntime()
+{
+        //----------------------1、默认的委托注册，直接注册--------------------------------
+        //对应由系统提供的Action委托类型：DelegateAction委托，里面参数是string类型
+        m_AppDomain.DelegateManager.RegisterMethodDelegate<string>();
+    
+        /* TestDelegateMetho和TestDelegateFunction是自定义委托，非系统默认委托。
+         *  使用RegisterMethodDelegate或RegisterFunctionDelegate注册使用委托会报错：
+        //1、对应void TestDelegateMethod<int>，委托运行会报错
+        m_AppDomain.DelegateManager.RegisterMethodDelegate<int>();
+        //2、对应 string TestDelegateFunction<int>，委托运行会报错
+        m_AppDomain.DelegateManager.RegisterFunctionDelegate<int,string>();
+         //*/
+
+        //---------------------2、自定义委托或Unity委托注册，使用委托转换器---------------------
+
+        //自定义委托和Unity委托注册，使用委托转换器RegisterDelegateConvertor
+        //通过Lamada表达式，把目标委托转为系统默认的Method、Function委托
+        //注：可参考官方文档--ILRuntime中使用委托
+        //创建委托实例的时候ILRuntime选择了显式注册，同一个参数组合的委托，只需要注册一次即可
+
+        //（1）对应void TestDelegateMethod<int>
+        m_AppDomain.DelegateManager.RegisterDelegateConvertor<TestDelegateMethod>((a) =>
+        {
+             return new TestDelegateMethod((b) =>
+             {
+                  ((System.Action<int>)a)(b);
+              });
+         });
+        //委托转换后，对应的系统委托若之前没注册过，也要注册下
+        m_AppDomain.DelegateManager.RegisterMethodDelegate<int>();
+
+         //（2）对应 string TestDelegateFunction<int,string>
+         m_AppDomain.DelegateManager.RegisterDelegateConvertor<TestDelegateFunction>((a) =>
+         {
+              return new TestDelegateFunction((b) =>
+              {
+                    return ((System.Func<int,string>)a)(b);//有返回值，故这里是Func<int,string>
+              });
+         });
+        //委托转换后，对应的系统委托若之前没注册过，也要注册下
+        m_AppDomain.DelegateManager.RegisterFunctionDelegate<int, string>();
+}
+
+
+六、运行输出
+TestDelegate Action str =Ocean
+TestDelegate Method a =75
+TestDelegate Function b =85
+RunTest2 delegateFunction：85
+

@@ -3,19 +3,24 @@ using System.Collections.Generic;
 using UnityEngine;
 using ILRuntime.Runtime.Enviorment;
 using System.IO;
-using System;
+//using System;
 using ILRuntime.CLR.TypeSystem;
 using ILRuntime.CLR.Method;
-using UnityEngine.Purchasing;
 
 public class ILRuntimeManager : Singleton<ILRuntimeManager>
 {
     /// <summary>
     /// 整个工程只有一个ILRuntime的AppDomain
     /// </summary>
-    ILRuntime.Runtime.Enviorment.AppDomain m_AppDomain;
+    //ILRuntime.Runtime.Enviorment.AppDomain m_AppDomain;
+    AppDomain m_AppDomain;
     private const string DLLPATH = "Assets/GameData/Data/HotFix/HotFix.dll.bytes";
     private const string PDBPATH = "Assets/GameData/Data/HotFix/HotFix.pdb.bytes";
+
+    //测试跨域委托的委托变量
+    public TestDelegateMethod DelegateMethod;
+    public TestDelegateFunction DelegateFunction;
+    public System.Action<string> DelegateAction;
 
     /// <summary>
     /// 代码热更初始化
@@ -30,13 +35,13 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
     /// </summary>
     void LoadHotFixAssembly()
     {
-        m_AppDomain = new ILRuntime.Runtime.Enviorment.AppDomain();
+        //m_AppDomain = new ILRuntime.Runtime.Enviorment.AppDomain();
+        m_AppDomain = new AppDomain();
         //读取热更资源的dll
         TextAsset dllText = ResourceManager.Instance.LoadResource<TextAsset>(DLLPATH);
         //读取PDB文件，调试数据库，主要用于日志报错
         TextAsset pdbText = ResourceManager.Instance.LoadResource<TextAsset>(PDBPATH);
         //读取加载热更库
-
         MemoryStream md = new MemoryStream(dllText.bytes);
         MemoryStream mp = new MemoryStream(pdbText.bytes);
         try
@@ -77,7 +82,50 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
     /// <summary>
     /// 初始化注册ILRuntime的一些注册
     /// </summary>
-    void InitializeILRuntime(){}
+    void InitializeILRuntime()
+    {
+        //----------------------1、默认的委托注册，直接注册--------------------------------
+        //默认的委托注册，仅仅支持系统自带的Action以及Function，
+        //使用RegisterMethodDelegate或RegisterFunctionDelegate
+        //对应由系统提供的Action委托类型：DelegateAction委托，里面参数是string类型
+        m_AppDomain.DelegateManager.RegisterMethodDelegate<string>();
+
+        /* TestDelegateMetho和TestDelegateFunction是自定义委托，非系统默认委托。
+        //1、对应自定义委托：void TestDelegateMethod<int>，委托运行会报错
+        m_AppDomain.DelegateManager.RegisterMethodDelegate<int>();
+        //2、对应自定义委托：string TestDelegateFunction<int,string>，委托运行会报错
+        m_AppDomain.DelegateManager.RegisterFunctionDelegate<int,string>();
+        //*/
+
+        //---------------------2、自定义委托或Unity委托注册，使用委托转换器---------------------
+
+        //自定义委托或Unity委托注册，使用委托转换器RegisterDelegateConvertor
+        //通过Lamada表达式，把目标委托转为系统默认的Method、Function委托
+        //注：可参考官方文档--ILRuntime中使用委托
+        //创建委托实例的时候ILRuntime选择了显式注册，同一个参数组合的委托，只需要注册一次即可
+
+        //（1）对应void TestDelegateMethod<int>
+        m_AppDomain.DelegateManager.RegisterDelegateConvertor<TestDelegateMethod>((a) =>
+        {
+            return new TestDelegateMethod((b) =>
+            {
+                ((System.Action<int>)a)(b);
+            });
+        });
+        //委托转换后，对应的系统委托若之前没注册过，也要注册下
+        m_AppDomain.DelegateManager.RegisterMethodDelegate<int>();
+
+        //（2）对应 string TestDelegateFunction<int,string>
+        m_AppDomain.DelegateManager.RegisterDelegateConvertor<TestDelegateFunction>((a) =>
+        {
+            return new TestDelegateFunction((b) =>
+            {
+                return ((System.Func<int,string>)a)(b);//有返回值，故这里是Func<int,string>
+            });
+        });
+        //委托转换后，对应的系统委托若之前没注册过，也要注册下
+        m_AppDomain.DelegateManager.RegisterFunctionDelegate<int, string>();
+    }
 
     /// <summary>
     /// 用于HotFix的热更加载
@@ -108,7 +156,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         paraList.Add(intType);
         IMethod method2 = type.GetMethod("StaticFuncTest2", paraList, null);
         m_AppDomain.Invoke(method2, null, 15);
-        */
+        //*/
         #endregion
 
         #region 实例化热更工程里的类，类似Unity里new一个类
@@ -138,7 +186,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         Debug.Log("id2 =" + id2);//输出：id2 =35
         //int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, args);//会报错
         //int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, 55);//会报错
-        */
+        //*/
         #endregion
 
         #region 调用泛型方法
@@ -157,14 +205,28 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //GetMethod("泛型方法名", 传进去的参数列表, 泛型类型);
         IMethod method = type3.GetMethod("GenericMethod", paraList, genericArguments2);
         m_AppDomain.Invoke(method, null, "Ocean2222222222222");//调用方法
-        */
+        //*/
         #endregion
 
-        //热更内部--使用委托调用
-        m_AppDomain.Invoke("HotFix.TestDelegate", "Initialize", null,null);//委托注册
+        #region 热更内部--3种委托调用
+        /*
+        m_AppDomain.Invoke("HotFix.TestDelegate", "Initialize", null, null);//委托注册
         m_AppDomain.Invoke("HotFix.TestDelegate", "RunTest", null, null);//委托调用
+        //*/
+        #endregion
+
+        #region 跨域委托--Unity主工程的委托
+        //可热更工程里调用，也可Unity里调用，具体哪里调用无所谓，主要委托定义在主工程
+        m_AppDomain.Invoke("HotFix.TestDelegate", "Initialize2", null, null);//委托注册
+        m_AppDomain.Invoke("HotFix.TestDelegate", "RunTest2", null, null);//委托调用
+        #endregion
+
     }
 }
 
+/// <summary>
+/// 测试热更内部的3种委托调用的自定义委托
+/// </summary>
+/// <param name="a"></param>
 public delegate void TestDelegateMethod(int a);//普通传参委托
 public delegate string TestDelegateFunction(int b);//带返回值的委托

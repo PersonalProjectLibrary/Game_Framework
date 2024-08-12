@@ -25,16 +25,29 @@ namespace HotFix
             Debug.Log("TestDelegate Function b =" + b);
             return b.ToString();
         }
-        
-        //4、委托注册
+
+        /// <summary>
+        /// 4、热更内部--委托注册
+        /// </summary>
         public static void Initialize()
         {
             delegateAction = Action;
             delegateMethod = Method;
             delegateFunction = Function;
         }
+        /// <summary>
+        /// 4、跨域委托--Unity主程序里的委托注册
+        /// </summary>
+        public static void Initialize2()
+        {
+            ILRuntimeManager.Instance.DelegateAction = Action;
+            ILRuntimeManager.Instance.DelegateMethod = Method;
+            ILRuntimeManager.Instance.DelegateFunction = Function;
+        }
 
-        //5、委托调用
+        /// <summary>
+        /// 5、热更内部--委托调用
+        /// </summary>
         public static void RunTest()
         {
             if (delegateAction != null) delegateAction("Ocean");
@@ -42,7 +55,23 @@ namespace HotFix
             if (delegateFunction != null)
             {
                 string str = delegateFunction(65);
-                Debug.Log("Runtest delegateFunction：" + str);
+                Debug.Log("RunTest delegateFunction：" + str);
+            }
+        }
+
+        /// <summary>
+        /// 5、跨域委托--Unity主程序里的委托调用
+        /// </summary>
+        public static void RunTest2()
+        {
+            if (ILRuntimeManager.Instance.DelegateAction != null) 
+                ILRuntimeManager.Instance.DelegateAction("Ocean");
+            if (ILRuntimeManager.Instance.DelegateMethod != null)
+                ILRuntimeManager.Instance.DelegateMethod(75);
+            if (ILRuntimeManager.Instance.DelegateFunction != null)
+            {
+                string str = ILRuntimeManager.Instance.DelegateFunction(85);
+                Debug.Log("RunTest2 delegateFunction：" + str);
             }
         }
     }
