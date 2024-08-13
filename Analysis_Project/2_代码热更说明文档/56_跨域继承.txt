@@ -1,0 +1,181 @@
+一、Unity工程里写用于继承使用的基类
+在ILRuntimeManager.cs文件里，ILRuntimeManager{}外面添加继承用的基类
+
+// 测试继承用的基类
+public abstract class TestInheritanceBase
+{
+    // 虚方法
+    public virtual void TestVirtual(string str)
+    {
+        Debug.Log("TestClassBase TestVirtual str = "+str);
+    }
+    public virtual int Value { get { return 0; } } // 虚变量
+    public abstract void TestAbstract(int a);// 抽象方法
+}
+
+二、热更工程HotFix新建测试继承用的类：TestInheritance.cs
+1、新建继承的子类：
+解决方案--选中HotFix右键--添加新项--类：TestInheritance .cs
+生成的新类，类名处，删除关键字：internal，添加public，继承TestClassBase.cs
+
+2、完善继承基类的子类
+public class TestInheritance : TestInheritanceBase
+{
+    public override void TestAbstract(int a)
+    {
+        Debug.Log("TestInheritance TestAbstract a = " + a);
+    }
+
+    public override void TestVirtual(string str)
+    {
+        base.TestVirtual(str);
+        Debug.Log("TestInheritance TestVirtual str = " + str);
+    }
+}
+
+三、更新dll
+1、HotFix热更工程生成dll；
+2、Unity里点击菜单栏“更新Hotfix的dll”更新dll；
+
+四、Unity工程里ILRuntimeManager.cs里OnHotFixLoaded()里做跨域继承的实例化
+TestInheritanceBase obj = m_AppDomain.Instantiate<TestInheritanceBase>("HotFix.TestInheritance");
+
+五、运行报错：
+TypeLoadException: Cannot find Adaptor for:TestInheritanceBase
+ILRuntime.CLR.TypeSystem.ILType.InitializeBaseType ()
+原因：跨域继承需要适配器和适配类
+解决方法：写继承类的适配器的类、真正适配转化调用的类，这两个类
+
+六、写继承类的适配器的类、真正适配转化调用的类
+在ILRuntimeManager.cs文件里，ILRuntimeManager{}外面TestInheritanceBase{}下面添加类
+这里做个简单示例。后续根据需求再完善增加等
+
+1、添加继承类的适配器的类：public class InheritanceAdapter : CrossBindingAdaptor{}
+public class InheritanceAdapter : CrossBindingAdaptor
+{
+    public override System.Type BaseCLRType
+    {
+        get { return typeof(TestInheritanceBase); }//返回想要继承的类
+    }
+    public override System.Type AdaptorType
+    {
+        get { return typeof(Adapter); }//实际的适配器类
+    }
+    public override object CreateCLRInstance(AppDomain appdomain, ILTypeInstance instance)
+    {
+        return new Adapter(appdomain,instance);//返回新的适配器对象
+    }
+    //因为跨域继承只有一个Adapter，因避免一个类同时实现多个外部接口
+    public override System.Type[] BaseCLRTypes => base.BaseCLRTypes;
+}
+
+2、真正适配转化调用的类：class Adapter : TestInheritanceBase, CrossBindingAdaptorType{}
+适配类，方便起见，建议写到各自适配器的类里，这里就写在InheritanceAdapter类里
+class Adapter : TestInheritanceBase, CrossBindingAdaptorType
+{
+    private AppDomain m_AppDomain;
+    private ILTypeInstance m_Instance;
+    private IMethod m_TestAbstract;//重写的抽象方法
+    private IMethod m_TestVirtual;//重写的虚方法
+    private IMethod m_GetValue;//重写的属性
+    private IMethod m_ToString;//适配器里必须要重写tostring方法！！！
+    private object[] param1 = new object[1];//重写方法时有参数时，使用的辅助数组
+    
+    private bool m_TestVirtualInvoking = false;// m_TestVirtual虚函数是否在被调用中
+    private bool m_GetValueInvoking = false;// m_GetValue虚成员变量是否在被调用中
+
+    public Adapter() { }//无参构造函数
+    public Adapter(AppDomain appdomain, ILTypeInstance instance)//有参构造函数
+    {
+        m_AppDomain = appdomain;
+        m_Instance = instance;
+    }
+    public ILTypeInstance ILInstance
+    {
+        get { return m_Instance; }
+    }
+    //在适配器中重写所有需要在热更脚本重写的方法，并且将控制权转移到脚本里去
+    // 重写HotFix里TestInheritance的抽象方法TestAbstract()方法
+    public override void TestAbstract(int a)
+    {
+        if(m_TestAbstract == null) m_TestAbstract = m_Instance.Type.GetMethod("TestAbstract", 1);
+        if (m_TestAbstract != null)//控制权转移
+        {
+            param1[0] = a;
+            m_AppDomain.Invoke(m_TestAbstract, m_Instance, param1);
+        }
+    }
+    // 重写HotFix里TestInheritance的虚方法TestVirtual()方法
+    public override void TestVirtual(string str)
+    {
+        if (m_TestVirtual == null) m_TestVirtual = m_Instance.Type.GetMethod("TestVirtual", 1);
+        //必须要设定一个标识位来表示当前是否在调用中，避免不同自身调用自身导致死循环
+        if (m_TestVirtual != null &&!m_TestVirtualInvoking)
+        {
+            m_TestVirtualInvoking = true;
+            param1[0] = str;
+            m_AppDomain.Invoke(m_TestVirtual, m_Instance, param1);
+            m_TestVirtualInvoking = false;
+        }
+        else base.TestVirtual(str);
+    }
+    // 重写HotFix里TestInheritance的虚变量Value
+    public override int Value
+    {
+        get
+        {
+            if (m_GetValue == null) m_GetValue = m_Instance.Type.GetMethod("get_Value", 1);
+            if (m_GetValue != null && !m_GetValueInvoking)
+            {
+                m_GetValueInvoking = true;
+                int res = (int)m_AppDomain.Invoke(m_GetValue, m_Instance, null);
+                m_GetValueInvoking = false;
+                return res;
+            }
+            else return base.Value;
+        }
+    }
+    // 重写ToString,可以不要考虑为什么这样写，官方写法，直接复制到适配器里就好
+    public override string ToString()
+    {
+        if (m_ToString == null) m_ToString = m_AppDomain.ObjectType.GetMethod("ToString", 0);
+        IMethod m = m_Instance.Type.GetVirtualMethod(m_ToString);
+        if (m == null || m is ILMethod) return m_Instance.ToString();
+        else return m_Instance.Type.FullName;
+    }
+
+说明：
+Invoke、GeMethod里获取属性ID、Value使用get_ID、get_Value的写法：
+是因为编译软件，属性编译后会变成一个方法，前面会加一个下划线，
+就转变为：get_属性、set_属性，
+所以书写时是这种写法
+
+七、注册适配器，适配器写好要记得注册
+在ILRuntimeManager的InitializeILRuntime()方法里注册跨域继承
+InheritanceAdapter继承了CrossBindingAdaptor，
+所以这里直接.RegisterCrossBindingAdaptor 注册适配器InheritanceAdapter
+
+m_AppDomain.RegisterCrossBindingAdaptor(new InheritanceAdapter());
+
+八、测试跨域继承的实现
+前面在第四步骤里，已经做了在OnHotFixLoaded()里做跨域继承的实例化
+第六七步骤里，写了继承类的适配器和注册适配器。
+这里直接点运行，进行测试即可，可看到没有报错，继承类实例化成功。
+
+九，调用跨域继承类里的方法
+在ILRuntimeManager的OnHotFixLoaded()里添加跨域继承类的方法的调用：
+在跨域继承的实例化下面添加：
+obj.TestAbstract(556);
+obj.TestVirtual("Ocean");
+
+点击运行可以看到输出：
+TestInheritance TestAbstract a = 556
+TestClassBase TestVirtual str = Ocean
+TestInheritance TestVirtual str = Ocean
+
+
+
+
+
+
+

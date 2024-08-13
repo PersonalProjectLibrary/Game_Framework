@@ -59,6 +59,11 @@ ILRuntime自带一些API来创建类，可以参考官方文档说明
         //int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, args);//会报错
         //int id2 = (int)m_AppDomain.Invoke("HotFix.TestClass", "get_ID", obj4, 55);//会报错
 
+说明：
+Invoke里获取属性ID使用get_ID的写法：
+是因为编译软件，属性编译后会变成一个方法，前面会加一个下划线，
+就转变为：get_属性、set_属性，
+所以书写时是这种写法
 
 
 
