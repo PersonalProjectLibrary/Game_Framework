@@ -1,0 +1,134 @@
+1、Unity主工程的ILRuntimeManager脚本里：继承基类TestInheritanceBase
+public abstract class TestInheritanceBase
+{
+    public virtual void TestVirtual(string str)
+    {
+        Debug.Log("TestClassBase TestVirtual str = "+str);
+    }
+    public virtual int Value { get { return 0; } }
+    public abstract void TestAbstract(int a);
+}
+
+2、HotFix工程里继承类TestInheritance
+public class TestInheritance : TestInheritanceBase
+{
+    public override void TestAbstract(int a)
+    {
+        Debug.Log("TestInheritance TestAbstract a = " + a);
+    }
+    public override void TestVirtual(string str)
+    {
+        base.TestVirtual(str);
+        Debug.Log("TestInheritance TestVirtual str = " + str);
+    }
+     public static TestInheritance NewObject()
+    {
+         return new TestInheritance();
+    }
+}
+
+然后生成更新HotFix.dll
+
+3、继承类的适配器类InheritanceAdapter和适配器Adapter
+public class InheritanceAdapter : CrossBindingAdaptor
+{
+    public override System.Type BaseCLRType
+    {
+        get { return typeof(TestInheritanceBase); }//返回想要继承的类
+    }
+    public override System.Type AdaptorType
+    {
+        get { return typeof(Adapter); }//实际的适配器类
+    }
+    public override object CreateCLRInstance(AppDomain appdomain, ILTypeInstance instance)
+    {
+        return new Adapter(appdomain,instance);//返回新的适配器对象
+    }
+    public override System.Type[] BaseCLRTypes => base.BaseCLRTypes;
+
+    //实际的适配器类
+    class Adapter : TestInheritanceBase, CrossBindingAdaptorType
+    {
+        private AppDomain m_AppDomain;
+        private ILTypeInstance m_Instance;
+        private IMethod m_TestAbstract;//重写的抽象方法
+        private IMethod m_TestVirtual;//重写的虚方法
+        private IMethod m_GetValue;//重写的属性
+        private IMethod m_ToString;//适配器里必须要重写tostring方法！！！
+        private object[] param1 = new object[1];//重写方法时有参数时，使用的辅助数组
+        private bool m_TestVirtualInvoking = false;
+        private bool m_GetValueInvoking = false;
+
+        public Adapter() { }//无参构造函数
+        public Adapter(AppDomain appdomain, ILTypeInstance instance)//有参构造函数
+        {
+            m_AppDomain = appdomain;
+            m_Instance = instance;
+        }
+        public ILTypeInstance ILInstance
+        {
+            get { return m_Instance; }
+        }
+        public override void TestAbstract(int a)
+        {
+            if(m_TestAbstract == null) m_TestAbstract = m_Instance.Type.GetMethod("TestAbstract", 1);
+            if (m_TestAbstract != null)
+            {
+                param1[0] = a;
+                m_AppDomain.Invoke(m_TestAbstract, m_Instance, param1);
+            }
+        }
+        public override void TestVirtual(string str)
+        {
+            if (m_TestVirtual == null) m_TestVirtual = m_Instance.Type.GetMethod("TestVirtual", 1);
+            if (m_TestVirtual != null &&!m_TestVirtualInvoking)
+            {
+                m_TestVirtualInvoking = true;
+                param1[0] = str;
+                m_AppDomain.Invoke(m_TestVirtual, m_Instance, param1);
+                m_TestVirtualInvoking = false;
+            }
+            else base.TestVirtual(str);
+        }
+        public override int Value
+        {
+            get
+            {
+                if (m_GetValue == null) m_GetValue = m_Instance.Type.GetMethod("get_Value", 1);
+                if (m_GetValue != null && !m_GetValueInvoking)
+                {
+                    m_GetValueInvoking = true;
+                    int res = (int)m_AppDomain.Invoke(m_GetValue, m_Instance, null);
+                    m_GetValueInvoking = false;
+                    return res;
+                }
+                else return base.Value;
+            }
+        }
+        public override string ToString()
+        {
+            if (m_ToString == null) m_ToString = m_AppDomain.ObjectType.GetMethod("ToString", 0);
+            IMethod m = m_Instance.Type.GetVirtualMethod(m_ToString);
+            if (m == null || m is ILMethod) return m_Instance.ToString();
+            else return m_Instance.Type.FullName;
+        }
+    }
+}
+
+4、跨域继承类的适配器类的注册
+Unity主工程的ILRuntimeManager里的InitializeILRuntime()里添加：
+m_AppDomain.RegisterCrossBindingAdaptor(new InheritanceAdapter());
+
+5、跨域继承类的实例化和继承类里的方法调用
+Unity主工程的ILRuntimeManager里的OnHotFixLoaded()里添加：
+（1）第一种跨域继承实例化和调用
+//实例化跨域继承对象
+TestInheritanceBase obj = m_AppDomain.Instantiate<TestInheritanceBase>("HotFix.TestInheritance");
+//调用跨域继承里的方法
+obj.TestAbstract(556);
+obj.TestVirtual("Ocean");
+
+（2）第二种跨域继承实例化和调用
+TestInheritanceBase obj2 = m_AppDomain.Invoke("HotFix.TestInheritance", "NewObject", null, null) as TestInheritanceBase;
+obj2.TestAbstract(721);
+obj2.TestVirtual("Ocean123");

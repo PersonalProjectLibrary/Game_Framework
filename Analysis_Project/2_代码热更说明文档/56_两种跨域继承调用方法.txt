@@ -173,6 +173,55 @@ TestInheritance TestAbstract a = 556
 TestClassBase TestVirtual str = Ocean
 TestInheritance TestVirtual str = Ocean
 
+关于跨域继承调用：
+这里只考虑HotFix的继承子类和ILRuntimeManager里对继承类的实例化和调用；
+关于继承类的适配器类都一样，未做修改。
+
+一、第一种跨域继承调用：
+1、在HotFix工程的新建TestInheritance类继承TestInheritanceBase类：
+public class TestInheritance : TestInheritanceBase
+{
+    public override void TestAbstract(int a)
+    {
+        Debug.Log("TestInheritance TestAbstract a = " + a);
+    }
+    public override void TestVirtual(string str)
+    {
+        base.TestVirtual(str);
+        Debug.Log("TestInheritance TestVirtual str = " + str);
+    }
+}
+
+2、Unity工程里ILRuntimeManager.cs里OnHotFixLoaded()里做跨域继承的实例化和调用
+TestInheritanceBase obj = m_AppDomain.Instantiate<TestInheritanceBase>("HotFix.TestInheritance");
+obj.TestAbstract(556);
+obj.TestVirtual("Ocean");
+
+3、点击运行可以看到输出：
+TestInheritance TestAbstract a = 556
+TestClassBase TestVirtual str = Ocean
+TestInheritance TestVirtual str = Ocean
+
+二、第二种跨域继承调用：
+（这里基于第一种跨域继承完成的情况下，新增方法语句，实现第二种跨域继承的调用）
+通过继承类里的静态方法，来实现对继承类及其内部方法的调用
+
+1、在HotFix工程的TestInheritance类里添加静态方法，获取继承类：
+public static TestInheritance NewObject()
+{
+    return new TestInheritance();
+}
+
+2、Unity主工程的ILRuntimeManager里的OnHotFixLoaded()里添加：
+TestInheritanceBase obj2 = m_AppDomain.Invoke("HotFix.TestInheritance", "NewObject", null, null) as TestInheritanceBase;
+obj2.TestAbstract(721);
+obj2.TestVirtual("Ocean123");
+
+4、点击运行，可得到输出
+TestInheritance TestAbstract a = 721
+TestClassBase TestVirtual str = Ocean123
+TestInheritance TestVirtual str = Ocean123
+
 
 
 

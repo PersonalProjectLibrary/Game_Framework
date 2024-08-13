@@ -260,12 +260,21 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //*/
         #endregion
 
-        #region 5、跨域继承
+        #region 5、跨域继承调用
+        //跨域继承的第一种调用
+        /*
         //实例化跨域继承对象
         TestInheritanceBase obj = m_AppDomain.Instantiate<TestInheritanceBase>("HotFix.TestInheritance");
         //调用跨域继承里的方法
         obj.TestAbstract(556);
         obj.TestVirtual("Ocean");
+        //*/
+
+        //跨域继承的第二种调用
+        //通过继承类里的静态方法，来实现对继承类的实例化，除了下面方法，也可以使用其他实例化静态方法的方式调用
+        TestInheritanceBase obj2 = m_AppDomain.Invoke("HotFix.TestInheritance", "NewObject", null, null) as TestInheritanceBase;
+        obj2.TestAbstract(721);
+        obj2.TestVirtual("Ocean123");
         #endregion
 
     }

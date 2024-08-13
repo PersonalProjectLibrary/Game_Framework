@@ -15,5 +15,11 @@ namespace HotFix
             base.TestVirtual(str);
             Debug.Log("TestInheritance TestVirtual str = " + str);
         }
+
+        //通过继承类里的静态方法，来实现对继承类的实例化
+        public static TestInheritance NewObject()
+        {
+            return new TestInheritance();
+        }
     }
 }
