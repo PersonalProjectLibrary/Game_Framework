@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using ILRuntime.Runtime.Enviorment;
 using System.IO;
-//using System;
 using ILRuntime.CLR.TypeSystem;
 using ILRuntime.CLR.Method;
+using ILRuntime.Runtime.Intepreter;
 
 public class ILRuntimeManager : Singleton<ILRuntimeManager>
 {
     /// <summary>
     /// 整个工程只有一个ILRuntime的AppDomain
     /// </summary>
-    //ILRuntime.Runtime.Enviorment.AppDomain m_AppDomain;
     AppDomain m_AppDomain;
     private const string DLLPATH = "Assets/GameData/Data/HotFix/HotFix.dll.bytes";
     private const string PDBPATH = "Assets/GameData/Data/HotFix/HotFix.pdb.bytes";
@@ -35,6 +34,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
     /// </summary>
     void LoadHotFixAssembly()
     {
+        #region 加载热更程序集
         //m_AppDomain = new ILRuntime.Runtime.Enviorment.AppDomain();
         m_AppDomain = new AppDomain();
         //读取热更资源的dll
@@ -52,6 +52,8 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         {
             Debug.LogError("加载热更DLL失败，请确保已经通过VS打开HotFixProject/HotFix.sln编译过热更DLL");
         }
+        #endregion
+
         InitializeILRuntime();
         OnHotFixLoaded();
     }
@@ -84,26 +86,27 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
     /// </summary>
     void InitializeILRuntime()
     {
-        //----------------------1、默认的委托注册，直接注册--------------------------------
+        #region 1、默认的委托注册，直接注册
         //默认的委托注册，仅仅支持系统自带的Action以及Function，
         //使用RegisterMethodDelegate或RegisterFunctionDelegate
         //对应由系统提供的Action委托类型：DelegateAction委托，里面参数是string类型
         m_AppDomain.DelegateManager.RegisterMethodDelegate<string>();
 
+        //错误写法
         /* TestDelegateMetho和TestDelegateFunction是自定义委托，非系统默认委托。
         //1、对应自定义委托：void TestDelegateMethod<int>，委托运行会报错
         m_AppDomain.DelegateManager.RegisterMethodDelegate<int>();
         //2、对应自定义委托：string TestDelegateFunction<int,string>，委托运行会报错
         m_AppDomain.DelegateManager.RegisterFunctionDelegate<int,string>();
         //*/
+        #endregion
 
-        //---------------------2、自定义委托或Unity委托注册，使用委托转换器---------------------
-
+        #region 2、自定义委托或Unity委托注册，使用委托转换器
         //自定义委托或Unity委托注册，使用委托转换器RegisterDelegateConvertor
         //通过Lamada表达式，把目标委托转为系统默认的Method、Function委托
         //注：可参考官方文档--ILRuntime中使用委托
         //创建委托实例的时候ILRuntime选择了显式注册，同一个参数组合的委托，只需要注册一次即可
-
+        /*
         //（1）对应void TestDelegateMethod<int>
         m_AppDomain.DelegateManager.RegisterDelegateConvertor<TestDelegateMethod>((a) =>
         {
@@ -120,14 +123,17 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         {
             return new TestDelegateFunction((b) =>
             {
-                return ((System.Func<int,string>)a)(b);//有返回值，故这里是Func<int,string>
+                return ((System.Func<int, string>)a)(b);//有返回值，故这里是Func<int,string>
             });
         });
         //委托转换后，对应的系统委托若之前没注册过，也要注册下
         m_AppDomain.DelegateManager.RegisterFunctionDelegate<int, string>();
+        //*/
+        #endregion
 
-        //---------------------3、Unity自带事件注册，使用委托转换器---------------------
+        #region 3、Unity自带事件注册，使用委托转换器
         //注册Unity事件--UnityAction<bool>事件的注册，如Toggle事件
+        /*
         m_AppDomain.DelegateManager.RegisterDelegateConvertor<UnityEngine.Events.UnityAction<bool>>((a) =>
         {
             return new UnityEngine.Events.UnityAction<bool>((b) =>
@@ -136,6 +142,14 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
             });
         });
         m_AppDomain.DelegateManager.RegisterMethodDelegate<bool>();
+        //*/
+        #endregion
+
+        #region 跨域继承的注册
+        //InheritanceAdapter继承了CrossBindingAdaptor，
+        //所以这里直接.RegisterCrossBindingAdaptor 注册适配器InheritanceAdapter
+        m_AppDomain.RegisterCrossBindingAdaptor(new InheritanceAdapter());
+        #endregion
     }
 
     /// <summary>
@@ -143,7 +157,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
     /// </summary>
     void OnHotFixLoaded()
     {
-        #region 热更工程静态方法调用：2种方法，4种写法
+        #region 1、热更工程静态方法调用：2种方法，4种写法
         /*
         //第一种热更工程里方法的调用：每次先反射获取方法所在的类，然后再调用反射类里的方法
         m_AppDomain.Invoke("HotFix.TestClass", "StaticFunTest", null, null);
@@ -170,7 +184,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //*/
         #endregion
 
-        #region 实例化热更工程里的类，类似Unity里new一个类
+        #region 2、实例化热更工程里的类，类似Unity里new一个类
         //ILRuntime自带一些API来创建类，可以参考官方文档说明
         /*
         //第一种实例化方式：直接实例化
@@ -200,7 +214,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //*/
         #endregion
 
-        #region 调用泛型方法
+        #region 3、调用泛型方法
         /*
         //第一种调用泛型方法，专门的泛型API：InvokeGenericMethod();
         IType stringType = m_AppDomain.GetType(typeof(string));//获取string类型
@@ -219,37 +233,196 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //*/
         #endregion
 
-        #region 热更内部--3种委托调用
+        #region 4、热更内部委托和跨域委托
+        //----------------------热更内部--3种委托调用-----------------------------------
         /*
         m_AppDomain.Invoke("HotFix.TestDelegate", "Initialize", null, null);//委托注册
         m_AppDomain.Invoke("HotFix.TestDelegate", "RunTest", null, null);//委托调用
         //*/
-        #endregion
 
-        #region 跨域委托--Unity主工程的委托
+        //----------------------跨域委托--Unity主工程的委托----------------------------------
         //可热更工程里调用，也可Unity里调用，具体哪里调用无所谓，主要委托定义在主工程
         /*
         m_AppDomain.Invoke("HotFix.TestDelegate", "Initialize2", null, null);//委托注册
         m_AppDomain.Invoke("HotFix.TestDelegate", "RunTest2", null, null);//委托调用
         //*/
-        #endregion
 
-        #region 跨域委托注册--Unity里直接使用注册过的热更事件
+        //--------------------跨域委托注册--Unity里直接使用注册过的热更事件--------------------------
+        /*
         m_AppDomain.Invoke("HotFix.TestDelegate", "Initialize2", null, null);//委托注册
         if (DelegateMethod != null) DelegateMethod(666);
         if (DelegateFunction != null)
         {
             string str = DelegateFunction(789);
-            Debug.Log("DelegateFuntion："+str);
+            Debug.Log("DelegateFuntion：" + str);
         }
         if (DelegateAction != null) DelegateAction("Ocean666");
+        //*/
         #endregion
+
+        #region 5、跨域继承
+        //实例化跨域继承对象
+        TestInheritanceBase obj = m_AppDomain.Instantiate<TestInheritanceBase>("HotFix.TestInheritance");
+        //调用跨域继承里的方法
+        obj.TestAbstract(556);
+        obj.TestVirtual("Ocean");
+        #endregion
+
     }
 }
 
 /// <summary>
-/// 测试热更内部的3种委托调用的自定义委托
+/// 测试委托调用的自定义委托
 /// </summary>
 /// <param name="a"></param>
 public delegate void TestDelegateMethod(int a);//普通传参委托
 public delegate string TestDelegateFunction(int b);//带返回值的委托
+
+/// <summary>
+/// 测试继承用的基类
+/// </summary>
+public abstract class TestInheritanceBase
+{
+    /// <summary>
+    /// 虚方法
+    /// </summary>
+    /// <param name="str"></param>
+    public virtual void TestVirtual(string str)
+    {
+        Debug.Log("TestClassBase TestVirtual str = "+str);
+    }
+
+    /// <summary>
+    /// 虚变量
+    /// </summary>
+    public virtual int Value { get { return 0; } }
+    /// <summary>
+    /// 抽象方法
+    /// </summary>
+    /// <param name="a"></param>
+    public abstract void TestAbstract(int a);
+}
+
+/// <summary>
+/// 跨域继承类的适配器类
+/// </summary>
+public class InheritanceAdapter : CrossBindingAdaptor
+{
+    public override System.Type BaseCLRType
+    {
+        get { return typeof(TestInheritanceBase); }//返回想要继承的类
+    }
+
+    public override System.Type AdaptorType
+    {
+        get { return typeof(Adapter); }//实际的适配器类
+    }
+
+    public override object CreateCLRInstance(AppDomain appdomain, ILTypeInstance instance)
+    {
+        return new Adapter(appdomain,instance);//返回新的适配器对象
+    }
+
+    //因为跨域继承只有一个Adapter，因避免一个类同时实现多个外部接口
+    public override System.Type[] BaseCLRTypes => base.BaseCLRTypes;
+
+    //实际的适配器类
+    class Adapter : TestInheritanceBase, CrossBindingAdaptorType
+    {
+        private AppDomain m_AppDomain;
+        private ILTypeInstance m_Instance;
+        private IMethod m_TestAbstract;//重写的抽象方法
+        private IMethod m_TestVirtual;//重写的虚方法
+        private IMethod m_GetValue;//重写的属性
+        private IMethod m_ToString;//适配器里必须要重写tostring方法！！！
+        private object[] param1 = new object[1];//重写方法时有参数时，使用的辅助数组
+        /// <summary>
+        /// m_TestVirtual虚函数是否在被调用中
+        /// </summary>
+        private bool m_TestVirtualInvoking = false;
+        private bool m_GetValueInvoking = false;
+
+        
+        public Adapter() { }//无参构造函数
+        public Adapter(AppDomain appdomain, ILTypeInstance instance)//有参构造函数
+        {
+            m_AppDomain = appdomain;
+            m_Instance = instance;
+        }
+        public ILTypeInstance ILInstance
+        {
+            get { return m_Instance; }
+        }
+
+        //在适配器中重写所有需要在热更脚本重写的方法，并且将控制权转移到脚本里去
+        /// <summary>
+        /// 重写HotFix里TestInheritance的抽象方法TestAbstract()方法
+        /// </summary>
+        /// <param name="a"></param>
+        public override void TestAbstract(int a)
+        {
+            if(m_TestAbstract == null) m_TestAbstract = m_Instance.Type.GetMethod("TestAbstract", 1);
+            //控制权转移
+            if (m_TestAbstract != null)
+            {
+                param1[0] = a;
+                m_AppDomain.Invoke(m_TestAbstract, m_Instance, param1);
+            }
+        }
+        /// <summary>
+        /// 重写HotFix里TestInheritance的虚方法TestVirtual()方法
+        /// </summary>
+        /// <param name="str"></param>
+        public override void TestVirtual(string str)
+        {
+            if (m_TestVirtual == null) m_TestVirtual = m_Instance.Type.GetMethod("TestVirtual", 1);
+            //必须要设定一个标识位来表示当前是否在调用中，避免不同自身调用自身导致死循环
+            if (m_TestVirtual != null &&!m_TestVirtualInvoking)
+            {
+                m_TestVirtualInvoking = true;
+                param1[0] = str;
+                m_AppDomain.Invoke(m_TestVirtual, m_Instance, param1);
+                m_TestVirtualInvoking = false;
+            }
+            else base.TestVirtual(str);
+        }
+        /// <summary>
+        /// 重写HotFix里TestInheritance的虚变量Value
+        /// </summary>
+        public override int Value
+        {
+            get
+            {
+                if (m_GetValue == null) m_GetValue = m_Instance.Type.GetMethod("get_Value", 1);
+                if (m_GetValue != null && !m_GetValueInvoking)
+                {
+                    m_GetValueInvoking = true;
+                    int res = (int)m_AppDomain.Invoke(m_GetValue, m_Instance, null);
+                    m_GetValueInvoking = false;
+                    return res;
+                }
+                else return base.Value;
+            }
+        }
+        /// <summary>
+        /// 重写ToString,可以不要考虑为什么这样写，官方写法，直接复制到适配器里就好
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            if (m_ToString == null) m_ToString = m_AppDomain.ObjectType.GetMethod("ToString", 0);
+            IMethod m = m_Instance.Type.GetVirtualMethod(m_ToString);
+            if (m == null || m is ILMethod) return m_Instance.ToString();
+            else return m_Instance.Type.FullName;
+        }
+    }
+}
+
+#region 说明
+/*
+Invoke、GeMethod里获取属性ID、Value使用get_ID、get_Value的写法：
+是因为编译软件，属性编译后会变成一个方法，前面会加一个下划线，
+就转变为：get_属性、set_属性，
+所以书写时是这种写法
+ */
+#endregion
