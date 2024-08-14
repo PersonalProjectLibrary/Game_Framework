@@ -279,6 +279,11 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //*/
         #endregion
 
+        #region CLR绑定测试
+        long startTime = System.DateTime.Now.Ticks;//当前时间
+        m_AppDomain.Invoke("HotFix.TestCLRBinding", "RunTest", null,null);
+        Debug.Log("未绑定CLR时的测试运行时间：" + (System.DateTime.Now.Ticks - startTime));
+        #endregion
     }
 }
 
@@ -288,6 +293,15 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
 /// <param name="a"></param>
 public delegate void TestDelegateMethod(int a);//普通传参委托
 public delegate string TestDelegateFunction(int b);//带返回值的委托
+
+#region 说明
+/*
+Invoke、GeMethod里获取属性ID、Value使用get_ID、get_Value的写法：
+是因为编译软件，属性编译后会变成一个方法，前面会加一个下划线，
+就转变为：get_属性、set_属性，
+所以书写时是这种写法
+ */
+#endregion
 
 /// <summary>
 /// 测试继承用的基类
@@ -429,11 +443,13 @@ public class InheritanceAdapter : CrossBindingAdaptor
     }
 }
 
-#region 说明
-/*
-Invoke、GeMethod里获取属性ID、Value使用get_ID、get_Value的写法：
-是因为编译软件，属性编译后会变成一个方法，前面会加一个下划线，
-就转变为：get_属性、set_属性，
-所以书写时是这种写法
- */
-#endregion
+/// <summary>
+/// 测试CLR的类
+/// </summary>
+public class CLRBindingTestClass
+{
+    public static float DoSomeTest(int a,float b)
+    {
+        return a + b;
+    }
+}

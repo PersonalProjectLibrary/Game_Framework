@@ -1,0 +1,48 @@
+一、Unity主工程里添加测试CLR的方法
+依旧是写在ILRuntimeManager.cs文件里，ILRuntimeManager{}外的类：
+public class CLRBindingTestClass
+{
+    public static float DoSomeTest(int a,float b) { return a + b; }
+}
+
+二、HotFix工程新建测试CLR绑定的类
+解决方案--选中HotFix右键--添加新项--类：TestCLRBinding.cs
+生成的新类，类名处，删除关键字：internal，添加public
+添加方法，来调用Unity热更工程里的测试方法：
+public class TestCLRBinding
+{
+    public static void RunTest()
+    {
+        for (int i = 0; i < 100000; i++) { CLRBindinTestClass.DoSomeTest(i, i); }
+    }
+}
+
+三、准备工作
+1、这里整理了下文件夹，
+将Assets/Editor文件夹下的ILRuntimeMenu.cs和ILRuntimeCLRBinding.cs
+移到Assets/ILRuntime/Editor文件夹里
+2、清除Unity工程里Assets/ILRuntime/Generated文件夹里之前生成的CLR生成文件
+3、重新生成下HotFix的dll文件，并更新Unity项目里的HotFix的dll文件
+
+4、未绑定CLR时的测试运行速度
+在ILRuntimeManager.cs的OnHotFixLoaded()里添加对CLR测试方法的调用
+long startTime = System.DateTime.Now.Ticks;//当前时间
+m_AppDomain.Invoke("HotFix.TestCLRBinding", "RunTest", null,null);
+Debug.Log("未绑定CLR时的测试运行时间：" + (System.DateTime.Now.Ticks - startTime));
+输出：未绑定CLR时的测试运行时间：6442163
+
+5、绑定CLR时的测试运行速度
+
+
+
+
+
+
+
+
+
+
+
+
+
+
