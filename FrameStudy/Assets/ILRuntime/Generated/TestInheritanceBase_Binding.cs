@@ -18,40 +18,39 @@ using AutoList = ILRuntime.Other.UncheckedList<object>;
 #endif
 namespace ILRuntime.Runtime.Generated
 {
-    unsafe class CLRBindingTestClass_Binding
+    unsafe class TestInheritanceBase_Binding
     {
         public static void Register(ILRuntime.Runtime.Enviorment.AppDomain app)
         {
             BindingFlags flag = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
             MethodBase method;
             Type[] args;
-            Type type = typeof(global::CLRBindingTestClass);
-            args = new Type[]{typeof(System.Int32), typeof(System.Single)};
-            method = type.GetMethod("DoSomeTest", flag, null, args, null);
-            app.RegisterCLRMethodRedirection(method, DoSomeTest_0);
+            Type type = typeof(global::TestInheritanceBase);
+            args = new Type[]{typeof(System.String)};
+            method = type.GetMethod("TestVirtual", flag, null, args, null);
+            app.RegisterCLRMethodRedirection(method, TestVirtual_0);
 
 
         }
 
 
-        static StackObject* DoSomeTest_0(ILIntepreter __intp, StackObject* __esp, AutoList __mStack, CLRMethod __method, bool isNewObj)
+        static StackObject* TestVirtual_0(ILIntepreter __intp, StackObject* __esp, AutoList __mStack, CLRMethod __method, bool isNewObj)
         {
             ILRuntime.Runtime.Enviorment.AppDomain __domain = __intp.AppDomain;
             StackObject* ptr_of_this_method;
             StackObject* __ret = ILIntepreter.Minus(__esp, 2);
 
             ptr_of_this_method = ILIntepreter.Minus(__esp, 1);
-            System.Single @b = *(float*)&ptr_of_this_method->Value;
+            System.String @str = (System.String)typeof(System.String).CheckCLRTypes(StackObject.ToObject(ptr_of_this_method, __domain, __mStack), (CLR.Utils.Extensions.TypeFlags)0);
+            __intp.Free(ptr_of_this_method);
 
             ptr_of_this_method = ILIntepreter.Minus(__esp, 2);
-            System.Int32 @a = ptr_of_this_method->Value;
+            global::TestInheritanceBase instance_of_this_method = (global::TestInheritanceBase)typeof(global::TestInheritanceBase).CheckCLRTypes(StackObject.ToObject(ptr_of_this_method, __domain, __mStack), (CLR.Utils.Extensions.TypeFlags)0);
+            __intp.Free(ptr_of_this_method);
 
+            instance_of_this_method.TestVirtual(@str);
 
-            var result_of_this_method = global::CLRBindingTestClass.DoSomeTest(@a, @b);
-
-            __ret->ObjectType = ObjectTypes.Float;
-            *(float*)&__ret->Value = result_of_this_method;
-            return __ret + 1;
+            return __ret;
         }
 
 

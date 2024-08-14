@@ -1,0 +1,61 @@
+Unity主工程的ILRuntimecCLRBinding.cs脚本里的：
+
+GenerateCLRBinding()：
+是自己根据热更dll里面使用的类型，手动进行添加类型来绑定
+
+GenerateCLRBindingByAnalysis()：建议使用
+是程序根据热更dll里使用的类型，自动进行全部绑定
+
+之前就是使用GenerateCLRBinding()手动添加对CLRBindingTestClass类的绑定
+
+这里使用GenerateCLRBindingByAnalysis()进行自动绑定：
+1、删除Unity主工程里：
+Assets/ILRuntime/Generated里面的CLR生成类文件；
+
+2、ILRuntimecCLRBinding.cs里GenerateCLRBindingByAnalysis()方法里，
+可以看到使用到：InitILRuntime(domain);  这里需要我们把跨域所用到的继承的适配器全部打开，
+也就是ILRuntimecCLRBinding.cs里的InitILRuntime()里的注册适配器取消注释；
+
+由于MonoBehaviourAdapter和CoroutineAdapter这两个适配器还没使用，先不取消注释；
+这里只取消、打开继承类的适配器：
+static void InitILRuntime(ILRuntime.Runtime.Enviorment.AppDomain domain)
+{
+    //注册适配器
+    ////这里需要注册所有热更DLL中用到的跨域继承Adapter，否则无法正确抓取引用
+    //domain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());
+    //domain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
+    //domain.RegisterCrossBindingAdaptor(new WindowAdapter());
+    domain.RegisterCrossBindingAdaptor(new InheritanceAdapter());
+}
+
+3、另外ILRuntimeManager.cs的InitializeILRuntime()里写入：
+ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain);先注释掉
+不然会报错
+
+4、进行自动绑定CLR类
+（1）避免点击了按钮，却没有反应表现。
+这里有在GenerateCLRBindingByAnalysis()里加上AssetDatabase.Refresh();语句进行显示提示。
+（2）点击菜单栏“ILRuntime/Generate CLR Binding Code by Analysis”
+（3）然后可以在Assets/ILRuntime/Generated文件夹下看到自动生成的所有用到的所有的CLR绑定类
+没有用到的东西也没有添加生成，也没有出现报错什么的，就很友好方便。
+
+5、取消ILRuntimeManager.cs的InitializeILRuntime()里对CLR绑定注册的注释，进行CLR绑定注册
+void InitializeILRuntime()
+{
+    ... ...
+    ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain);
+}
+
+6、再次点击运行，可以看到控制台输出：
+测试绑定CLR前后的运行时间：2794761
+甚至比先前的未绑定，手动绑定CLR运行速度还要快
+
+
+
+
+
+
+
+
+
+

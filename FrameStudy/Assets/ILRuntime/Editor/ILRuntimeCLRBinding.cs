@@ -70,7 +70,7 @@ public class ILRuntimeCLRBinding
         //domain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());
         //domain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
         //domain.RegisterCrossBindingAdaptor(new WindowAdapter());
-        //domain.RegisterCrossBindingAdaptor(new InheritanceAdapter());
+        domain.RegisterCrossBindingAdaptor(new InheritanceAdapter());
     }
 }
 #endif
