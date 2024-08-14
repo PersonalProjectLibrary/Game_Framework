@@ -1,0 +1,85 @@
+一、Unity主工程里添加测试CLR的方法
+依旧是写在ILRuntimeManager.cs文件里，ILRuntimeManager{}外的类：
+public class CLRBindingTestClass
+{
+    public static float DoSomeTest(int a,float b) { return a + b; }
+}
+
+二、HotFix工程新建测试CLR绑定的类
+解决方案--选中HotFix右键--添加新项--类：TestCLRBinding.cs
+生成的新类，类名处，删除关键字：internal，添加public
+添加方法，来调用Unity热更工程里的测试方法：
+public class TestCLRBinding
+{
+    public static void RunTest()
+    {
+        for (int i = 0; i < 100000; i++) { CLRBindinTestClass.DoSomeTest(i, i); }
+    }
+}
+
+三、准备工作
+1、这里整理了下文件夹，
+将Assets/Editor文件夹下的ILRuntimeMenu.cs和ILRuntimeCLRBinding.cs
+移到Assets/ILRuntime/Editor文件夹里
+2、清除Unity工程里Assets/ILRuntime/Generated文件夹里之前生成的CLR生成文件
+3、重新生成下HotFix的dll文件，并更新Unity项目里的HotFix的dll文件
+
+四、未绑定CLR时的测试运行速度
+在ILRuntimeManager.cs的OnHotFixLoaded()里添加对CLR测试方法的调用
+long startTime = System.DateTime.Now.Ticks;//当前时间
+m_AppDomain.Invoke("HotFix.TestCLRBinding", "RunTest", null,null);
+Debug.Log("未绑定CLR时的测试运行时间：" + (System.DateTime.Now.Ticks - startTime));
+输出：未绑定CLR时的测试运行时间：6442163
+
+五、绑定CLR时的测试运行速度
+1、打开Unity主工程的ILRuntimecCLRBinding.cs脚本
+把GenerateCLRBinding()里注释掉的types.Add(typeof(CLRBindingTestClass));取消注释
+
+注：
+原语句是types.Add(typeof(CLRBingdingTestClass));
+里面的CLRBingdingTestClass对应原本的CLRBingdingTestClass类；
+这里可以改成自己写的类名。
+个人项目里对应的测试CLR类名为CLRBindingTestClass，
+故语句改为types.Add(typeof(CLRBindingTestClass));
+这样就后面自动生成CLR类时，就可以生成CLRBingdingTestClass对应的CLR类；
+
+2、生成CLR类
+点击菜单栏“ILRuntime/Generate CLR Binding Code”
+然后可以看到Assets/ILRuntime/Generated文件夹下有生成CLR绑定代码脚本
+参照59_CRL绑定_生成CRL绑定类.txt里：
+“一、添加自动生成CLR绑定工具---3、生成CLR类---生成CLR代码时，有可能会生成错误，进行报错。”
+（1）点击错误提示，找到报错的语句，注释/删除掉报错的函数的引用，和报错语句所在的函数
+可参考59_CRL绑定_生成CRL绑定类.txt里的示例说明，来解决生成CLR类的报错。
+（2）也可能出现关键词缺少引用库的报错提示，这里添加对应using xxx库即可。
+可参考60_CLR绑定测试文件夹里的纠错示例来解决报错。
+
+3、CLR绑定注册：只需要注册一次，官方文档上有示例说明
+在ILRuntimeManager.cs的InitializeILRuntime()里写入：
+ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain);
+
+4、CLR测试语句，前面“四、未绑定CLR时的测试运行速度”步骤时已经做过
+ILRuntimeManager.cs的OnHotFixLoaded()里添加对CLR测试方法的调用
+
+5、点击运行看控制台输出
+输出：未绑定CLR时的测试运行时间：3191707
+
+对比之前未绑定CLR时时间为：6442163，可以发现运行速度明显提高
+
+6、可以查看官方示例，有测试绑定前后GC的不同
+最后把ILRuntimeManager.cs的OnHotFixLoaded()里添加对CLR测试的Debug输出进行了小修改：
+改为：Debug.Log("测试绑定CLR前后的运行时间：" + (System.DateTime.Now.Ticks - startTime));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

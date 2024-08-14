@@ -146,9 +146,16 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         #endregion
 
         #region 跨域继承的注册
+        /*
         //InheritanceAdapter继承了CrossBindingAdaptor，
         //所以这里直接.RegisterCrossBindingAdaptor 注册适配器InheritanceAdapter
         m_AppDomain.RegisterCrossBindingAdaptor(new InheritanceAdapter());
+        //*/
+        #endregion
+
+        #region CLR绑定注册
+        //只需要注册一次，官方文档上有示例说明
+        ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain);
         #endregion
     }
 
@@ -282,7 +289,8 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         #region CLR绑定测试
         long startTime = System.DateTime.Now.Ticks;//当前时间
         m_AppDomain.Invoke("HotFix.TestCLRBinding", "RunTest", null,null);
-        Debug.Log("未绑定CLR时的测试运行时间：" + (System.DateTime.Now.Ticks - startTime));
+        Debug.Log("测试绑定CLR前后的运行时间：" + (System.DateTime.Now.Ticks - startTime));
+        //绑定前时间：6442163；绑定后时间：3191707。
         #endregion
     }
 }
