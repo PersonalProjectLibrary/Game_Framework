@@ -1,0 +1,36 @@
+手动编写CLR重定向方法是个工作量非常巨大的事，而且要求对ILRuntime底层机制非常了解
+ILRuntime提供了一个代码生成工具来自动生成CLR绑定代码。
+
+一、添加自动生成CLR绑定工具：
+1、从ILRuntimeDemo项目：Assets/Samples/ILRuntime/2.1.0/Demo/Editor里，
+找到ILRuntimeCLRBinding.cs脚本复制到项目中；
+个人这里把该脚本放到项目的Assets/Editor文件夹里。
+2、打开ILRuntimeCLRBinding.cs脚本将该脚本改为适合本项目的脚本。
+3、生成CLR类
+（1）点击菜单栏“ILRuntime/Generate CLR Binding Code"选项，
+（2）然后可以看到Assets/ILRuntime/Generated文件夹下有生成CLR绑定代码脚本
+（3）生成CLR代码时，有可能会生成错误，进行报错。
+这时候点击错误提示，找到报错的语句，注释/删除掉报错的函数的引用，和报错语句所在的函数即可。
+
+如
+报错：
+Assets\ILRuntime\Generated\System_String_Binding.cs(3738,55): error CS0457: Ambiguous user defined conversions 'ReadOnlySpan<char>.implicit operator ReadOnlySpan<char>(ArraySegment<char>)' and 'ReadOnlySpan<char>.implicit operator ReadOnlySpan<char>(char[])' when converting from 'object' to 'ReadOnlySpan<char>'
+
+双击定位到：
+System_String_Binding.cs里StackObject* Ctor_3()里的
+System.ReadOnlySpan<System.Char> @value = (System.ReadOnlySpan<System.Char>)typeof(System.ReadOnlySpan<System.Char>).CheckCLRTypes(StackObject.ToObject(ptr_of_this_method, __domain, __mStack), (CLR.Utils.Extensions.TypeFlags)16);语句报错；
+
+解决报错：
+1）StackObject* Ctor_3()的引用语句是Register()里的Ctor_3的注册语句：
+method = type.GetConstructor(flag, null, args, null);
+app.RegisterCLRMethodRedirection(method, Ctor_3);
+将其注释掉
+2）再把StackObject* Ctor_3()这个包含报错语句的函数注释掉。
+这样就解决了生成错误引起的错误和报错
+
+可以测试点运行，项目正常运行无报错
+
+注：
+在CLR绑定代码生成之后，需要将这些绑定代码注册到AppDomain中才能使CLR绑定生效，
+但是一定要记得将CLR绑定的注册写在CLR重定向的注册后面，
+因为同一个方法只能被重定向一次，只有先注册的那个才能生效。
