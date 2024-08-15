@@ -295,13 +295,6 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
     }
 }
 
-/// <summary>
-/// 测试委托调用的自定义委托
-/// </summary>
-/// <param name="a"></param>
-public delegate void TestDelegateMethod(int a);//普通传参委托
-public delegate string TestDelegateFunction(int b);//带返回值的委托
-
 #region 说明
 /*
 Invoke、GeMethod里获取属性ID、Value使用get_ID、get_Value的写法：
@@ -310,6 +303,14 @@ Invoke、GeMethod里获取属性ID、Value使用get_ID、get_Value的写法：
 所以书写时是这种写法
  */
 #endregion
+
+#region 跨域委托、继承适配器、CLR功能测试代码
+/// <summary>
+/// 测试委托调用的自定义委托
+/// </summary>
+/// <param name="a"></param>
+public delegate void TestDelegateMethod(int a);//普通传参委托
+public delegate string TestDelegateFunction(int b);//带返回值的委托
 
 /// <summary>
 /// 测试继承用的基类
@@ -322,7 +323,7 @@ public abstract class TestInheritanceBase
     /// <param name="str"></param>
     public virtual void TestVirtual(string str)
     {
-        Debug.Log("TestClassBase TestVirtual str = "+str);
+        Debug.Log("TestClassBase TestVirtual str = " + str);
     }
 
     /// <summary>
@@ -353,7 +354,7 @@ public class InheritanceAdapter : CrossBindingAdaptor
 
     public override object CreateCLRInstance(AppDomain appdomain, ILTypeInstance instance)
     {
-        return new Adapter(appdomain,instance);//返回新的适配器对象
+        return new Adapter(appdomain, instance);//返回新的适配器对象
     }
 
     //因为跨域继承只有一个Adapter，因避免一个类同时实现多个外部接口
@@ -375,7 +376,7 @@ public class InheritanceAdapter : CrossBindingAdaptor
         private bool m_TestVirtualInvoking = false;
         private bool m_GetValueInvoking = false;
 
-        
+
         public Adapter() { }//无参构造函数
         public Adapter(AppDomain appdomain, ILTypeInstance instance)//有参构造函数
         {
@@ -394,7 +395,7 @@ public class InheritanceAdapter : CrossBindingAdaptor
         /// <param name="a"></param>
         public override void TestAbstract(int a)
         {
-            if(m_TestAbstract == null) m_TestAbstract = m_Instance.Type.GetMethod("TestAbstract", 1);
+            if (m_TestAbstract == null) m_TestAbstract = m_Instance.Type.GetMethod("TestAbstract", 1);
             //控制权转移
             if (m_TestAbstract != null)
             {
@@ -410,7 +411,7 @@ public class InheritanceAdapter : CrossBindingAdaptor
         {
             if (m_TestVirtual == null) m_TestVirtual = m_Instance.Type.GetMethod("TestVirtual", 1);
             //必须要设定一个标识位来表示当前是否在调用中，避免不同自身调用自身导致死循环
-            if (m_TestVirtual != null &&!m_TestVirtualInvoking)
+            if (m_TestVirtual != null && !m_TestVirtualInvoking)
             {
                 m_TestVirtualInvoking = true;
                 param1[0] = str;
@@ -456,8 +457,10 @@ public class InheritanceAdapter : CrossBindingAdaptor
 /// </summary>
 public class CLRBindingTestClass
 {
-    public static float DoSomeTest(int a,float b)
+    public static float DoSomeTest(int a, float b)
     {
         return a + b;
     }
 }
+
+#endregion
