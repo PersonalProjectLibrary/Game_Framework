@@ -30,6 +30,12 @@ namespace ILRuntime.Runtime.Generated
             System_Int32_Binding.Register(app);
             System_String_Binding.Register(app);
             CLRBindingTestClass_Binding.Register(app);
+            MonoSingleton_1_GameStart_Binding.Register(app);
+            UnityEngine_MonoBehaviour_Binding.Register(app);
+            UnityEngine_Time_Binding.Register(app);
+            System_Single_Binding.Register(app);
+            UnityEngine_WaitForSeconds_Binding.Register(app);
+            System_NotSupportedException_Binding.Register(app);
             Singleton_1_ILRuntimeManager_Binding.Register(app);
             ILRuntimeManager_Binding.Register(app);
             System_Action_1_String_Binding.Register(app);

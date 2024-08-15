@@ -1,0 +1,152 @@
+一、Unity主工程里写协程适配器类和协程适配器类型类：
+在ILRuntimeManager.cs文件里，ILRuntimeManager{}外面，
+跨域委托、继承适配器、CLR功能、协程适配器测试代码模块里添加协程适配器的类
+添加协程适配器的类：CoroutineAdapter(){} 与Adaptor(){}
+
+public class CoroutineAdapter : CrossBindingAdaptor
+{
+    public override System.Type BaseCLRType { get { return null; } }//返回想继承的类
+    public override System.Type AdaptorType{ get { return typeof(Adaptor); } }//返回适配器类型
+
+    //继承多个接口的时候使用该方法，原则上尽量不要继承多个接口，但是协程本身就是继承多个接口的
+    public override System.Type[] BaseCLRTypes
+    {
+        get
+        {
+            return new System.Type[]//协程继承的接口
+            {
+                typeof(IEnumerator),typeof(IEnumerator<System.Object>),typeof(System.IDisposable)
+            };
+        }
+    }
+
+    public override object CreateCLRInstance(AppDomain appdomain, ILTypeInstance instance)
+    {
+        return new Adaptor(appdomain, instance);
+    }
+
+    //协程的适配器
+    public class Adaptor : CrossBindingAdaptorType, IEnumerator, IEnumerator<System.Object>, System.IDisposable
+    {
+        private ILTypeInstance m_Instance;
+        private AppDomain m_AppDomain;
+
+        private IMethod m_ToString;
+        private IMethod m_CurMethod;
+        private IMethod m_MoveNextMethod;
+        private IMethod m_ResetMethod;
+        private IMethod m_DisposeMethod;
+
+        public Adaptor() { }
+
+        public Adaptor(AppDomain appdomain, ILTypeInstance instance)
+        {
+            m_Instance = instance;
+            m_AppDomain = appdomain;
+        }
+        public ILTypeInstance ILInstance{ get { return m_Instance; } }
+
+        public override string ToString()
+        {
+            if (m_ToString == null) m_ToString = m_AppDomain.ObjectType.GetMethod("ToString", 0);
+            IMethod m = m_Instance.Type.GetVirtualMethod(m_ToString);
+            if (m == null || m is ILMethod) return m_Instance.ToString();
+            else return m_Instance.Type.FullName;
+        }
+
+        public object Current
+        {
+            get
+            {
+                if (m_CurMethod == null) { ... }
+                object res = null;
+                if (m_CurMethod != null) res = m_AppDomain.Invoke(m_CurMethod, m_Instance, null);
+                return res;
+            }
+        }
+
+        public bool MoveNext()
+        {
+            if (m_MoveNextMethod == null) m_MoveNextMethod = m_Instance.Type.GetMethod("MoveNext", 0);
+            if(m_MoveNextMethod != null)return (bool)m_AppDomain.Invoke(m_MoveNextMethod, m_Instance, null);
+            else return false;
+        }
+
+        public void Reset()
+        {
+            if (m_ResetMethod == null) m_ResetMethod = m_Instance.Type.GetMethod("Reset", 0);
+            if(m_ResetMethod != null)m_AppDomain.Invoke(m_ResetMethod, m_Instance, null);
+        }
+
+        public void Dispose()
+        {
+            if(m_DisposeMethod == null){...}
+            if(m_DisposeMethod!=null)m_AppDomain.Invoke(m_DisposeMethod, m_Instance, null);
+        }
+    }
+}
+
+二、热更工程HotFix新建测试协程用的类：TestCoroutine.cs
+1、新建继承的子类：
+解决方案--选中HotFix右键--添加新项--类：TestCoroutine.cs
+生成的新类，类名处，删除关键字：internal，添加public
+
+2、完善协程方法
+public class TestCoroutine
+{
+    static System.Collections.IEnumerator Coroutine()
+    {
+        Debug.Log("开始协程，t = "+Time.time);
+        yield return new WaitForSeconds(3);
+        Debug.Log("协程完成，t = " + Time.time);
+    }
+    //开启协程 
+    public static void RunTest() { GameStart.Instance.StartCoroutine(Coroutine());}
+}
+
+三、Unity工程里在ILRuntimeManager的InitializeILRuntime()方法里注册协程适配器
+m_AppDomain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
+注：放在CLR绑定注册语句的前面注册，CLR绑定注册最后执行。
+
+四、Unity工程里ILRuntimeManager.cs里OnHotFixLoaded()里执行协程的调用
+m_AppDomain.Invoke("HotFix.TestCoroutine", "RunTest", null,null);
+
+五、Unity工程里ILRuntimeCLRBinding.cs的InitILRuntime()里
+取消对协程适配器的注释/添加协程适配器的注册语句：
+static void InitILRuntime(ILRuntime.Runtime.Enviorment.AppDomain domain)
+{
+    //注册适配器
+    ////这里需要注册所有热更DLL中用到的跨域继承Adapter，否则无法正确抓取引用
+    //domain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());
+    //domain.RegisterCrossBindingAdaptor(new WindowAdapter());
+    domain.RegisterCrossBindingAdaptor(new InheritanceAdapter());
+    domain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
+}
+
+六、更新dll
+1、HotFix热更工程生成dll；
+2、Unity里点击菜单栏“更新Hotfix的dll”更新dll；
+
+七、进行CLR代码生成绑定
+点击菜单栏“ILRuntime/Generate CLR Binding Code by Analysis”
+
+
+八、点击运行，查看控制台输出：
+开始协程，t = 0.12
+协程完成，t = 3.138333
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

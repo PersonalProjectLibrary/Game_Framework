@@ -153,7 +153,11 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //*/
         #endregion
 
-        #region CLR绑定注册
+        #region 注册协程的适配器
+        m_AppDomain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
+        #endregion
+
+        #region CLR绑定注册（放最后执行）
         //只需要注册一次，官方文档上有示例说明
         ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain);
         #endregion
@@ -286,11 +290,17 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //*/
         #endregion
 
-        #region CLR绑定测试
+        #region 6、CLR绑定测试
+        /*
         long startTime = System.DateTime.Now.Ticks;//当前时间
         m_AppDomain.Invoke("HotFix.TestCLRBinding", "RunTest", null,null);
         Debug.Log("测试绑定CLR前后的运行时间：" + (System.DateTime.Now.Ticks - startTime));
         //绑定前时间：6442163；绑定后时间：3191707。
+        //*/
+        #endregion
+
+        #region 7、协程适配器测试
+        m_AppDomain.Invoke("HotFix.TestCoroutine", "RunTest", null,null);
         #endregion
     }
 }
@@ -304,7 +314,7 @@ Invoke、GeMethod里获取属性ID、Value使用get_ID、get_Value的写法：
  */
 #endregion
 
-#region 跨域委托、继承适配器、CLR功能测试代码
+#region 跨域委托、继承适配器、CLR功能、协程适配器测试代码
 /// <summary>
 /// 测试委托调用的自定义委托
 /// </summary>
@@ -463,4 +473,103 @@ public class CLRBindingTestClass
     }
 }
 
+/// <summary>
+/// 协程适配器
+/// </summary>
+public class CoroutineAdapter : CrossBindingAdaptor
+{
+    public override System.Type BaseCLRType { get { return null; } }//返回想继承的类
+
+    public override System.Type AdaptorType{ get { return typeof(Adaptor); } }//返回适配器类型
+
+    //继承多个接口的时候使用该方法，原则上尽量不要继承多个接口，但是协程本身就是继承多个接口的
+    public override System.Type[] BaseCLRTypes
+    {
+        get
+        {
+            return new System.Type[]//协程继承的接口
+            {
+                typeof(IEnumerator),typeof(IEnumerator<System.Object>),typeof(System.IDisposable)
+            };
+        }
+    }
+
+    public override object CreateCLRInstance(AppDomain appdomain, ILTypeInstance instance)
+    {
+        return new Adaptor(appdomain, instance);
+    }
+
+    //协程的适配器
+    public class Adaptor : CrossBindingAdaptorType, IEnumerator, IEnumerator<System.Object>, System.IDisposable
+    {
+        private ILTypeInstance m_Instance;
+        private AppDomain m_AppDomain;
+
+        private IMethod m_ToString;
+        private IMethod m_CurMethod;
+        private IMethod m_MoveNextMethod;
+        private IMethod m_ResetMethod;
+        private IMethod m_DisposeMethod;
+
+        public Adaptor() { }
+
+        public Adaptor(AppDomain appdomain, ILTypeInstance instance)
+        {
+            m_Instance = instance;
+            m_AppDomain = appdomain;
+        }
+        public ILTypeInstance ILInstance
+        {
+            get { return m_Instance; }
+        }
+
+        public override string ToString()
+        {
+            if (m_ToString == null) m_ToString = m_AppDomain.ObjectType.GetMethod("ToString", 0);
+            IMethod m = m_Instance.Type.GetVirtualMethod(m_ToString);
+            if (m == null || m is ILMethod) return m_Instance.ToString();
+            else return m_Instance.Type.FullName;
+        }
+
+        public object Current
+        {
+            get
+            {
+                if (m_CurMethod == null)
+                {
+                    m_CurMethod = m_Instance.Type.GetMethod("get_Current", 0);
+                    if (m_CurMethod == null) //存在上面方法取不到Current的情况
+                        m_CurMethod = m_Instance.Type.GetMethod("System.Collections.IEnumerator.get_Current", 0);
+                }
+
+                object res = null;
+                if (m_CurMethod != null) res = m_AppDomain.Invoke(m_CurMethod, m_Instance, null);
+                return res;
+            }
+        }
+
+        public bool MoveNext()
+        {
+            if (m_MoveNextMethod == null) m_MoveNextMethod = m_Instance.Type.GetMethod("MoveNext", 0);
+            if(m_MoveNextMethod != null)return (bool)m_AppDomain.Invoke(m_MoveNextMethod, m_Instance, null);
+            else return false;
+        }
+
+        public void Reset()
+        {
+            if (m_ResetMethod == null) m_ResetMethod = m_Instance.Type.GetMethod("Reset", 0);
+            if(m_ResetMethod != null)m_AppDomain.Invoke(m_ResetMethod, m_Instance, null);
+        }
+
+        public void Dispose()
+        {
+            if(m_DisposeMethod == null)
+            {
+                m_DisposeMethod = m_Instance.Type.GetMethod("Dispose", 0);
+                if (m_DisposeMethod == null) m_DisposeMethod = m_Instance.Type.GetMethod("System.IDisposable.Dispose", 0);
+            }
+            if(m_DisposeMethod!=null)m_AppDomain.Invoke(m_DisposeMethod, m_Instance, null);
+        }
+    }
+}
 #endregion
