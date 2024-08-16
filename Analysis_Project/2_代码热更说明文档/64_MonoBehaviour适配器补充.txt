@@ -1,0 +1,134 @@
+前面MonoBehaviour适配器里做了AddComponent，
+这里再补充个GetComponent函数
+
+一、更新热更工程MonoBehaviour测试类：TestMonoBehaviour.cs
+注：之前有方法类写的不太合适，这里做了处理修改。
+namespace HotFix
+{
+    public class MonoTest
+    {
+        // 测试Addcompont,Awake等MonoBehaviour的方法
+        public static void RunTest(GameObject go){ go.AddComponent<TestMonoBehaviour>(); }
+        // 测试GetComponent
+        public static void RunTest2(GameObject go)
+        {
+            go.AddComponent<TestMonoBehaviour>();//测试用这里先获取组件
+            TestMonoBehaviour testMono = go.GetComponent<TestMonoBehaviour>();
+            testMono.Test();
+        }
+    }
+    public class TestMonoBehaviour : MonoBehaviour
+    {
+        public float m_CurTime = 0;
+        void Awake(){ Debug.Log("Mono Awake!"); }
+        void Start(){ Debug.Log("Mono Start!"); }
+        void Update()
+        {
+            if (m_CurTime < 0.2f)
+            {
+                Debug.Log("Mono Update!");
+                m_CurTime += Time.deltaTime;
+            }
+        }
+        public void Test(){ Debug.Log("Mono Test!!!!!!!!!!!!!!!!!"); }
+    }
+}
+
+二、更新dll
+1、HotFix热更工程生成dll；
+2、Unity里点击菜单栏“更新Hotfix的dll”更新dll；
+
+三、更新CLR重定向
+1、在ILRuntimeManager.cs类里用于AddComponent重定向的方法SetupCLRRedirection()，
+重命名为：AddComponentCLRRedirection()
+AddComponent()也重命名为CLR_AddCompontent()；
+
+2、添加对GetComponent的重定向方法GetComponentCLRRedirection()和CLR_GetComponent()函数
+写完方法后，在InitializeILRuntime()方法里进行调用执行。
+CLR的重定向注册也要放在CLR绑定注册前执行。
+（1）GetComponetCLRRedirection
+unsafe void GetCompomentCLRRedirection()
+{
+    var arr = typeof(GameObject).GetMethods();//获取GameObject的所有类型
+    foreach(var method in arr)//遍历找只有一个参数的GetComponet方法
+    {
+        if(method.Name =="GetComponent"&&method.GetGenericArguments().Length == 1)
+        {
+            m_AppDomain.RegisterCLRMethodRedirection(method, CLR_GetComponent);
+        }
+    }
+}
+
+(2)CLR_GetComponent
+private unsafe StackObject* CLR_GetComponent(ILIntepreter __intp, StackObject* __esp, List<object> __mStack, CLRMethod __method, bool isNewObj)
+{
+    AppDomain __domain = __intp.AppDomain;
+    var ptr = __esp - 1;
+    GameObject instance = StackObject.ToObject(ptr, __domain, __mStack) as GameObject;
+    if (instance == null) throw new System.Exception();
+    __intp.Free(ptr);
+
+    var genericArgument = __method.GenericArguments;
+    if(genericArgument != null && genericArgument.Length == 1)
+    {
+        var type = genericArgument[0];
+        object res = null;
+        if (type is CLRType) res = instance.GetComponent(type.TypeForCLR);
+        else
+        {
+            //把GameObject里的MonoBehaviour的所有的适配器全部找到，然后遍历判断
+            var clrInstances = instance.GetComponents<MonoBehaviourAdapter.Adapter>();
+            foreach (var clrInstance in clrInstances)
+            {
+                if(clrInstance.ILInstance!=null)//判断是否是无效的MonoBehaviour
+                {
+                    if(clrInstance.ILInstance.Type == type)//判断是否是目标类型
+                    {
+                        res = clrInstance.ILInstance;
+                        break;
+                    }
+                }
+            }
+        }
+        return ILIntepreter.PushObject(ptr,__mStack, res);
+    }
+    return __esp;
+}
+
+三、注册重定向
+Unity工程里ILRuntimeCLRBinding.cs的InitILRuntime()里添加重定向注册
+void InitializeILRuntime()
+{
+    m_AppDomain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());//注册MonoBehaviour适配器
+    AddComponentCLRRedirection();//注册MonoBehaviour测试的AddComponent的重定向
+    GetCompomentCLRRedirection();//注册MonoBehaviour测试的GetComponent的重定向
+    ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain);//CLR绑定注册（放最后执行）
+}
+
+四、添加AddComponent测试语句
+Unity工程里ILRuntimeManager.cs里OnHotFixLoaded()里添加测试语句
+void OnHotFixLoaded()
+{
+    //测试MonoBehaviour的AddComponent
+    //m_AppDomain.Invoke("HotFix.MonoTest", "RunTest", null, GameStart.Instance.gameObject);
+   //测试MonoBehaviour的GetComponent
+    m_AppDomain.Invoke("HotFix.MonoTest", "RunTest2", null, GameStart.Instance.gameObject);
+}
+
+五、运行测试
+之前测试AddConponent时MonoBehaviour相关的适配器、
+注册以及CLR代码生成绑定做过，这里直接点击运行即可查看输出。
+
+运行状态下可以看到Hierarchy面板/场景里的GameStart上挂有
+MonoBehaviourAdapter/Adapter脚本，即MonoBehaviour适配器脚本
+
+六、查看控制台输出
+Mono Awake!
+Mono Test!!!!!!!!!!!!!!!!!
+Mono Start!
+Mono Update!
+
+
+
+
+

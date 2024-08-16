@@ -59,29 +59,6 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         OnHotFixLoaded();
     }
 
-    #region Old LoadHotFixAssembly
-    //void LoadHotFixAssembly()
-    //{
-    //    m_AppDomain = new AppDomain();
-    //    //读取热更资源的dll
-    //    TextAsset dllText = ResourceManager.Instance.LoadResource<TextAsset>(DLLPATH);
-    //    //读取PDB文件，调试数据库，主要用于日志报错
-    //    TextAsset pdbText = ResourceManager.Instance.LoadResource<TextAsset>(PDBPATH);
-    //    //读取加载热更库
-    //    using (MemoryStream md = new MemoryStream(dllText.txt))//加载dll的流被关闭了。新版要求流不能关闭，也不能用using写法
-    //    {
-    //        using (MemoryStream mp = new MemoryStream(pdbText.txt))
-    //        {
-    //            //视频里旧版是m_AppDomain.LoadAssembly(mp, md, new Mono.Cecil.Pdb.PdbReaderProvider());
-    //            //当前版本格式（有对比Demo里的使用）
-    //            m_AppDomain.LoadAssembly(mp, md, new ILRuntime.Mono.Cecil.Pdb.PdbReaderProvider());
-    //        }
-    //    }
-    //    InitializeILRuntime();
-    //    OnHotFixLoaded();
-    //}
-    #endregion
-
     /// <summary>
     /// 初始化注册ILRuntime的一些注册
     /// </summary>
@@ -159,10 +136,9 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         #endregion
 
         #region MonoBehaviour适配器
-
         m_AppDomain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());//MonoBehaviour测试适配器注册
-
-        SetupCLRRedirection();//MonoBehaviour测试里需要的CLR重定向
+        AddComponentCLRRedirection();//注册MonoBehaviour测试的AddComponent的重定向
+        GetCompomentCLRRedirection();//注册MonoBehaviour测试的GetComponent的重定向
         #endregion
 
         #region CLR绑定注册（放最后执行）
@@ -312,8 +288,10 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //m_AppDomain.Invoke("HotFix.TestCoroutine", "RunTest", null,null);
         #endregion
 
-        #region MonoBehaviour测试
-        m_AppDomain.Invoke("HotFix.TestMono", "RunTest", null, GameStart.Instance.gameObject);
+        #region 8、MonoBehaviour测试
+        //测试AddComponent
+        //m_AppDomain.Invoke("HotFix.MonoTest", "RunTest", null, GameStart.Instance.gameObject);
+        m_AppDomain.Invoke("HotFix.MonoTest", "RunTest2", null, GameStart.Instance.gameObject);
         #endregion
     }
 
@@ -324,23 +302,48 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
      * 写完方法后，在InitializeILRuntime()方法里进行调用执行。这个重定向也要放在CLR绑定注册之前执行
     //*/
     /// <summary>
-    /// MonoBehaviour测试里需要的CLR重定向
+    /// 获取重定向后的AddComponent
     /// </summary>
-    unsafe void SetupCLRRedirection()
+    unsafe void AddComponentCLRRedirection()
     {
-        var arr = typeof(GameObject).GetMethods();//先获取GameObject这个类型，然后获取GameObject里的函数方法
+        var arr = typeof(GameObject).GetMethods();//获取GameObject的类型、函数方法
         foreach (var method in arr)//遍历GameObject里的函数方法
         {
             if(method.Name =="AddComponent"&& method.GetGenericArguments().Length == 1)//找只有一个参数的AddComponet方法
             {
                 //使用热更程序集对AddComponent进行重定向成目标函数
-                m_AppDomain.RegisterCLRMethodRedirection(method,AddCompontent);
+                m_AppDomain.RegisterCLRMethodRedirection(method,CLR_AddCompontent);
             }
         }
     }
 
-    //用到指针写的不安全委托,参数可以直接拷贝官方文档的重定向示例里给的写法
-    private unsafe StackObject* AddCompontent(ILIntepreter __intp, StackObject* __esp, List<object> __mStack, CLRMethod __method, bool isNewObj)
+    /// <summary>
+    /// 获取重定向后的GetComponent
+    /// </summary>
+    unsafe void GetCompomentCLRRedirection()
+    {
+        var arr = typeof(GameObject).GetMethods();//获取GameObject的所有类型
+        foreach(var method in arr)//遍历找只有一个参数的GetComponet方法
+        {
+            if(method.Name =="GetComponent"&&method.GetGenericArguments().Length == 1)
+            {
+                m_AppDomain.RegisterCLRMethodRedirection(method, CLR_GetComponent);
+            }
+        }
+    }
+
+    /// <summary>
+    /// AddComponent重定向
+    /// </summary>
+    /// <param name="__intp"></param>
+    /// <param name="__esp"></param>
+    /// <param name="__mStack"></param>
+    /// <param name="__method"></param>
+    /// <param name="isNewObj"></param>
+    /// <returns></returns>
+    /// <exception cref="System.Exception"></exception>
+    /// 用到指针写的不安全委托,参数可以直接拷贝官方文档的重定向示例里给的写法
+    private unsafe StackObject* CLR_AddCompontent(ILIntepreter __intp, StackObject* __esp, List<object> __mStack, CLRMethod __method, bool isNewObj)
     {
         AppDomain __domain = __intp.AppDomain;//获取到程序集
 
@@ -359,7 +362,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
             {
                 res = instance.AddComponent(type.TypeForCLR);
             }
-            else //ILType说明是热更工程里的类型，需要做重定向
+            else //ILType说明是热更工程里的类型，需要做重定向：new一个AddComponent然后替换
             {
                 //实例化热更dll里的类（MonoTest），传false表手动创建类，Unity不允许new一个MonoBehaviour类
                 var ilInstance = new ILTypeInstance(type as ILType, false);
@@ -379,6 +382,52 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         }
         return __esp;
     }
+
+    /// <summary>
+    /// GetComponent重定向
+    /// </summary>
+    /// <param name="__intp"></param>
+    /// <param name="__esp"></param>
+    /// <param name="__mStack"></param>
+    /// <param name="__method"></param>
+    /// <param name="isNewObj"></param>
+    /// <returns></returns>
+    /// <exception cref="System.Exception"></exception>
+    private unsafe StackObject* CLR_GetComponent(ILIntepreter __intp, StackObject* __esp, List<object> __mStack, CLRMethod __method, bool isNewObj)
+    {
+        AppDomain __domain = __intp.AppDomain;
+        var ptr = __esp - 1;
+        GameObject instance = StackObject.ToObject(ptr, __domain, __mStack) as GameObject;
+        if (instance == null) throw new System.Exception();
+        __intp.Free(ptr);
+
+        var genericArgument = __method.GenericArguments;
+        if(genericArgument != null && genericArgument.Length == 1)
+        {
+            var type = genericArgument[0];
+            object res = null;
+            if (type is CLRType) res = instance.GetComponent(type.TypeForCLR);
+            else//这里不同与AddComponent是new一个然后替换
+            {
+                //把GameObject里的MonoBehaviour的所有的适配器全部找到，然后遍历判断
+                var clrInstances = instance.GetComponents<MonoBehaviourAdapter.Adapter>();
+                foreach (var clrInstance in clrInstances)
+                {
+                    if(clrInstance.ILInstance!=null)//判断是否是无效的MonoBehaviour
+                    {
+                        if(clrInstance.ILInstance.Type == type)//判断是否是目标类型
+                        {
+                            res = clrInstance.ILInstance;
+                            break;
+                        }
+                    }
+                }
+            }
+            return ILIntepreter.PushObject(ptr,__mStack, res);
+        }
+        return __esp;
+    }
+
     #endregion
 }
 
