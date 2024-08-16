@@ -67,10 +67,10 @@ public class ILRuntimeCLRBinding
     {
         //注册适配器
         ////这里需要注册所有热更DLL中用到的跨域继承Adapter，否则无法正确抓取引用
-        //domain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());
         //domain.RegisterCrossBindingAdaptor(new WindowAdapter());
         domain.RegisterCrossBindingAdaptor(new InheritanceAdapter());
         domain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
+        domain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());
     }
 }
 #endif

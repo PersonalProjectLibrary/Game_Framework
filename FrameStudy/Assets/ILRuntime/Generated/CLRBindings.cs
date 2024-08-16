@@ -42,6 +42,7 @@ namespace ILRuntime.Runtime.Generated
             TestDelegateMethod_Binding.Register(app);
             TestDelegateFunction_Binding.Register(app);
             TestInheritanceBase_Binding.Register(app);
+            UnityEngine_GameObject_Binding.Register(app);
         }
 
         /// <summary>

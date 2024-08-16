@@ -87,7 +87,7 @@ public class CoroutineAdapter : CrossBindingAdaptor
 }
 
 二、热更工程HotFix新建测试协程用的类：TestCoroutine.cs
-1、新建继承的子类：
+1、新建类：
 解决方案--选中HotFix右键--添加新项--类：TestCoroutine.cs
 生成的新类，类名处，删除关键字：internal，添加public
 

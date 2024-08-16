@@ -6,6 +6,7 @@ using System.IO;
 using ILRuntime.CLR.TypeSystem;
 using ILRuntime.CLR.Method;
 using ILRuntime.Runtime.Intepreter;
+using ILRuntime.Runtime.Stack;
 
 public class ILRuntimeManager : Singleton<ILRuntimeManager>
 {
@@ -154,13 +155,21 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         #endregion
 
         #region 注册协程的适配器
-        m_AppDomain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
+        //m_AppDomain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
+        #endregion
+
+        #region MonoBehaviour适配器
+
+        m_AppDomain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());//MonoBehaviour测试适配器注册
+
+        SetupCLRRedirection();//MonoBehaviour测试里需要的CLR重定向
         #endregion
 
         #region CLR绑定注册（放最后执行）
         //只需要注册一次，官方文档上有示例说明
         ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain);
         #endregion
+
     }
 
     /// <summary>
@@ -300,9 +309,77 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         #endregion
 
         #region 7、协程适配器测试
-        m_AppDomain.Invoke("HotFix.TestCoroutine", "RunTest", null,null);
+        //m_AppDomain.Invoke("HotFix.TestCoroutine", "RunTest", null,null);
+        #endregion
+
+        #region MonoBehaviour测试
+        m_AppDomain.Invoke("HotFix.TestMono", "RunTest", null, GameStart.Instance.gameObject);
         #endregion
     }
+
+    #region MonoBehaviour测试需要的重定向操作
+    /* HotFix工程测试代码中使用到AddComponent<MonoTest>，而MonoTest这个类不在Unity主工程中
+     * 直接AddComponet<MonoTest> 是加不到Object身上去的，所以要做重定向
+     * 写方法SetupCLRRedirection()，将HotFix工程里的AddComponent进行一个挟持，转换成Unity工程那边的调用
+     * 写完方法后，在InitializeILRuntime()方法里进行调用执行。这个重定向也要放在CLR绑定注册之前执行
+    //*/
+    /// <summary>
+    /// MonoBehaviour测试里需要的CLR重定向
+    /// </summary>
+    unsafe void SetupCLRRedirection()
+    {
+        var arr = typeof(GameObject).GetMethods();//先获取GameObject这个类型，然后获取GameObject里的函数方法
+        foreach (var method in arr)//遍历GameObject里的函数方法
+        {
+            if(method.Name =="AddComponent"&& method.GetGenericArguments().Length == 1)//找只有一个参数的AddComponet方法
+            {
+                //使用热更程序集对AddComponent进行重定向成目标函数
+                m_AppDomain.RegisterCLRMethodRedirection(method,AddCompontent);
+            }
+        }
+    }
+
+    //用到指针写的不安全委托,参数可以直接拷贝官方文档的重定向示例里给的写法
+    private unsafe StackObject* AddCompontent(ILIntepreter __intp, StackObject* __esp, List<object> __mStack, CLRMethod __method, bool isNewObj)
+    {
+        AppDomain __domain = __intp.AppDomain;//获取到程序集
+
+        var ptr = __esp - 1;//获取第一个参数
+        GameObject instance = StackObject.ToObject(ptr, __domain, __mStack) as GameObject;//获取第一个参数的值
+        if (instance == null) throw new System.Exception();
+        __intp.Free(ptr);//获取完参数，释放指针
+
+        var genericArgument = __method.GenericArguments;//获取所有泛型变量
+        if (genericArgument != null && genericArgument.Length == 1)//AddComponent只有一个参数，对应泛型变量长度为1
+        {
+            var type = genericArgument[0];//找到目标函数，进行获取
+            object res;
+
+            if (type is CLRType) //CLRType说明是Unity主工程里的类型，不需要做处理
+            {
+                res = instance.AddComponent(type.TypeForCLR);
+            }
+            else //ILType说明是热更工程里的类型，需要做重定向
+            {
+                //实例化热更dll里的类（MonoTest），传false表手动创建类，Unity不允许new一个MonoBehaviour类
+                var ilInstance = new ILTypeInstance(type as ILType, false);
+                //创建适配器实例，把GameObject添加上了适配器;后面根据适配器里的类来掉热更里的目标类
+                var clrInstance = instance.AddComponent<MonoBehaviourAdapter.Adapter>();
+                //因为Unity里写的适配器类clrInstance里没有对应的热更类，要做实例的替换，手动赋值
+                clrInstance.ILInstance = ilInstance;//实例替换
+                clrInstance.AppDomain = __domain;//程序集也替换
+                //这个实例默认创建的CLRInstance不是通过AddCompontent出来的有效实例，所以进行下面的实例替换
+                ilInstance.CLRInstance = clrInstance;//Instance转换替换
+
+                res = clrInstance.ILInstance;//转换好了进行赋值
+
+                clrInstance.Awake();//真正调用MonoBehaviour的Awake函数，补掉Awake();
+            }
+            return ILIntepreter.PushObject(ptr, __mStack, res);
+        }
+        return __esp;
+    }
+    #endregion
 }
 
 #region 说明
@@ -314,7 +391,7 @@ Invoke、GeMethod里获取属性ID、Value使用get_ID、get_Value的写法：
  */
 #endregion
 
-#region 跨域委托、继承适配器、CLR功能、协程适配器测试代码
+#region 跨域委托、继承适配器、CLR功能、协程适配器、MonoBehaviour适配器测试代码
 /// <summary>
 /// 测试委托调用的自定义委托
 /// </summary>
@@ -518,10 +595,7 @@ public class CoroutineAdapter : CrossBindingAdaptor
             m_Instance = instance;
             m_AppDomain = appdomain;
         }
-        public ILTypeInstance ILInstance
-        {
-            get { return m_Instance; }
-        }
+        public ILTypeInstance ILInstance { get { return m_Instance; }}
 
         public override string ToString()
         {
@@ -569,6 +643,92 @@ public class CoroutineAdapter : CrossBindingAdaptor
                 if (m_DisposeMethod == null) m_DisposeMethod = m_Instance.Type.GetMethod("System.IDisposable.Dispose", 0);
             }
             if(m_DisposeMethod!=null)m_AppDomain.Invoke(m_DisposeMethod, m_Instance, null);
+        }
+    }
+}
+
+/// <summary>
+/// MonoBehaviour的简单的适配器
+/// </summary>
+public class MonoBehaviourAdapter : CrossBindingAdaptor
+{
+    public override System.Type BaseCLRType{ get { return typeof(MonoBehaviour); } }//返回要继承的类
+
+    public override System.Type AdaptorType{ get { return typeof(Adapter); } }//返回适配器
+
+    public override object CreateCLRInstance(AppDomain appdomain, ILTypeInstance instance)
+    {
+        return new Adapter(appdomain, instance);//返回适配器实例化
+    }
+
+    public class Adapter: MonoBehaviour,CrossBindingAdaptorType
+    {
+        private AppDomain m_AppDomain;
+        private ILTypeInstance m_Instance;
+
+        private IMethod m_ToString;
+        private IMethod m_AwakeMethod;
+        private IMethod m_StartMethod;
+        private IMethod m_UpdateMethod;
+
+        public Adapter() { }
+        public Adapter(AppDomain appdomain, ILTypeInstance instance)
+        {
+            m_AppDomain = appdomain;
+            m_Instance = instance;
+        }
+
+        /// <summary>
+        /// 对应MonoBehaviour的实例，可get，也可set
+        /// </summary>
+        public ILTypeInstance ILInstance
+        {
+            get { return m_Instance; }
+            set
+            {
+                m_Instance = value;
+                //实例修改后，原方法函数要重置，避免还是使用之前实例的同名方法函数
+                m_AwakeMethod = null;
+                m_StartMethod = null;
+                m_UpdateMethod = null;
+            }
+        }
+
+        /// <summary>
+        /// 提供可更改程序集的属性，可get，可set
+        /// </summary>
+        public AppDomain AppDomain
+        {
+            get { return m_AppDomain; }
+            set { m_AppDomain =  value; }
+        }
+
+        public override string ToString()
+        {
+            if (m_ToString == null) m_ToString = m_AppDomain.ObjectType.GetMethod("ToString", 0);
+            IMethod m = m_Instance.Type.GetVirtualMethod(m_ToString);
+            if (m == null || m is ILMethod) return m_Instance.ToString();
+            else return m_Instance.Type.FullName;
+        }
+
+        public void Awake()
+        {
+            if (m_Instance != null)//Awake执行的比较早，可能存在实例为空的情况
+            {
+                if (m_AwakeMethod == null) m_AwakeMethod = m_Instance.Type.GetMethod("Awake", 0);
+                if(m_AwakeMethod != null)m_AppDomain.Invoke(m_AwakeMethod,m_Instance,null);
+            }
+        }
+        public void Start()
+        {
+            //前面有Awake先执行判断实例是否存在，这里不用再判断m_Instance是否为空了
+            if (m_StartMethod == null) m_StartMethod = m_Instance.Type.GetMethod("Start", 0);
+            if (m_StartMethod != null) m_AppDomain.Invoke(m_StartMethod, m_Instance, null);
+        }
+        public void Update()
+        {
+            if (m_UpdateMethod == null) m_UpdateMethod = m_Instance.Type.GetMethod("Update", 0);
+            if (m_UpdateMethod != null) m_AppDomain.Invoke(m_UpdateMethod, m_Instance, null);
         }
     }
 }
