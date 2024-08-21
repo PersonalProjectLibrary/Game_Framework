@@ -1,6 +1,0 @@
-E:\GitLibrary\PersonalProjectLibrary\Game_Framework\FrameStudy\Assets\GameData\Data\HotFix\HotFix.dll
-E:\GitLibrary\PersonalProjectLibrary\Game_Framework\FrameStudy\Assets\GameData\Data\HotFix\HotFix.pdb
-E:\GitLibrary\PersonalProjectLibrary\Game_Framework\FrameStudy\HotFixProject\HotFix\HotFix\obj\Debug\HotFix.csproj.AssemblyReference.cache
-E:\GitLibrary\PersonalProjectLibrary\Game_Framework\FrameStudy\HotFixProject\HotFix\HotFix\obj\Debug\HotFix.csproj.CoreCompileInputs.cache
-E:\GitLibrary\PersonalProjectLibrary\Game_Framework\FrameStudy\HotFixProject\HotFix\HotFix\obj\Debug\HotFix.dll
-E:\GitLibrary\PersonalProjectLibrary\Game_Framework\FrameStudy\HotFixProject\HotFix\HotFix\obj\Debug\HotFix.pdb

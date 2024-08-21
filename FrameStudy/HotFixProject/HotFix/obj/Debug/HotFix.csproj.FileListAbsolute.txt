@@ -1,0 +1,2 @@
+E:\GitLibrary\PersonalProjectLibrary\Game_Framework\FrameStudy\HotFixProject\HotFix\obj\Debug\HotFix.csproj.AssemblyReference.cache
+E:\GitLibrary\PersonalProjectLibrary\Game_Framework\FrameStudy\HotFixProject\HotFix\obj\Debug\HotFix.csproj.CoreCompileInputs.cache
