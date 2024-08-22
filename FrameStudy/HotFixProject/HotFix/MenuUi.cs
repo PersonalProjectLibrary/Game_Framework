@@ -9,7 +9,7 @@ namespace HotFix
     {
         private MenuPanel m_MainPanel;
 
-        public override void Awake(params object[] paralist)
+        public override void Awake(object param1 = null, object param2 = null, object param3 = null)
         {
             m_MainPanel = GameObject.GetComponent<MenuPanel>();
             AddButtonClickListener(m_MainPanel.m_StartButton, OnClickStart);

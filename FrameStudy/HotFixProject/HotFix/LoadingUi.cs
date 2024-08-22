@@ -9,10 +9,10 @@ namespace HotFix
         private LoadingPanel m_MainPanel;
         private string m_SceneName;
 
-        public override void Awake(params object[] paralist)
+        public override void Awake(object param1 = null, object param2 = null, object param3 = null)
         {
             m_MainPanel = GameObject.GetComponent<LoadingPanel>();
-            m_SceneName = (string)paralist[0];
+            m_SceneName = (string)param1;
         }
 
         public override void OnUpdate()

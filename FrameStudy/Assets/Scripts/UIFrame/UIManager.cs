@@ -147,7 +147,7 @@ public class UIManager : Singleton<UIManager>
     /// <param name="para2"></param>
     /// <param name="para3"></param>
     /// <returns></returns>
-    public Window PopUpWnd(string wndName, bool bTop = true,bool resource =false, params object[] paralist)
+    public Window PopUpWnd(string wndName, bool bTop = true,bool resource =false, object param1=null,object param2=null,object param3=null)
     {
         Window wnd = FindWndByName<Window>(wndName);
         if (wnd == null)
@@ -191,18 +191,18 @@ public class UIManager : Singleton<UIManager>
             wnd.Transform = wndObj.transform;
             wnd.Name = wndName;
             if (wnd.IsHotFix)
-                ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "Awake", wnd, paralist);
-            else wnd.Awake(paralist);
+                ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "Awake", wnd, param1, param2, param3);
+            else wnd.Awake(param1, param2, param3);
             wnd.Resource = resource;
             wndObj.transform.SetParent(m_WndRoot, false);
 
             if (bTop) wndObj.transform.SetAsLastSibling();
 
             if (wnd.IsHotFix)
-                ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnShow", wnd, paralist);
-            else wnd.OnShow(paralist);
+                ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnShow", wnd, param1, param2, param3);
+            else wnd.OnShow(param1, param2, param3);
         }
-        else ShowWnd(wndName, bTop, paralist);
+        else ShowWnd(wndName, bTop, param1, param2, param3);
 
         return wnd;
     }

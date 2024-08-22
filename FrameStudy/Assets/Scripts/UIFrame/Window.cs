@@ -34,9 +34,9 @@ public class Window
         return true;
     }
 
-    public virtual void Awake(params object[] paralist) { }
+    public virtual void Awake(object param1 = null, object param2 = null, object param3 = null) { }
 
-    public virtual void OnShow(params object[] paralist) { }
+    public virtual void OnShow(object param1 = null, object param2 = null, object param3 = null) { }
 
     public virtual void OnDisable() { }
 

@@ -92,6 +92,28 @@
     <Compile Include="Assets\ILRuntime\Generated\UnityEngine_GameObject_Binding.cs" />
     <Compile Include="Assets\ILRuntime\Generated\UnityEngine_Debug_Binding.cs" />
     <Compile Include="Assets\Scripts\UGUI\Item\CommonConfirm.cs" />
+    <Compile Include="Assets\Scripts\Adapter\WindowAdapter.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\LoadingPanel_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\ObjectManager_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\System_Object_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\Singleton_1_ConfigerManager_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\ResourceManager_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\UnityEngine_UI_Text_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\MonsterData_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\UnityEngine_Input_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\System_Collections_Generic_List_1_MonsterBase_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\ConfigerManager_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\UnityEngine_UI_Slider_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\Singleton_1_UIManager_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\Singleton_1_ObjectManager_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\UnityEngine_UI_Image_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\Window_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\UnityEngine_Object_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\MenuPanel_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\UIManager_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\Singleton_1_ResourceManager_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\MonsterBase_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\Generated\GameMapManager_Binding.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Resources\Version.txt" />

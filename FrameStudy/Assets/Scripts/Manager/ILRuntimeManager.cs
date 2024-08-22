@@ -125,7 +125,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //*/
         #endregion
 
-        #region 跨域继承的注册
+        #region 跨域继承的注册注册
         /*
         //InheritanceAdapter继承了CrossBindingAdaptor，
         //所以这里直接.RegisterCrossBindingAdaptor 注册适配器InheritanceAdapter
@@ -133,18 +133,29 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //*/
         #endregion
 
-        #region 注册协程的适配器
+        #region 注册协程的适配器注册
         //m_AppDomain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
         #endregion
 
-        #region MonoBehaviour适配器
+        #region MonoBehaviour适配器注册
+        //*
         m_AppDomain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());//MonoBehaviour测试适配器注册
         AddComponentCLRRedirection();//注册MonoBehaviour测试的AddComponent的重定向
         GetCompomentCLRRedirection();//注册MonoBehaviour测试的GetComponent的重定向
+        //*/
+        #endregion
+
+        #region Window适配器注册
+        m_AppDomain.RegisterCrossBindingAdaptor(new WindowAdapter());//Window适配器注册
         #endregion
 
         #region CLR绑定注册（放最后执行）
         //只需要注册一次，官方文档上有示例说明
+        //每次删除Assets/ILRuntime/Generated里的生成代码
+        //或点击Generate CLR Binding Code by Analysis生成代码时
+        //这句注册语句要先注释掉，不然进行删除或生成CLR生成绑定代码时会报错，
+        //在点击Generate CLR Binding Code by Analysis生成新的CLR绑定生成代码后再取消注释
+
         ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain);
         #endregion
 
@@ -292,9 +303,10 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
 
         #region 8、MonoBehaviour测试
         //测试AddComponent
-        //m_AppDomain.Invoke("HotFix.MonoTest", "RunTest", null, GameStart.Instance.gameObject);
-        m_AppDomain.Invoke("HotFix.MonoTest", "RunTest2", null, GameStart.Instance.gameObject);
+        //m_AppDomain.Invoke("HotFix.MonoTest", "RunTest", null, GameStart.Instance.gameObject);//测试Mono和GetCom
+        //m_AppDomain.Invoke("HotFix.MonoTest", "RunTest2", null, GameStart.Instance.gameObject);//测试AddCom
         #endregion
+
     }
 
     #region MonoBehaviour测试需要的重定向操作
@@ -369,7 +381,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
                 //实例化热更dll里的类（MonoTest），传false表手动创建类，Unity不允许new一个MonoBehaviour类
                 var ilInstance = new ILTypeInstance(type as ILType, false);
                 //创建适配器实例，把GameObject添加上了适配器;后面根据适配器里的类来掉热更里的目标类
-                var clrInstance = instance.AddComponent<MonoBehaviourAdapter.Adapter>();
+                var clrInstance = instance.AddComponent<MonoBehaviourAdapter.Adaptor>();
                 //因为Unity里写的适配器类clrInstance里没有对应的热更类，要做实例的替换，手动赋值
                 clrInstance.ILInstance = ilInstance;//实例替换
                 clrInstance.AppDomain = __domain;//程序集也替换
@@ -412,7 +424,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
             else//这里不同与AddComponent是new一个然后替换
             {
                 //把GameObject里的MonoBehaviour的所有的适配器全部找到，然后遍历判断
-                var clrInstances = instance.GetComponents<MonoBehaviourAdapter.Adapter>();
+                var clrInstances = instance.GetComponents<MonoBehaviourAdapter.Adaptor>();
                 foreach (var clrInstance in clrInstances)
                 {
                     if(clrInstance.ILInstance!=null)//判断是否是无效的MonoBehaviour
@@ -487,19 +499,19 @@ public class InheritanceAdapter : CrossBindingAdaptor
 
     public override System.Type AdaptorType
     {
-        get { return typeof(Adapter); }//实际的适配器类
+        get { return typeof(Adaptor); }//实际的适配器类
     }
 
     public override object CreateCLRInstance(AppDomain appdomain, ILTypeInstance instance)
     {
-        return new Adapter(appdomain, instance);//返回新的适配器对象
+        return new Adaptor(appdomain, instance);//返回新的适配器对象
     }
 
     //因为跨域继承只有一个Adapter，因避免一个类同时实现多个外部接口
     public override System.Type[] BaseCLRTypes => base.BaseCLRTypes;
 
     //实际的适配器类
-    class Adapter : TestInheritanceBase, CrossBindingAdaptorType
+    class Adaptor : TestInheritanceBase, CrossBindingAdaptorType
     {
         private AppDomain m_AppDomain;
         private ILTypeInstance m_Instance;
@@ -515,8 +527,8 @@ public class InheritanceAdapter : CrossBindingAdaptor
         private bool m_GetValueInvoking = false;
 
 
-        public Adapter() { }//无参构造函数
-        public Adapter(AppDomain appdomain, ILTypeInstance instance)//有参构造函数
+        public Adaptor() { }//无参构造函数
+        public Adaptor(AppDomain appdomain, ILTypeInstance instance)//有参构造函数
         {
             m_AppDomain = appdomain;
             m_Instance = instance;
@@ -705,14 +717,14 @@ public class MonoBehaviourAdapter : CrossBindingAdaptor
 {
     public override System.Type BaseCLRType{ get { return typeof(MonoBehaviour); } }//返回要继承的类
 
-    public override System.Type AdaptorType{ get { return typeof(Adapter); } }//返回适配器
+    public override System.Type AdaptorType{ get { return typeof(Adaptor); } }//返回适配器
 
     public override object CreateCLRInstance(AppDomain appdomain, ILTypeInstance instance)
     {
-        return new Adapter(appdomain, instance);//返回适配器实例化
+        return new Adaptor(appdomain, instance);//返回适配器实例化
     }
 
-    public class Adapter: MonoBehaviour,CrossBindingAdaptorType
+    public class Adaptor: MonoBehaviour,CrossBindingAdaptorType
     {
         private AppDomain m_AppDomain;
         private ILTypeInstance m_Instance;
@@ -722,8 +734,8 @@ public class MonoBehaviourAdapter : CrossBindingAdaptor
         private IMethod m_StartMethod;
         private IMethod m_UpdateMethod;
 
-        public Adapter() { }
-        public Adapter(AppDomain appdomain, ILTypeInstance instance)
+        public Adaptor() { }
+        public Adaptor(AppDomain appdomain, ILTypeInstance instance)
         {
             m_AppDomain = appdomain;
             m_Instance = instance;

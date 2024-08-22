@@ -10,7 +10,7 @@ public class HotFixUi : Window
     /// </summary>
     private float m_SumTime = 0;
 
-    public override void Awake(params object[] paralist)
+    public override void Awake(object param1 = null, object param2 = null, object param3 = null)
     {
         m_SumTime = 0;
         m_Panel = GameObject.GetComponent<HotFixPanel>();

@@ -1,0 +1,239 @@
+添加Window.cs的适配器
+一、在Assets\Scripts里新建文件夹Adapter，并建项目的第一个适配器脚本：WindowAdapter.cs
+public class WindowAdapter : CrossBindingAdaptor
+{
+    public override Type BaseCLRType { get { return typeof(Window); } }
+    public override Type AdaptorType { get { return typeof(Adaptor); } }
+    public override object CreateCLRInstance(ILRuntime.Runtime.Enviorment.AppDomain appdomain, ILTypeInstance instance)
+    {
+        return new Adaptor(appdomain, instance);
+    }
+    public class Adaptor : Window, CrossBindingAdaptorType
+    {
+        private ILRuntime.Runtime.Enviorment.AppDomain m_AppDomain;
+        private ILTypeInstance m_Instance;
+        private IMethod m_ToString;
+
+        public Adaptor() { }
+        public Adaptor(ILRuntime.Runtime.Enviorment.AppDomain appDomain, ILTypeInstance instance)
+        {
+            m_AppDomain = appDomain;
+            m_Instance = instance;
+        }
+        public ILTypeInstance ILInstance
+        {
+            get { return m_Instance; }
+            set { m_Instance = value; }
+        }
+        public override string ToString()
+        {
+            if (m_ToString == null) m_ToString = m_AppDomain.ObjectType.GetMethod("ToString", 0);
+            IMethod m = m_Instance.Type.GetVirtualMethod(m_ToString);
+            if (m == null || m is ILMethod) return m_Instance.ToString();
+            else return m_Instance.Type.FullName;
+         }
+    }
+}
+
+二、适配器重写方法时存在的问题：
+1、Window适配器WindowAdapter.cs里的Adaptor类里重写Awake和OnShow方法时，需要明确参数个数，
+使用params object[] paralist的形式去填写参数或报错；
+如下面的写法，运行时就会报错：
+
+private IMethod m_AwakeMethod;
+public override void Awake(params object[] paralist)
+{
+    if (m_AwakeMethod == null) m_AwakeMethod = m_Instance.Type.GetMethod("Awake",1);
+    if(m_AwakeMethod!=null)m_AppDomain.Invoke(m_AwakeMethod, paralist);
+}
+
+2、所以这里对：
+主工程里：将Window.cs里的Awake()和OnShow()参数数组改为具体参数，这里设置为3个参数；
+UIManager.cs里的PopUpWnd()和Window.cs里的Awake()和OnShow()以及HotFixUi.cs里的Awake()进行重写；
+热更工程里：将MenuUI.cs和LoadingUi.cs里Awake()进行重写；
+
+（1）UIManager.cs里
+原：
+public Window PopUpWnd(string wndName, bool bTop = true,bool resource =false, params object[] paralist)
+{
+    ... ...
+    if (wnd == null)
+    {
+        ... ...
+        if (wnd.IsHotFix)
+            ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "Awake", wnd, paralist);
+        else wnd.Awake(paralist);
+        ... ...
+        if (wnd.IsHotFix)
+            ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnShow", wnd, paralist);
+        else wnd.OnShow(paralist);
+    }
+    else ShowWnd(wndName, bTop, paralist);
+    return wnd;
+}
+改：
+public Window PopUpWnd(string wndName, bool bTop = true,bool resource =false, object param1=null,object param2=null,object param3=null)
+{
+    ... ...
+    if (wnd == null)
+    {
+        ... ...
+        if (wnd.IsHotFix)
+            ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "Awake", wnd, param1, param2, param3);
+        else wnd.Awake(param1, param2, param3);
+        ... ...
+        if (wnd.IsHotFix)
+            ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnShow", wnd, param1, param2, param3);
+        else wnd.OnShow(param1, param2, param3);
+    }
+    else ShowWnd(wndName, bTop, param1, param2, param3);
+    return wnd;
+}
+
+（2）Window.cs里
+原：
+public virtual void Awake(params object[] paralist) { }
+public virtual void OnShow(params object[] paralist) { }
+改：
+public virtual void Awake(object param1 = null, object param2 = null, object param3 = null) { }
+public virtual void OnShow(object param1 = null, object param2 = null, object param3 = null) { }
+
+注：OnMessage()也可以重写，但OnMessage()也不是UIManager.cs调用，
+而是拿到Windowl的类调用，热更里使用也是热更里的类调用该方法，而不是直接使用，这里就不做处理了。
+
+（3）HotFixUi.cs里
+原：
+public override void Awake(params object[] paralist){... ...}
+改：
+public override void Awake(object param1 = null, object param2 = null, object param3 = null){... ...}
+
+（4）MenuUi.cs里
+原：
+public override void Awake(params object[] paralist){... ...}
+改：
+public override void Awake(object param1 = null, object param2 = null, object param3 = null){... ...}
+
+（5）LoadingUi.cs里
+原：
+public override void Awake(params object[] paralist)
+{
+    m_MainPanel = GameObject.GetComponent<LoadingPanel>();
+    m_SceneName = (string)paralist[0];
+}
+改：
+public override void Awake(object param1 = null, object param2 = null, object param3 = null)
+{
+    m_MainPanel = GameObject.GetComponent<LoadingPanel>();
+    m_SceneName = (string)param1;
+}
+
+三、相关方法重写后，继续实现适配器里方法的重写：
+private object[] m_Paralist = new object[3];
+private IMethod m_AwakeMethod;
+private IMethod m_ShowMethod;
+private IMethod m_DisableMethod;
+private IMethod m_UpdateMethod;
+
+public override void Awake(object param1 = null, object param2 = null, object param3 = null)
+{
+    if (m_AwakeMethod == null) m_AwakeMethod = m_Instance.Type.GetMethod("Awake",3);
+    if (m_AwakeMethod != null)
+    {
+        m_Paralist[0] = param1;
+        m_Paralist[1] = param2;
+        m_Paralist[2] = param3;
+        m_AppDomain.Invoke(m_AwakeMethod, m_Paralist);
+    }
+}
+public override void OnShow(object param1 = null, object param2 = null, object param3 = null)
+{
+    if (m_ShowMethod == null) m_ShowMethod = m_Instance.Type.GetMethod("OnShow", 3);
+    if (m_ShowMethod != null)
+    {
+        m_Paralist[0] = param1;
+        m_Paralist[1] = param2;
+        m_Paralist[2] = param3;
+        m_AppDomain.Invoke(m_ShowMethod, m_Paralist);
+    }
+}
+public override void OnDisable()
+{
+    if (m_DisableMethod == null) m_DisableMethod = m_Instance.Type.GetMethod("OnDisable", 0);
+    if (m_DisableMethod != null) m_AppDomain.Invoke(m_DisableMethod, m_Instance);
+}
+public override void OnUpdate()
+{
+    if (m_UpdateMethod == null) m_UpdateMethod = m_Instance.Type.GetMethod("OnUpdate", 0);
+    if (m_UpdateMethod != null) m_AppDomain.Invoke(m_UpdateMethod, m_Instance);
+}
+
+四、适配器对Window.cs里的OnClose()重写
+Window.cs里的OnClose()不是空方法，有内容；适配器里重写要继承Window.cs里OnClose()的内容
+对与有base的调用（继承父类），需要添加bool值判断是否正在执行该方法，不允许同时执行此方法
+private bool m_OnCloseInvoking;
+public override void OnClose()
+{
+    if (m_CloseMethod == null) m_CloseMethod = m_Instance.Type.GetMethod("OnClose", 0);
+    if (m_CloseMethod != null && !m_OnCloseInvoking)
+    {
+        m_OnCloseInvoking = true;
+        m_AppDomain.Invoke(m_CloseMethod, m_Instance);
+        m_OnCloseInvoking = false;
+    }else base.OnClose();
+}
+
+五、重写生成和更新HotFix.dll
+Window.cs的适配器就写完了，Window.cs里修改Awake()和Onshow()后相关脚本的重写修改也进行了处理
+包括热更工程里MenuUi.cs和LoadingUi.cs里对Awake()的参数修改；
+然后重写生成和更新HotFix.dll
+
+六、重新生成绑定CLR代码
+1、在ILRuntimeCLRBinding.cs的InitILRuntime()里添加新的适配器注册
+static void InitILRuntime(ILRuntime.Runtime.Enviorment.AppDomain domain)
+{
+    domain.RegisterCrossBindingAdaptor(new InheritanceAdapter());
+    domain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
+    domain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());
+    domain.RegisterCrossBindingAdaptor(new WindowAdapter());
+}
+
+2、在ILRuntimeManager.cs的InitializeILRuntime()里CLR注册绑定语句前，添加适配器注册
+void InitializeILRuntime()
+{
+    ... ...
+    m_AppDomain.RegisterCrossBindingAdaptor(new WindowAdapter());//Window适配器注册
+    ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain);
+}
+
+3、CLR重新生成绑定
+（1）注释掉ILRuntimeManager.cs的InitializeILRuntime()里的
+ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain); 语句
+
+不然不论是进行删除Assets/ILRuntime/Generated里的生成代码
+或点击菜单栏Generate CLR Binding Code by Analysis进行生成CLR生成绑定代码
+都会报错
+
+（2）删除Assets/ILRuntime/Generated里旧的生成代码
+这步可做可不做，不做第三步时新生成代码会自动覆盖旧的
+
+（3）点击 菜单栏：ILRuntime--Generate CLR Binding Code by Analysis
+生成新的生成代码
+
+（4）对ILRuntimeManager.cs的InitializeILRuntime()里的CLR绑定注册语句
+ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain);取消注释
+
+七、点击运行项目
+可以看到项目正常运行加载；
+但进入场景后，报错：
+KeyNotFoundException: Cannot find convertor for UnityEngine.Events.UnityAction
+Please add following code:
+appdomain.DelegateManager.RegisterDelegateConvertor<UnityEngine.Events.UnityAction>(...);
+ILRuntime.Runtime.Enviorment.DelegateManager.ConvertToDelegate...
+
+分析：项目正常加载，进入场景后报错；
+项目运行，Loading界面完成后，打开MENU场景；
+MenuUi.cs里，在Awake()里进行注册Button事件，以及资源加载没有做适配
+
+故解决办法：对MenuUi.cs里功能方法做适配；
+
+

@@ -56,7 +56,7 @@ public class ILRuntimeCLRBinding
         {
             Debug.LogError("CLR绑定失败\n" + e);
         }
-        //Crossbind Adapter is needed to generate the correct binding code
+        //Crossbind Adaptor is needed to generate the correct binding code
         InitILRuntime(domain);
         ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.GenerateBindingCode(domain, GeneratePath);
 
@@ -67,10 +67,10 @@ public class ILRuntimeCLRBinding
     {
         //注册适配器
         ////这里需要注册所有热更DLL中用到的跨域继承Adapter，否则无法正确抓取引用
-        //domain.RegisterCrossBindingAdaptor(new WindowAdapter());
         domain.RegisterCrossBindingAdaptor(new InheritanceAdapter());
         domain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
         domain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());
+        domain.RegisterCrossBindingAdaptor(new WindowAdapter());
     }
 }
 #endif
