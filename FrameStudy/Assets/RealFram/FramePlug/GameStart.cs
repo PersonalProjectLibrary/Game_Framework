@@ -67,8 +67,10 @@ public class GameStart : MonoSingleton<GameStart>
     //注册UI窗口
     void RegisterUI()
     {
-        UIManager.Instance.Register<MenuUi>(ConStr.MENUPANEL);
-        UIManager.Instance.Register<LoadingUi>(ConStr.LOADINGPANEL);
+        //UIManager.Instance.Register<MenuUi>(ConStr.MENUPANEL);
+        //UIManager.Instance.Register<LoadingUi>(ConStr.LOADINGPANEL);
+        UIManager.Instance.Register<Window>(ConStr.MENUPANEL);
+        UIManager.Instance.Register<Window>(ConStr.LOADINGPANEL);
         UIManager.Instance.Register<HotFixUi>(ConStr.HOTFIX);
     }
 

@@ -84,9 +84,12 @@ public class UIManager : Singleton<UIManager>
     {
         for (int i = 0; i < m_WindowList.Count; i++)
         {
-            if (m_WindowList[i] != null)
+            Window wnd = m_WindowList[i];
+            if (wnd != null)
             {
-                m_WindowList[i].OnUpdate();
+                if (wnd.IsHotFix)
+                    ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnUpdate", wnd);
+                else wnd.OnUpdate();
             }
         }
     }
@@ -152,7 +155,15 @@ public class UIManager : Singleton<UIManager>
             System.Type tp = null;
             if (m_RegisterDic.TryGetValue(wndName, out tp))
             {
-                wnd = System.Activator.CreateInstance(tp) as Window;
+                //resource加载的，正常反射处理加载
+                if (resource) wnd = System.Activator.CreateInstance(tp) as Window;
+                else//其他热更窗体使用ILRuntime创建
+                {
+                    string hotName = "HotFix." + wndName.Replace("Panel.prefab", "Ui");
+                    wnd = ILRuntimeManager.Instance.ILRunAppDomain.Instantiate<Window>(hotName);
+                    wnd.IsHotFix = true;
+                    wnd.HotFixClassName = hotName;
+                }
             }
             else
             {
@@ -179,21 +190,19 @@ public class UIManager : Singleton<UIManager>
             wnd.GameObject = wndObj;
             wnd.Transform = wndObj.transform;
             wnd.Name = wndName;
-            wnd.Awake(paralist);
+            if (wnd.IsHotFix)
+                ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "Awake", wnd, paralist);
+            else wnd.Awake(paralist);
             wnd.Resource = resource;
             wndObj.transform.SetParent(m_WndRoot, false);
 
-            if (bTop)
-            {
-                wndObj.transform.SetAsLastSibling();
-            }
+            if (bTop) wndObj.transform.SetAsLastSibling();
 
-            wnd.OnShow(paralist);
+            if (wnd.IsHotFix)
+                ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnShow", wnd, paralist);
+            else wnd.OnShow(paralist);
         }
-        else
-        {
-            ShowWnd(wndName, bTop, paralist);
-        }
+        else ShowWnd(wndName, bTop, paralist);
 
         return wnd;
     }
@@ -218,8 +227,15 @@ public class UIManager : Singleton<UIManager>
     {
         if (window != null)
         {
-            window.OnDisable();
-            window.OnClose();
+            
+            if(window.IsHotFix)
+                ILRuntimeManager.Instance.ILRunAppDomain.Invoke(window.HotFixClassName, "OnDisable", window);
+            else window.OnDisable();
+
+            if (window.IsHotFix)
+                ILRuntimeManager.Instance.ILRunAppDomain.Invoke(window.HotFixClassName, "OnClose", window);
+            else window.OnClose();
+
             if (m_WindowDic.ContainsKey(window.Name))
             {
                 m_WindowDic.Remove(window.Name);
@@ -227,17 +243,10 @@ public class UIManager : Singleton<UIManager>
             }
             if (!window.Resource)
             {
-                if (destory)
-                {
-                    ObjectManager.Instance.ReleaseObject(window.GameObject, 0, true);
-                }
-                else
-                {
-                    ObjectManager.Instance.ReleaseObject(window.GameObject, recycleParent: false);
-                }
+                if (destory) ObjectManager.Instance.ReleaseObject(window.GameObject, 0, true);
+                else ObjectManager.Instance.ReleaseObject(window.GameObject, recycleParent: false);
             }
             else GameObject.Destroy(window.GameObject);
-
             window.GameObject = null;
             window = null;
         }
@@ -283,7 +292,9 @@ public class UIManager : Singleton<UIManager>
         if (wnd != null)
         {
             wnd.GameObject.SetActive(false);
-            wnd.OnDisable();
+            if(wnd.IsHotFix) 
+                ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnDisable", wnd);
+            else wnd.OnDisable();
         }
     }
 
@@ -309,7 +320,9 @@ public class UIManager : Singleton<UIManager>
         {
             if (wnd.GameObject != null && !wnd.GameObject.activeSelf) wnd.GameObject.SetActive(true);
             if (bTop) wnd.Transform.SetAsLastSibling();
-            wnd.OnShow(paralist);
+            if(wnd.IsHotFix) 
+                ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnShow", wnd, paralist);
+            else wnd.OnShow(paralist);
         }
     }
 }

@@ -1,0 +1,205 @@
+前面已经成功将Unity工程里的MenuUi.cs与LoadingUi.cs复制到HotFix热更工程中；
+接下来继续操作修改，实现对Window的热更；
+
+之前操作：
+1、将Assets/RealFram/FramePlug/UIFrame，移动到Assets/Scripts里
+2、删除UIFrame里的UIManager程序集（不是脚本！！！）
+3、Assets/Scripts/UGUI/Window里MenuUi.cs与LoadingUi.cs复制到热更工程HotFix的脚本文件夹里；
+4、热更工程解决方案里，选中HotFix，右键--添加--现有项；添加MenuUi.cs与LoadingUi.cs进行；
+5、添加UnityEngine.InputLegacyModule.dll的引用，解决类型名"Input"不识别问题。
+6、热更工程项目进行生成dll，Unity主工程里更新dll
+7、测试正常运行；
+
+继续完善项目：
+1、ILRuntimeManager.cs里，添加ILRunAppDomain属性；方便外部程序获取m_AppDomain；
+
+2、对前面热更工程添加的MenuUi.cs与LoadingUi.cs，添加命名空间
+namespace HotFix { public class MenuUi : Window{} }
+namespace HotFix { public class LoadingUi: Window{} }
+
+3、更新HotFix热更dll，并同步Unity里HotFix.dll的修改
+
+4、Unity工程里移除Window里MenuUi.cs与LoadingUi.cs脚本（前面复制到热更工程了，Unity工程里不用存在了）
+将GameStart.cs里使用到MenuUi.cs与LoadingUi.cs注册窗口的RegisterUI()更新
+原：
+    void RegisterUI()
+    {
+        UIManager.Instance.Register<MenuUi>(ConStr.MENUPANEL);
+        UIManager.Instance.Register<LoadingUi>(ConStr.LOADINGPANEL);
+        UIManager.Instance.Register<HotFixUi>(ConStr.HOTFIX);
+    }
+改：
+    void RegisterUI()
+    {
+        UIManager.Instance.Register<Window>(ConStr.MENUPANEL);
+        UIManager.Instance.Register<Window>(ConStr.LOADINGPANEL);
+        UIManager.Instance.Register<HotFixUi>(ConStr.HOTFIX);
+    }
+
+5、热更wnd与非热更资源加载的wnd，加载方式不同；
+为了区别wnd类型，在Window.cs里添加变量：
+public bool IsHotFix { get; set; } = false;//是否是热更加载
+public string HotFixClassName {  get; set; }//调用窗口的类名
+
+6、替换UIManager.cs里对wnd创建和使用：
+PopUpWnd()、ShowWnd()、CloseWnd()、OnUpdate()、HideWnd()
+原：
+（1）
+public Window PopUpWnd(string wndName, bool bTop = true,bool resource =false, params object[] paralist)
+{
+    ... ...
+    if (wnd == null)
+    {
+        ... ...
+        if (m_RegisterDic.TryGetValue(wndName, out tp))
+        {
+	wnd = System.Activator.CreateInstance(tp) as Window;    
+        }
+         ... ...
+        wnd.Awake(paralist);
+        ... ...
+        wnd.OnShow(paralist);
+    }
+    ... ...
+    return wnd;
+}
+（2）
+public void ShowWnd(Window wnd, bool bTop = true, params object[] paralist)
+{
+    if (wnd != null)
+    {
+        ... ...
+        wnd.OnShow(paralist);
+    }
+}
+（3）
+public void CloseWnd(Window window, bool destory = false)
+{
+    if (window != null)
+    {
+        window.OnDisable();
+        window.OnClose();
+        ... ...
+    }
+}
+（4）
+public void OnUpdate()
+{
+    for (int i = 0; i < m_WindowList.Count; i++)
+    {
+        if (m_WindowList[i] != null) m_WindowList[i].OnUpdate();
+    }
+}
+（5）
+public void HideWnd(Window wnd)
+{
+    if (wnd != null)
+    {
+        wnd.GameObject.SetActive(false);
+        wnd.OnDisable();
+    }
+}
+改：
+（1）
+public Window PopUpWnd(string wndName, bool bTop = true,bool resource =false, params object[] paralist)
+{
+    ... ...
+    if (wnd == null)
+    {
+        ... ...
+        if (m_RegisterDic.TryGetValue(wndName, out tp))
+        {
+            if (resource) wnd = System.Activator.CreateInstance(tp) as Window;
+            else
+            {
+                string hotName = "HotFix." + wndName.Replace("Panel.prefab", "Ui");
+                wnd = ILRuntimeManager.Instance.ILRunAppDomain.Instantiate<Window>(hotName);
+                wnd.IsHotFix = true;
+                wnd.HotFixClassName = hotName;
+            }
+        }            
+         ... ...
+        if (wnd.IsHotFix)
+            ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "Awake", wnd, paralist);
+        else wnd.Awake(paralist);
+        ... ...
+        if(wnd.IsHotFix) 
+            ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnShow", wnd, paralist);
+        else wnd.OnShow(paralist);
+    }
+    ... ...
+    return wnd;
+}
+（2）
+public void ShowWnd(Window wnd, bool bTop = true, params object[] paralist)
+{
+    if (wnd != null)
+    {
+        ... ...
+        if(wnd.IsHotFix) 
+            ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnShow", wnd, paralist);
+        else wnd.OnShow(paralist);
+    }
+}
+（3）
+public void CloseWnd(Window window, bool destory = false)
+{
+    if (window != null)
+    {
+        if(window.IsHotFix)
+	ILRuntimeManager.Instance.ILRunAppDomain.Invoke(window.HotFixClassName, "OnDisable", window);
+        else window.OnDisable();
+
+       if (window.IsHotFix)
+               ILRuntimeManager.Instance.ILRunAppDomain.Invoke(window.HotFixClassName, "OnClose", window);
+       else window.OnClose();
+        ... ...
+    }
+}
+（4）
+public void OnUpdate()
+{
+    for (int i = 0; i < m_WindowList.Count; i++)
+    {
+        Window wnd = m_WindowList[i];
+        if (wnd != null)
+        {
+            if (wnd.IsHotFix)
+                ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnUpdate", wnd);
+            else wnd.OnUpdate();
+        }
+    }
+}
+（5）
+public void HideWnd(Window wnd)
+{
+    if (wnd != null)
+    {
+        wnd.GameObject.SetActive(false);
+        if(wnd.IsHotFix) 
+            ILRuntimeManager.Instance.ILRunAppDomain.Invoke(wnd.HotFixClassName, "OnDisable", wnd);
+        else wnd.OnDisable();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

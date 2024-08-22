@@ -14,6 +14,8 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
     /// 整个工程只有一个ILRuntime的AppDomain
     /// </summary>
     AppDomain m_AppDomain;
+    public AppDomain ILRunAppDomain { get { return m_AppDomain; } }
+
     private const string DLLPATH = "Assets/GameData/Data/HotFix/HotFix.dll.bytes";
     private const string PDBPATH = "Assets/GameData/Data/HotFix/HotFix.pdb.bytes";
 

@@ -17,6 +17,12 @@ public class Window
     //窗口面板是否从Resource里加载
     public bool Resource { get; set; } = false;
 
+    //是否是热更加载
+    public bool IsHotFix { get; set; } = false;
+
+    //调用窗口的类名
+    public string HotFixClassName {  get; set; }
+
     //所有的Button
     protected List<Button> m_AllButton = new List<Button>();
 
