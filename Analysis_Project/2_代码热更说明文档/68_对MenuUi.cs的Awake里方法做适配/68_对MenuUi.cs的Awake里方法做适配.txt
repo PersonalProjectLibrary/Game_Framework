@@ -1,0 +1,27 @@
+一、添加适配器
+热更工程里MenuUi.cs的Awake()里的事件的适配器
+在主工程的ILRuntimeManager.cs的InitializeILRuntime()里添加MenuUi.cs的自定义委托事件注册
+1、MenuUi.cs里使用的自带Action事件的注册
+2、MenuUi.cs里使用的AddButtonClickListener()事件注册
+3、MenuUi.cs里使用的资源异步加载OnAsyncObjFinish事件注册
+
+void InitializeILRuntime()
+{
+    //MenuUi.cs里使用的自带Action事件的注册
+    m_AppDomain.DelegateManager.RegisterMethodDelegate<System.String, UnityEngine.Object, System.Object, System.Object, System.Object>();
+    //MenuUi.cs里使用的自定义Button事件注册
+    m_AppDomain.DelegateManager.RegisterDelegateConvertor<UnityEngine.Events.UnityAction>((action) =>
+    {
+        return new UnityEngine.Events.UnityAction(() =>{ ((System.Action)action)(); });
+    });
+    //MenuUi.cs里使用的资源异步加载OnAsyncObjFinish事件注册
+    m_AppDomain.DelegateManager.RegisterDelegateConvertor<OnAsyncObjFinish>((action) =>
+    {
+         return new OnAsyncObjFinish((path, obj, param1, param2, param3) => { ((System.Action<System.String, UnityEngine.Object, System.Object, System.Object, System.Object>)action)(path, obj, param1, param2, param3); });
+        });
+    //Window适配器注册
+    m_AppDomain.RegisterCrossBindingAdaptor(new WindowAdapter());
+    ILRuntime.Runtime.Generated.CLRBindings.Initialize(m_AppDomain);
+}
+
+然后运行发现正常进入加载项目

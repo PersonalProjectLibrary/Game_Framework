@@ -67,10 +67,12 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
     void InitializeILRuntime()
     {
         #region 1、默认的委托注册，直接注册
+        /*
         //默认的委托注册，仅仅支持系统自带的Action以及Function，
         //使用RegisterMethodDelegate或RegisterFunctionDelegate
         //对应由系统提供的Action委托类型：DelegateAction委托，里面参数是string类型
         m_AppDomain.DelegateManager.RegisterMethodDelegate<string>();
+        //*/
 
         //错误写法
         /* TestDelegateMetho和TestDelegateFunction是自定义委托，非系统默认委托。
@@ -125,7 +127,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //*/
         #endregion
 
-        #region 跨域继承的注册注册
+        #region 4、跨域继承的注册注册
         /*
         //InheritanceAdapter继承了CrossBindingAdaptor，
         //所以这里直接.RegisterCrossBindingAdaptor 注册适配器InheritanceAdapter
@@ -133,19 +135,31 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         //*/
         #endregion
 
-        #region 注册协程的适配器注册
+        #region 5、注册协程的适配器注册
         //m_AppDomain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
         #endregion
 
-        #region MonoBehaviour适配器注册
-        //*
+        #region 6、MonoBehaviour适配器注册
+        /*
         m_AppDomain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());//MonoBehaviour测试适配器注册
         AddComponentCLRRedirection();//注册MonoBehaviour测试的AddComponent的重定向
         GetCompomentCLRRedirection();//注册MonoBehaviour测试的GetComponent的重定向
         //*/
         #endregion
 
-        #region Window适配器注册
+        #region 7、Window适配器注册
+        //MenuUi.cs里使用的自带Action事件的注册
+        m_AppDomain.DelegateManager.RegisterMethodDelegate<System.String, UnityEngine.Object, System.Object, System.Object, System.Object>();
+        //MenuUi.cs里使用的自定义Button事件注册
+        m_AppDomain.DelegateManager.RegisterDelegateConvertor<UnityEngine.Events.UnityAction>((action) =>
+        {
+            return new UnityEngine.Events.UnityAction(() => { ((System.Action)action)(); });
+        });
+        //MenuUi.cs里使用的资源异步加载OnAsyncObjFinish事件注册
+        m_AppDomain.DelegateManager.RegisterDelegateConvertor<OnAsyncObjFinish>((action) =>
+        {
+            return new OnAsyncObjFinish((path, obj, param1, param2, param3) => { ((System.Action<System.String, UnityEngine.Object, System.Object, System.Object, System.Object>)action)(path, obj, param1, param2, param3); });
+        });
         m_AppDomain.RegisterCrossBindingAdaptor(new WindowAdapter());//Window适配器注册
         #endregion
 
@@ -309,7 +323,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
 
     }
 
-    #region MonoBehaviour测试需要的重定向操作
+    #region MonoBehaviour测试需要的重定向操作：AddComponent和GetComponent
     /* HotFix工程测试代码中使用到AddComponent<MonoTest>，而MonoTest这个类不在Unity主工程中
      * 直接AddComponet<MonoTest> 是加不到Object身上去的，所以要做重定向
      * 写方法SetupCLRRedirection()，将HotFix工程里的AddComponent进行一个挟持，转换成Unity工程那边的调用
