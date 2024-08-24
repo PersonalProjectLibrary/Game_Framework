@@ -39,26 +39,26 @@ public class GameStart : MonoSingleton<GameStart>
         progress.fillAmount = 0f;
         yield return null;
         text.text = "加载dll... ...";
-        ILRuntimeManager.Instance.Init();
 
+        text.text = "加载本地数据... ...";
+        AssetBundleManager.Instance.LoadAssetBundleConfig();
         progress.fillAmount = 0.1f;
         yield return null;
-        text.text = "加载本地数据... ...";
 
-        AssetBundleManager.Instance.LoadAssetBundleConfig();
+        ILRuntimeManager.Instance.Init();
         progress.fillAmount = 0.2f;
         yield return null;
-        text.text = "加载数据表... ...";
 
+        text.text = "加载数据表... ...";
         LoadConfiger();
         progress.fillAmount = 0.7f;
         yield return null;
-        text.text = "加载配置... ...";
 
+        text.text = "加载配置... ...";
         progress.fillAmount = 0.9f;
         yield return null;
-        text.text = "初始化地图... ...";//text的内容根据需求自定义设定填写即可
 
+        text.text = "初始化地图... ...";//text的内容根据需求自定义设定填写即可
         GameMapManager.Instance.Init(this);//初始化完成
         progress.fillAmount = 1f;
         yield return null;

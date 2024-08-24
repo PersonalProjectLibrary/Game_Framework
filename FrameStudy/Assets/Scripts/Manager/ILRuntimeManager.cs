@@ -46,10 +46,14 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         TextAsset pdbText = ResourceManager.Instance.LoadResource<TextAsset>(PDBPATH);
         //读取加载热更库
         MemoryStream md = new MemoryStream(dllText.bytes);
-        MemoryStream mp = new MemoryStream(pdbText.bytes);
+        //MemoryStream mp = new MemoryStream(pdbText.bytes);
+
+        //pdb文件调试数据库，有需要在日志中显示报错的行号，则必须提供PDB文件，不过会额外耗用内存；
+        //正式发布时请将pdb去掉，LoadAssembly的时候，pdb传null即可。
         try
         {
-            m_AppDomain.LoadAssembly(md, mp, new ILRuntime.Mono.Cecil.Pdb.PdbReaderProvider());
+            //m_AppDomain.LoadAssembly(md, mp, new ILRuntime.Mono.Cecil.Pdb.PdbReaderProvider());
+            m_AppDomain.LoadAssembly(md, null, new ILRuntime.Mono.Cecil.Pdb.PdbReaderProvider());
         }
         catch
         {
@@ -329,6 +333,8 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
      * 写方法SetupCLRRedirection()，将HotFix工程里的AddComponent进行一个挟持，转换成Unity工程那边的调用
      * 写完方法后，在InitializeILRuntime()方法里进行调用执行。这个重定向也要放在CLR绑定注册之前执行
     //*/
+
+    /* 重定向
     /// <summary>
     /// 获取重定向后的AddComponent
     /// </summary>
@@ -455,7 +461,7 @@ public class ILRuntimeManager : Singleton<ILRuntimeManager>
         }
         return __esp;
     }
-
+    //*/
     #endregion
 }
 

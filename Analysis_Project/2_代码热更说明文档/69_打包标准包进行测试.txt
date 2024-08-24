@@ -1,0 +1,134 @@
+一、正式打包时，将pdb部分注释掉
+1、在ILRuntimeManager.cs的LoadHotFixAssembly()加载热更程序集部分，将pdb部分注释掉：
+pdb文件调试数据库，有需要在日志中显示报错的行号，则必须提供PDB文件，不过会额外耗用内存；
+正式发布时请将pdb去掉，LoadAssembly的时候，pdb传null即可。
+2、原：
+void LoadHotFixAssembly()
+{
+    m_AppDomain = new AppDomain();
+    //读取热更资源的dll
+    TextAsset dllText = ResourceManager.Instance.LoadResource<TextAsset>(DLLPATH);
+    //读取PDB文件，调试数据库，主要用于日志报错
+    TextAsset pdbText = ResourceManager.Instance.LoadResource<TextAsset>(PDBPATH);
+    //读取加载热更库
+    MemoryStream md = new MemoryStream(dllText.bytes);
+    MemoryStream mp = new MemoryStream(pdbText.bytes);
+    try { m_AppDomain.LoadAssembly(md, mp, new ILRuntime.Mono.Cecil.Pdb.PdbReaderProvider()); }
+    catch { Debug.LogError("加载热更DLL失败，请确保已经通过VS打开HotFixProject/HotFix.sln编译过热更DLL"); }
+
+    InitializeILRuntime();
+    OnHotFixLoaded();
+}
+3、改：
+void LoadHotFixAssembly()
+{
+    #region 加载热更程序集
+    //m_AppDomain = new ILRuntime.Runtime.Enviorment.AppDomain();
+    m_AppDomain = new AppDomain();
+    //读取热更资源的dll
+    TextAsset dllText = ResourceManager.Instance.LoadResource<TextAsset>(DLLPATH);
+    //读取PDB文件，调试数据库，主要用于日志报错
+    TextAsset pdbText = ResourceManager.Instance.LoadResource<TextAsset>(PDBPATH);
+    //读取加载热更库
+    MemoryStream md = new MemoryStream(dllText.bytes);
+    //MemoryStream mp = new MemoryStream(pdbText.bytes);
+    try
+    {
+        //m_AppDomain.LoadAssembly(md, mp, new ILRuntime.Mono.Cecil.Pdb.PdbReaderProvider());
+        m_AppDomain.LoadAssembly(md, null, new ILRuntime.Mono.Cecil.Pdb.PdbReaderProvider());
+    }
+    catch
+    {
+        Debug.LogError("加载热更DLL失败，请确保已经通过VS打开HotFixProject/HotFix.sln编译过热更DLL");
+    }
+    #endregion
+
+    InitializeILRuntime();
+    OnHotFixLoaded();
+}
+
+二、进行Unity打包
+Unity菜单栏：Build--标准包；
+当前平台是PC，打的包也是Windows包
+
+三、查看运行打包程序
+1、在项目Assets同级目录下BuildTarget文件夹里
+
+2、打包失败报错
+因为之前把LIRuntime测试功能代码注释掉了，但未完全注释掉；
+这里将ILRuntimeManager.cs里的
+AddComponentCLRRedirection()、GetCompomentCLRRedirection()、
+CLR_AddCompontent()、CLR_GetComponent()
+注释掉，再次打包，即可正常打包；
+
+3、打包完成后，可在项目Assets同级目录下BuildTarget文件夹里查看到Window文件夹
+windows里放着本次打包完成的标准包；
+
+四、双击标准包里的RealName.exe程序，进行运行测试
+1、可以发现在进行到“加载dll。。。 0.00M/S”时，一直卡住无法继续加载
+
+2、纠错：
+GameStart.cs里执行协程StartGame()时，
+原本是先执行Init()加载dll，然后执行LoadAssetBundleConfig()；
+这里逻辑顺序有问题，加载dll时，要先从ABConfig里读取配置信息才能加载；
+故这里将执行顺序颠倒下：
+原：
+public IEnumerator StartGame(Image progress, Text text)
+{
+    progress.fillAmount = 0f;
+    yield return null;
+    
+    text.text = "加载dll... ...";
+    ILRuntimeManager.Instance.Init();
+    progress.fillAmount = 0.1f;
+    yield return null;
+
+    text.text = "加载本地数据... ...";
+    AssetBundleManager.Instance.LoadAssetBundleConfig();
+    progress.fillAmount = 0.2f;
+    yield return null;
+
+    ... ...
+}
+
+改：
+public IEnumerator StartGame(Image progress, Text text)
+{
+    progress.fillAmount = 0f;
+    yield return null;
+
+    text.text = "加载本地数据... ...";
+    AssetBundleManager.Instance.LoadAssetBundleConfig();
+    progress.fillAmount = 0.1f;
+    yield return null;
+
+    text.text = "加载dll... ...";
+    ILRuntimeManager.Instance.Init();
+    progress.fillAmount = 0.2f;
+    yield return null;
+
+    ... ...
+}
+
+五、进行编辑器下运行测试没有问题，重新打包标准包进行测试
+Unity菜单栏：Build--标准包；
+BuildTarget/Window文件夹里放着本次打包完成的标准包；
+点击运行测试，可以看到正常调用热更dll运行加载。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
