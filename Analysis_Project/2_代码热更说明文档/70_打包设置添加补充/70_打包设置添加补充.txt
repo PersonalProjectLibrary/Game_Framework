@@ -85,10 +85,18 @@ public static void BuildPC()
 菜单栏：Build--标准包，运行测试没问题
 编辑器下和BuildTarget/Windows里的打包程序都可正常运行
 
-（下面的后续进行测试）
-（3）修改资源
-（4）进行热更打包
-（5）测试
+（3）修改资源，进行热更打包，更新服务器热更资源配置
+修改了Assets\GameData\Modle\benghuai里的Avatar_Kiana_C1_Texture_Face_Color_Common.png
+菜单栏：Tools--打热更包
+在Assets同级目录的Hot文件夹里查看热更包的文件
+这里在此文本的同级目录下，有备份一份放到服务器上的热更资源文件，
+方便其他设备测试项目，直接复制到服务器上测试；
+（4）本地项目还原到热更前状态，编辑器下测试是否正常热更
+将Assets同级目录下的AssetBundle里的ab资源文件复制到Assets/StreamingAssets文件夹里
+将ResourceManager.cs里的m_LoadFormAssetBundle改为true；
+点击运行，可以发现可正常热更加载；
+（5）测试打包程序，
+点击BuildTarget/Windows里的打包程序，可以发现正常下载加载热更资源运行；
 
 
 

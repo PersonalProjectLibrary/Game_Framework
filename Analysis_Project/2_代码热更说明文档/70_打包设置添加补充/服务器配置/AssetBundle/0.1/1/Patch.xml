@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Patch xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" PatchVersion="1">
+  <PatchFile Name="attack" Url="http://127.0.0.1/AssetBundle/0.1/1/attack" Platform="StandaloneWindows64" Md5="28910d47186ce168babafe7dab73c745" Size="664.9004" />
+  <PatchFile Name="StandaloneWindows64" Url="http://127.0.0.1/AssetBundle/0.1/1/StandaloneWindows64" Platform="StandaloneWindows64" Md5="ed13356199fa2a2663f336072c0db75c" Size="1.90039063" />
+  <PatchFile Name="ugui" Url="http://127.0.0.1/AssetBundle/0.1/1/ugui" Platform="StandaloneWindows64" Md5="8f02b9d51323b182d82b4d5df57ba967" Size="198.322266" />
+</Patch>
