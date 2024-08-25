@@ -173,11 +173,16 @@ public class BuildApp
     #region 打包机调用打包PC版本
     public static void BuildPC()
     {
-        //打ab包
+        //获取打包设置
         //BundleEditor.Build();//热更前的ab包打包
-        BundleEditor.NormalBuild();//加入可热更打包的资源打包
-
         BuildSetting buildSetting = GetPCBuildSetting();
+        //进行打包
+        if (buildSetting.IsHotFix)
+        {
+            BundleEditor.Build(true, buildSetting.HotPath, buildSetting.HotCount.ToString());
+            return;
+        }
+        BundleEditor.NormalBuild();//加入可热更打包的资源打包
         string suffix = SetPcSetting(buildSetting);
         //生成可执行程序
         string abPath = Application.dataPath + "/../AssetBundle/" + EditorUserBuildSettings.activeBuildTarget.ToString() + "/";
@@ -205,34 +210,37 @@ public class BuildApp
             if (str.StartsWith("Version"))
             {
                 var tempParam = str.Split(new string[] { "=" }, StringSplitOptions.RemoveEmptyEntries);
-                if (tempParam.Length == 2)
-                {
-                    buildSetting.Version = tempParam[1].Trim();
-                }
+                if (tempParam.Length == 2) buildSetting.Version = tempParam[1].Trim();
             }
             else if (str.StartsWith("Build"))
             {
                 var tempParam = str.Split(new string[] { "=" }, StringSplitOptions.RemoveEmptyEntries);
-                if (tempParam.Length == 2)
-                {
-                    buildSetting.Build = tempParam[1].Trim();
-                }
+                if (tempParam.Length == 2) buildSetting.Build = tempParam[1].Trim();
             }
             else if (str.StartsWith("Name"))
             {
                 var tempParam = str.Split(new string[] { "=" }, StringSplitOptions.RemoveEmptyEntries);
-                if (tempParam.Length == 2)
-                {
-                    buildSetting.Name = tempParam[1].Trim();
-                }
+                if (tempParam.Length == 2) buildSetting.Name = tempParam[1].Trim();
             }
             else if (str.StartsWith("Debug"))
             {
                 var tempParam = str.Split(new string[] { "=" }, StringSplitOptions.RemoveEmptyEntries);
-                if (tempParam.Length == 2)
-                {
-                    bool.TryParse(tempParam[1], out buildSetting.Debug);
-                }
+                if (tempParam.Length == 2) bool.TryParse(tempParam[1], out buildSetting.Debug);
+            }
+            else if (str.StartsWith("IsHotFix"))
+            {
+                var tempParam = str.Split(new string[] { "=" }, StringSplitOptions.RemoveEmptyEntries);
+                if (tempParam.Length == 2) bool.TryParse(tempParam[1], out buildSetting.IsHotFix);
+            }
+            else if (str.StartsWith("HotVerPath"))
+            {
+                var tempParam = str.Split(new string[] { "=" }, StringSplitOptions.RemoveEmptyEntries);
+                if (tempParam.Length == 2) buildSetting.HotPath = tempParam[1].Trim();
+            }
+            else if (str.StartsWith("HotCount"))
+            {
+                var tempParam = str.Split(new string[] { "=" }, StringSplitOptions.RemoveEmptyEntries);
+                if (tempParam.Length == 2) int.TryParse(tempParam[1], out buildSetting.HotCount);
             }
         }
         return buildSetting;
@@ -582,6 +590,18 @@ public class BuildSetting
     /// 是否开启动态合批
     /// </summary>
     public bool DynamicBatching = false;
+    /// <summary>
+    /// 是否热更
+    /// </summary>
+    public bool IsHotFix = false;
+    /// <summary>
+    /// 对应原版本数据路径
+    /// </summary>
+    public string HotPath = "";
+    /// <summary>
+    /// 热更次数
+    /// </summary>
+    public int HotCount = 0;
 }
 
 /// <summary>

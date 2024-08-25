@@ -1,0 +1,98 @@
+一、BuildApp.cs里新增打包设置
+
+1、BuildSetting添加参数：
+原：
+public class BuildSetting {  ... ...  }
+改：
+public class BuildSetting
+{
+    ... ...
+    public bool IsHotFix = false;		// 是否热更
+    public string HotPath = "";			// 对应原版本数据路径
+    public int HotCount = 0;			// 热更次数
+}
+
+2、更新GetPCBuildSetting()里对自动打包的Jenkins的设置
+原：
+static BuildSetting GetPCBuildSetting()
+{
+    string[] parameters = Environment.GetCommandLineArgs();
+    BuildSetting buildSetting = new BuildSetting();
+    foreach (string str in parameters)
+    {
+        if (str.StartsWith("Version")){... ...}
+        ...
+    }
+    return buildSetting;
+}
+改：
+static BuildSetting GetPCBuildSetting()
+{
+    string[] parameters = Environment.GetCommandLineArgs();
+    BuildSetting buildSetting = new BuildSetting();
+    foreach (string str in parameters)
+    {
+        if (str.StartsWith("Version")){ ... ... }
+        ... ...
+        else if (str.StartsWith("IsHotFix"))
+        {
+            var tempParam = str.Split(new string[] { "=" }, StringSplitOptions.RemoveEmptyEntries);
+            if (tempParam.Length == 2) bool.TryParse(tempParam[1], out buildSetting.IsHotFix);
+        }
+        else if (str.StartsWith("HotVerPath"))
+        {
+            var tempParam = str.Split(new string[] { "=" }, StringSplitOptions.RemoveEmptyEntries);
+            if (tempParam.Length == 2) buildSetting.HotPath = tempParam[1].Trim();
+        }
+        else if (str.StartsWith("HotCount"))
+        {
+            var tempParam = str.Split(new string[] { "=" }, StringSplitOptions.RemoveEmptyEntries);
+            if (tempParam.Length == 2) int.TryParse(tempParam[1], out buildSetting.HotCount);
+        }
+    }
+    return buildSetting;
+}
+
+3、BuildPC里更新打包设置
+如果打包设置里是进行热更IsHotFix，则不进行继续标准打包，改为热更打包。
+原：
+public static void BuildPC()
+{
+    BundleEditor.NormalBuild();//加入可热更打包的资源打包
+    BuildSetting buildSetting = GetPCBuildSetting();
+    string suffix = SetPcSetting(buildSetting);
+    ... ...
+}
+改：
+public static void BuildPC()
+{
+    BuildSetting buildSetting = GetPCBuildSetting();
+    if (buildSetting.IsHotFix)
+    {
+        BundleEditor.Build(true, buildSetting.HotPath, buildSetting.HotCount.ToString());
+        return;
+    }
+    BundleEditor.NormalBuild();//加入可热更打包的资源打包
+    string suffix = SetPcSetting(buildSetting);
+    ... ...
+}
+
+4、测试打包
+个人没有做Jenkins打包工程，就不测试Jensins打包，这样也就做下Unity打包测试下
+（1）删除旧打包资源：
+删除BuildTarget/Windows里的打包
+（2）做标准包打包：
+菜单栏：Build--标准包，运行测试没问题
+编辑器下和BuildTarget/Windows里的打包程序都可正常运行
+
+（下面的后续进行测试）
+（3）修改资源
+（4）进行热更打包
+（5）测试
+
+
+
+
+
+
+
