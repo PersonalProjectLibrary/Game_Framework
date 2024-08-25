@@ -25,3 +25,5 @@ MonoBehaviour:
     Path: Assets/GameData/Data/Binary
   - ABName: hotfix
     Path: Assets/GameData/Data/HotFix
+  - ABName: protobuf
+    Path: Assets/GameData/Data/ProtobufData

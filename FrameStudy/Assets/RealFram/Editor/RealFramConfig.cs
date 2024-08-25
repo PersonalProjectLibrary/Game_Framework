@@ -5,14 +5,11 @@ using UnityEditor;
 
 public class RealFramConfig : ScriptableObject
 {
-    //打包时生成AB包配置表的二进制路径
-    public string m_ABBytePath;
-    //xml文件夹路径
-    public string m_XmlPath;
-    //二进制文件夹路径
-    public string m_BinaryPath;
-    //脚本文件夹路径
-    public string m_ScriptsPath;
+    public string m_ABBytePath;//打包时生成AB包配置表的二进制路径
+    public string m_XmlPath;//xml文件夹路径
+    public string m_BinaryPath;//二进制文件夹路径
+    public string m_ScriptsPath;//脚本文件夹路径
+    public string m_ProtobufPath;//protobuf文件夹路径
 }
 
 [CustomEditor(typeof(RealFramConfig))]
@@ -22,13 +19,15 @@ public class RealFramConfigInspector : Editor
     public SerializedProperty m_XmlPath;
     public SerializedProperty m_BinaryPath;
     public SerializedProperty m_ScriptsPath;
+    public SerializedProperty m_ProtobufPath;
 
     private void OnEnable()
     {
         m_ABBytePath = serializedObject.FindProperty("m_ABBytePath");
         m_XmlPath = serializedObject.FindProperty("m_XmlPath");
         m_BinaryPath = serializedObject.FindProperty("m_BinaryPath");
-        m_ScriptsPath = serializedObject.FindProperty("m_BinaryPath");
+        m_ScriptsPath = serializedObject.FindProperty("m_ScriptsPath");
+        m_ProtobufPath = serializedObject.FindProperty("m_ProtobufPath");
     }
 
     public override void OnInspectorGUI()
@@ -41,6 +40,8 @@ public class RealFramConfigInspector : Editor
         EditorGUILayout.PropertyField(m_BinaryPath, new GUIContent("二进制路径"));
         GUILayout.Space(5);
         EditorGUILayout.PropertyField(m_ScriptsPath, new GUIContent("配置表脚本路径"));
+        GUILayout.Space(5);
+        EditorGUILayout.PropertyField(m_ProtobufPath, new GUIContent("ProtobufPath数据路径"));
         GUILayout.Space(5);
         serializedObject.ApplyModifiedProperties();
     }

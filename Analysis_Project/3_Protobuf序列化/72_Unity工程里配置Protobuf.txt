@@ -1,0 +1,113 @@
+Protobuf，用于网络传输，把类序列化为一组byte数组传递，
+接收方使用protobuf反序列化获取类进行处理。
+如果服务端也是使用C#，可以保证服务器和客户端使用同一个类，
+可以把客户端使用的类直接拷贝到服务端进行使用。
+
+json也可以实现，不过目前是Protobuf是序列化和反序列化效率最高的；
+
+之前使用xml作为配置表格式，主要是方便查看和写入xml，进行xml和excel的转换；
+现在使用protobuf，主要是方便转为二进制，效率提高，并且使数据大小变小；
+
+一、配置Protobuf
+1、在Assets/GameData/Data里新建文件夹ProtobufData
+
+2、在Assets/RealFram/Editor/Resource/ABConfig.asset的AllFileDirAB里
+新增ProtobufData打包项：ABName：protobuf	Path：Assets/GameData/Data/ProtobufData
+
+3、配置二进制处理
+（1）在RealFramConfig.cs里添加文件路径
+原：
+public class RealFramConfig : ScriptableObject
+{
+    ... ...
+    public string m_ScriptsPath;//脚本文件夹路径
+}
+改：
+public class RealFramConfig : ScriptableObject
+{
+    ... ...
+    public string m_ScriptsPath;//脚本文件夹路径
+    public string m_ProtobufPath;//protobuf文件夹路径
+}
+（2）在RealFramConfig.cs里的RealFramConfigInspector类里，添加Protobuf序列化处理
+原：
+public class RealFramConfigInspector : Editor
+{
+    ... ...
+    public SerializedProperty m_ScriptsPath;
+    private void OnEnable()
+    {
+        ... ...
+        m_ScriptsPath = serializedObject.FindProperty("m_BinaryPath");
+    }
+    public override void OnInspectorGUI()
+    {
+        serializedObject.Update();
+        ... ...
+        EditorGUILayout.PropertyField(m_ScriptsPath, new GUIContent("配置表脚本路径"));
+        GUILayout.Space(5);
+        serializedObject.ApplyModifiedProperties();
+    }
+}
+改：
+public class RealFramConfigInspector : Editor
+{
+    ... ...
+    public SerializedProperty m_ScriptsPath;
+    public SerializedProperty m_ProtobufPath;
+    private void OnEnable()
+    {
+        ... ...
+        m_ScriptsPath = serializedObject.FindProperty("m_ScriptsPath");
+        m_ProtobufPath = serializedObject.FindProperty("m_ProtobufPath");
+    }
+    public override void OnInspectorGUI()
+    {
+        serializedObject.Update();
+        ... ...
+        EditorGUILayout.PropertyField(m_ScriptsPath, new GUIContent("配置表脚本路径"));
+        GUILayout.Space(5);
+        EditorGUILayout.PropertyField(m_ProtobufPath, new GUIContent("ProtobufPath数据路径"));
+        GUILayout.Space(5);
+        serializedObject.ApplyModifiedProperties();
+    }
+}
+然后在Assets/RealFram/Editor/RealFramConfig.asset里添加路径：
+配置表脚本路径：Assets/Scripts/Data/
+Protobuf的数据路径：Assets/GameData/Data/ProtobufData/
+
+注：之前RealFramConfigInspector里的m_ScriptsPath配置错误，这里进行了修改
+
+4、在DataEditor.cs里添加Protobuf数据路径
+public class DataEditor
+{
+    ... ...
+    public static string ProtobufPath = RealConfig.GetRealFram().m_ProtobufPath;
+}
+这里整理了下DataEditor.cs里代码的格式、归类了各个方法
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
