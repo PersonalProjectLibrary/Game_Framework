@@ -10,6 +10,7 @@
   <ABList Path="Assets/GameData/Prefabs/UGUI/Panel/LoadingPanel.prefab" Crc="968375833" ABName="loadingpanel" AssetName="LoadingPanel.prefab" />
   <ABList Path="Assets/GameData/Prefabs/UGUI/Panel/MenuPanel.prefab" Crc="2681775694" ABName="menupanel" AssetName="MenuPanel.prefab" />
   <ABList Path="Assets/GameData/Prefabs/Effect/ParticleTest1.prefab" Crc="2774616854" ABName="particletest1" AssetName="ParticleTest1.prefab" />
+  <ABList Path="Assets/GameData/Data/Protobuf/MonsterData.bytes" Crc="886484447" ABName="protobuf" AssetName="MonsterData.bytes" />
   <ABList Path="Assets/GameData/Shaders/benghuai.shader" Crc="2153760648" ABName="shader" AssetName="benghuai.shader" />
   <ABList Path="Assets/GameData/Shaders/Skybox.shader" Crc="2040549738" ABName="shader" AssetName="Skybox.shader" />
   <ABList Path="Assets/GameData/Shaders/Water.shader" Crc="3794094069" ABName="shader" AssetName="Water.shader" />
