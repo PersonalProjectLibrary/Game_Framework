@@ -88,21 +88,21 @@ public class AssetBundleManager : Singleton<AssetBundleManager>
             return item;
         }
 
-        if (item.m_AssetBundle != null)
-        {
-            return item;
-        }
+        //这句直接return掉，没有进行引用计数++，引用计数出错：
+        //如果这里做item.RefCount++;然后return，
+        //但没有走下面的依赖设置LoadAssetBundle()，其依赖资源的引用计数没有++，还是引用计数有问题；
+        //应该删除这语句，不直接return，继续执行下面的依赖处理后再return；
+        //否则随资源加载释放、或释放后再加载顺序不同，会出bug
+
+        //if (item.m_AssetBundle != null) { return item; }
 
         item.m_AssetBundle = LoadAssetBundle(item.m_ABName);
 
         if (item.m_DependAssetBundle != null)
         {
             for (int i = 0; i < item.m_DependAssetBundle.Count; i++)
-            {
                 LoadAssetBundle(item.m_DependAssetBundle[i]);
-            }
         }
-
         return item;
     }
 

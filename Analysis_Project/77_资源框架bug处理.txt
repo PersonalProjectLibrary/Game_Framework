@@ -1,0 +1,12 @@
+1、ab资源引用存在问题：
+ab包资源的加载和释放，导致引用计数存在错误；
+
+2、解决方法：
+将AssetBundleManager.cs的LoadResouceAssetBundle()里的
+if (item.m_AssetBundle != null) { return item; }语句删除；
+
+出错原因，可打开脚本AssetBundleManager.cs查看
+脚本里对if (item.m_AssetBundle != null) { return item; }语句进行了注释，
+并添加了解释说明；
+
+
