@@ -1,0 +1,99 @@
+在BinarySerializeOpt.cs里新增Protobuf序列化与反序列化
+
+一、最简单的适用于本地文件保存的序列化反序列化方式
+using ProtoBuf;
+public class BinarySerializeOpt
+{
+    public static bool ProtoSerialize(string path,System.Object obj)
+    {
+        try
+        {
+            using (Stream file = File.Create(path))
+            {
+                Serializer.Serialize(file, obj);
+                return true;
+            }
+        }
+        catch (Exception e) 
+        { 
+            Debug.LogError(e);
+            return false;
+        }
+    }
+    public static T ProtoDeSerialize<T>(string path)where T : class
+    {
+        try
+        {
+            using (Stream file = File.OpenRead(path)) { return Serializer.Deserialize<T>(file); }
+        }
+        catch (Exception e) 
+        { 
+            Debug.LogError(e);
+            return null;
+        }
+    }
+    ... ...
+}
+
+二、适用于网络上数据传输的序列化与反序列化方式
+using ProtoBuf;
+public class BinarySerializeOpt
+{
+    public static byte[] ProtoSerialize(System.Object obj)
+    {
+        try
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                Serializer.Serialize(ms, obj);
+                byte[] res = new byte[ms.Length];
+                ms.Position = 0;
+                ms.Read(res, 0, res.Length);
+                return res;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+            return null;
+        }
+    }
+    public static T ProtoDeSerialize<T>(byte[] msg) where T : class
+    {
+        try
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                ms.Write(msg, 0, msg.Length);
+                ms.Position = 0;
+                return Serializer.Deserialize<T>(ms);
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+            return null;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
