@@ -188,7 +188,8 @@ public static void AssetsXmlToBinary(){}
 右键选中：Xml/Xml转Protobuf；
 就可以看到Assets/GameData/Xml里有新生成的MonsterData.bytes文件;
 
-
+对比Assets/GameData/Data/Binary里的MonsterData.bytes，
+可以发现同为二进制格式文件，protobuf格式比普通二进制格式文件更小；
 
 
 

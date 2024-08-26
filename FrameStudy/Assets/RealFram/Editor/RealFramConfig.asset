@@ -16,4 +16,4 @@ MonoBehaviour:
   m_XmlPath: Assets/GameData/Data/Xml/
   m_BinaryPath: Assets/GameData/Data/Binary/
   m_ScriptsPath: Assets/Scripts/Data/
-  m_ProtobufPath: Assets/GameData/Data/ProtobufData/
+  m_ProtobufPath: Assets/GameData/Data/Protobuf/

@@ -866,6 +866,17 @@ public class DataEditor
         foreach (TestInfoTwo test in testInfo.AllTestInfoList)
             Debug.LogError(test.Id + " " + test.Name);
     }
+
+    [MenuItem("Tools/测试/测试Protobuf")]
+    public static void TestProtobuf()
+    {
+        string path = "Assets/GameData/Data/Protobuf/MonsterData.bytes";
+        MonsterData data = BinarySerializeOpt.ProtoDeSerialize<MonsterData>(path);
+        foreach(MonsterBase monster in data.AllMonster)
+        {
+            Debug.Log(monster.Id+ " " + monster.Name+" "+monster.OutLook);
+        }
+    }
     #endregion
 
     #region Common Func

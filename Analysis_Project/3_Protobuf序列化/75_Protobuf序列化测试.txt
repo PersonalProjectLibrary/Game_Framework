@@ -1,0 +1,49 @@
+测试Protobuf序列化数据是否正常
+
+一、在DataEditor.cs里写测试方法
+    [MenuItem("Tools/测试/测试Protobuf")]
+    public static void TestProtobuf()
+    {
+        string path = "Assets/GameData/Data/ProtobufData/MonsterData.bytes";
+        MonsterData data = BinarySerializeOpt.ProtoDeSerialize<MonsterData>(path);
+        foreach(MonsterBase monster in data.AllMonster)
+        {
+            Debug.Log(monster.Id+ " " + monster.Name+" "+monster.OutLook);
+        }
+    }
+
+二、测试
+点击Unity菜单栏：Tools/测试/测试Protobuf；
+可看到控制台输出MonsterData.bytes里的数据；
+
+三、调整命名
+将Assets/GameData/Data里的ProtobufData文件夹，重命名为Protobuf；
+并将使用到该文件名的地方做修改：
+1、Assets/GameData/Data里ProtobufData文件夹改为Protobuf；
+2、Assets/RealFram/Editor/Resource/ABConfig.asset的AllFileDirAB里ProtobufData打包项改为：
+ABName：protobuf		Path：Assets/GameData/Data/Protobuf；
+3、在Assets/RealFram/Editor/RealFramConfig.asset里添加路径：
+Protobuf的数据路径：Assets/GameData/Data/Protobuf/
+4、DataEditor.cs的estProtobuf()里path修改为：
+string path = "Assets/GameData/Data/Protobuf/MonsterData.bytes";
+
+四、重新测试：
+1、可删除Assets/GameData/Data/Protobuf里的MonsterData.bytes；
+
+2、选中Assets/GameData/Xml里的MonsterData.xml文件，
+右键选中：Xml/Xml转Protobuf；
+就可以看到Assets/GameData/Protobuf里有新生成的MonsterData.bytes文件;
+
+3、点击Unity菜单栏：Tools/测试/测试Protobuf；
+可看到控制台输出MonsterData.bytes里的数据；
+
+
+
+
+
+
+
+
+
+
+
