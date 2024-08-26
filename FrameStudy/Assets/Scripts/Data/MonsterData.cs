@@ -54,9 +54,14 @@ public class MonsterData : ExcelBase
     [ProtoMember(1)]
     [XmlElement("AllMonster")]
     public List<MonsterBase> AllMonster { get; set; }
+
+    [ProtoMember(2)]
+    [XmlElement("AllKing")]
+    public List<KingBase> AllKing { get; set; }
 }
 
 [ProtoContract]
+[ProtoInclude(20,typeof(KingBase))]
 [System.Serializable]
 public class MonsterBase
 {
@@ -83,4 +88,13 @@ public class MonsterBase
     [ProtoMember(6)]
     [XmlAttribute("Height")]
     public float Height { get; set; }//怪物高度
+}
+
+[ProtoContract]
+[System.Serializable]
+public class KingBase:MonsterBase
+{
+    [ProtoMember(1)]
+    [XmlAttribute("Hp")]
+    public int Hp {  get; set; }
 }

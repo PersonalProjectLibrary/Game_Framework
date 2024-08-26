@@ -1,0 +1,77 @@
+
+Protobuf在序列化类的继承方面存在问题：
+需要对有子类继承的基类上的添加[ProtoInclude(int num, typeof(子类))) 标签
+
+一、添加新继承类和对应数据，可正常xml转二进制；但protobuf转二进制后，文件无数据：
+1、对MonsterData.cs新增继承子类class KingBase:MonsterBase{}
+[ProtoContract]
+[System.Serializable]
+public class KingBase:MonsterBase
+{
+    [ProtoMember(1)]
+    [XmlAttribute("Hp")]
+    public int Hp {  get; set; }
+}
+
+2、MonsterData 里添加King属性
+[ProtoMember(2)]
+[XmlElement("AllKing")]
+public List<KingBase> AllKing { get; set; }
+
+3、Assets\GameData\Data\Xml里的MonsterData.xml新增KingBase的数据
+<?xml version="1.0" encoding="utf-8"?>
+<MonsterData xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  ... ...
+  <AllKing Id="10" Name="king" OutLook="Assets/GameData/Prefabs/Attack.prefab" Level="0" Rare="2" Height="6" Hp="100" />
+</MonsterData>
+
+4、测试Protobuf读取里补充读取KingBase类里的数据
+[MenuItem("Tools/测试/测试Protobuf")]
+public static void TestProtobuf()
+{
+    string path = "Assets/GameData/Data/Protobuf/MonsterData.bytes";
+    MonsterData data = BinarySerializeOpt.ProtoDeSerialize<MonsterData>(path);
+    foreach(MonsterBase monster in data.AllMonster)
+        Debug.Log(monster.Id + " " + monster.Name + " " + monster.OutLook);
+    foreach (MonsterBase monster in data.AllKing)
+        Debug.Log(monster.Id + " " + monster.Name + " " + monster.OutLook);
+}
+
+5、测试
+（1）选择Assets/GameData/Xml里的MonsterData.xml文件，右键选中：Xml/Xml转Protobuf；
+（2）选择Assets/GameData/Xml里的MonsterData.xml文件，
+（3）菜单栏：Tools/测试/测试Protobuf；
+控制台可以看到MonsterBase里的数据能正常读取，KingBase里的数据读取错误；
+
+二、基类添加表明子类的标签，使正常读取继承类里的数据
+1、在MonsterBase类上面添加标签[ProtoInclude(int num, typeof(子类))) 标签
+其中子类填KingBase，KingBase继承MonsterBase；
+而num得是MonsterBase里使用的ProtoMember标签里没出现过的int值，故这里填20填大一点；
+即：
+[ProtoContract]
+[ProtoInclude(20,typeof(KingBase))]
+[System.Serializable]
+public class MonsterBase(){}
+
+2、再次测试：
+（1）选择Assets/GameData/Xml里的MonsterData.xml文件，右键选中：Xml/Xml转Protobuf；
+（2）菜单栏：Tools/测试/测试Protobuf；
+控制台可以看到 数据能正常读取；
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

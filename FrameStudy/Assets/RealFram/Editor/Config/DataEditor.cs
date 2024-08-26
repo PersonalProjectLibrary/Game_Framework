@@ -873,9 +873,9 @@ public class DataEditor
         string path = "Assets/GameData/Data/Protobuf/MonsterData.bytes";
         MonsterData data = BinarySerializeOpt.ProtoDeSerialize<MonsterData>(path);
         foreach(MonsterBase monster in data.AllMonster)
-        {
-            Debug.Log(monster.Id+ " " + monster.Name+" "+monster.OutLook);
-        }
+            Debug.Log(monster.Id + " " + monster.Name + " " + monster.OutLook);
+        foreach (MonsterBase monster in data.AllKing)
+            Debug.Log(monster.Id + " " + monster.Name + " " + monster.OutLook);
     }
     #endregion
 
