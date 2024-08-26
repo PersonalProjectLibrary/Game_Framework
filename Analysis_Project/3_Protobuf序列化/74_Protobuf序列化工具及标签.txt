@@ -1,0 +1,200 @@
+在DataEditor.cs里添加protobuf功能函数
+
+一、XmlToProtobuf
+    private static void XmlToProtobuf(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return;
+        try
+        {
+            Type type = null;
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                Type tempType = asm.GetType(name);
+                if (tempType != null)
+                {
+                    type = tempType;
+                    break;
+                }
+            }
+            if (type != null)
+            {
+                string xmlPath = XmlPath + name + ".xml";
+                string protobufPath = ProtobufPath + name + ".bytes";//文件还是以.bytes后缀
+                object obj = BinarySerializeOpt.XmlDeserialize(xmlPath, type);
+                BinarySerializeOpt.ProtoSerialize(protobufPath, obj);
+                Debug.Log(name + "xml转protobuf成功，protobuf路径为:" + protobufPath);
+            }
+        }
+        catch { Debug.LogError(name + "xml转protobuf失败！"); }
+    }
+
+二、新增xml转protobuf工具
+[MenuItem("Tools/Protobuf/Xml转Protobuf")]
+public static void XmlToProtobuf()
+{
+    UnityEngine.Object[] objs = Selection.objects;
+    for (int i = 0; i < objs.Length; i++)
+    {
+        EditorUtility.DisplayProgressBar("文件下的xml转成Protobuf", "正在扫描" + objs[i].name + "... ...", 1.0f / objs.Length * i);
+        XmlToProtobuf(objs[i].name);
+    }
+    AssetDatabase.Refresh();
+    EditorUtility.ClearProgressBar();
+}
+
+[MenuItem("Tools/Protobuf/AllXml转Protobuf")]
+public static void AllXmlToProtobuf()
+{
+    string path = Application.dataPath.Replace("Assets", "") + XmlPath;
+    string[] filesPath = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
+    for (int i = 0; i < filesPath.Length; i++)
+    {
+        EditorUtility.DisplayProgressBar("查找文件夹下面的Xml", "正在扫描" + filesPath[i] + "... ...", 1.0f / filesPath.Length * i);
+        if (filesPath[i].EndsWith(".xml"))
+        {
+            string tempPath = filesPath[i].Substring(filesPath[i].LastIndexOf("/") + 1);
+            tempPath = tempPath.Replace(".xml", "");
+            XmlToProtobuf(tempPath);
+        }
+    }
+    AssetDatabase.Refresh();
+    EditorUtility.ClearProgressBar();
+}
+
+三、给类加上Protobuf标签
+直接将xml文件转化通过上面的方法转为protobuf是无法转化的，
+对应的序列化得加上标签才能进行相应的序列化；
+加上Protobuf标签才能进行protobuf序列化
+1、类上面加标签
+xml的标签[System.Serializable]
+protobuf的标签[ProtoContract]
+2、变量上面也要加标签
+xml的变量的标签：[XmlIgnore]、[XmlElement("AllMonster")]、[XmlAttribute("Id")]等等
+protobuf的变量的标签：[ProtoMember(int x)]，
+Member里填int值，从1开始，大于0不能为负数，数字越小，计算量越小；
+不同类里int值可以重新开始，不用接其他类里的int数；
+
+如：在MonsterData.cs里添加protobuf标签
+原：
+[System.Serializable]
+public class MonsterData : ExcelBase
+{
+    ... ...
+    [XmlIgnore]
+    public Dictionary<int, MonsterBase> m_AllMonsterDic = new Dictionary<int, MonsterBase>();
+    [XmlElement("AllMonster")]
+    public List<MonsterBase> AllMonster { get; set; }
+}
+[System.Serializable]
+public class MonsterBase
+{
+    [XmlAttribute("Id")]
+    public int Id { get; set; }//ID
+
+    [XmlAttribute("Name")]
+    public string Name { get; set; }//Name
+
+    [XmlAttribute("OutLook")]
+    public string OutLook { get; set; }//预知路径
+
+    [XmlAttribute("Level")]
+    public int Level { get; set; }//怪物等级
+
+    [XmlAttribute("Rare")]
+    public int Rare { get; set; }//怪物稀有度
+
+    [XmlAttribute("Height")]
+    public float Height { get; set; }//怪物高度
+}
+
+改：
+using ProtoBuf;
+
+[ProtoContract]
+[System.Serializable]
+public class MonsterData : ExcelBase
+{
+   ... ...
+    [XmlIgnore]
+    public Dictionary<int, MonsterBase> m_AllMonsterDic = new Dictionary<int, MonsterBase>();
+
+    [ProtoMember(1)]
+    [XmlElement("AllMonster")]
+    public List<MonsterBase> AllMonster { get; set; }
+}
+
+[ProtoContract]
+[System.Serializable]
+public class MonsterBase
+{
+    [ProtoMember(1)]
+    [XmlAttribute("Id")]
+    public int Id { get; set; }//ID
+
+    [ProtoMember(2)]
+    [XmlAttribute("Name")]
+    public string Name { get; set; }//Name
+
+    [ProtoMember(3)]
+    [XmlAttribute("OutLook")]
+    public string OutLook { get; set; }//预知路径
+
+    [ProtoMember(4)]
+    [XmlAttribute("Level")]
+    public int Level { get; set; }//怪物等级
+
+    [ProtoMember(5)]
+    [XmlAttribute("Rare")]
+    public int Rare { get; set; }//怪物稀有度
+
+    [ProtoMember(6)]
+    [XmlAttribute("Height")]
+    public float Height { get; set; }//怪物高度
+}
+
+四、将xml转protobuf文件
+1、这里需要选择某个文件来转换格式，应将工具改到Asset下，
+原：
+[MenuItem("Tools/Protobuf/Xml转Protobuf")]
+public static void XmlToProtobuf(){}
+[MenuItem("Tools/Protobuf/AllXml转Protobuf")]
+public static void AllXmlToProtobuf(){}
+
+改：
+[MenuItem("Assets/Xml/Xml转Protobuf")]
+public static void AssetsXmlToProtobuf(){}
+[MenuItem("Tools/Xml/AllXml转Protobuf")]
+public static void AllXmlToProtobuf()
+
+同时之前改到Tools里的xml工具，也改回Assets里
+原：
+[MenuItem("Tools/Xml/类转xml")]
+public static void AssetsClassToXml(){}
+[MenuItem("Tools/Xml/Xml转Excel")]
+public static void AssetsXmlToExcel(){}
+[MenuItem("Tools/Xml/Xml转Binary")]
+public static void XmlToBinary(){}
+
+改：
+[MenuItem("Assets/Xml/类转xml")]
+public static void AssetsClassToXml(){}
+[MenuItem("Assets/Xml/Xml转Excel")]
+public static void AssetsXmlToExcel(){}
+[MenuItem("Assets/Xml/Xml转Binary")]
+public static void AssetsXmlToBinary(){}
+
+2、xml文件转protobuf
+选中Assets/GameData/Xml里的MonsterData.xml文件，
+右键选中：Xml/Xml转Protobuf；
+就可以看到Assets/GameData/Xml里有新生成的MonsterData.bytes文件;
+
+
+
+
+
+
+
+
+
+
+

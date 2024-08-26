@@ -18,196 +18,8 @@ public class DataEditor
     public static string ExcelPath = Application.dataPath + "/../Data/Excel/";
     public static string RegPath = Application.dataPath + "/../Data/Reg/";
 
-    #region 读取写入反射：Tools/测试
-    [MenuItem("Tools/测试/测试读取xml")]
-    public static void TestReadXml()
-    {
-        string xmlPath = Application.dataPath + "/../Data/Reg/MonsterData.xml";
-        XmlReader reader = null;
-        try
-        {
-            XmlDocument xml = new XmlDocument();
-            reader = XmlReader.Create(xmlPath);
-            xml.Load(reader);
-            XmlNode xn = xml.SelectSingleNode("data");
-            XmlElement xe = (XmlElement)xn;
-            string className = xe.GetAttribute("name");
-            string xmlName = xe.GetAttribute("to");
-            string excelName = xe.GetAttribute("from");
-            reader.Close();
-            Debug.LogError(className + "  " + xmlName + "  " + excelName);
-            foreach (XmlNode node in xe.ChildNodes)
-            {
-                XmlElement tempXe = (XmlElement)node;
-                string name = tempXe.GetAttribute("name");
-                string type = tempXe.GetAttribute("type");
-                Debug.LogError(name + "  " + type);
-                XmlNode listNode = tempXe.FirstChild;
-                XmlElement listElement = (XmlElement)listNode;
-                string listName = listElement.GetAttribute("name");
-                string sheetName = listElement.GetAttribute("sheetname");
-                string mainKey = listElement.GetAttribute("mainKey");
-                Debug.LogError("list: " + listName + "  " + sheetName + "  " + mainKey);
-                foreach (XmlNode nd in listElement.ChildNodes)
-                {
-                    XmlElement txe = (XmlElement)nd;
-                    Debug.LogError(txe.GetAttribute("name") + "  " + txe.GetAttribute("col") + "  " + txe.GetAttribute("type"));
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            if (reader != null) reader.Close();
-            Debug.LogError(e);
-        }
-    }
-
-    [MenuItem("Tools/测试/测试写入Excel")]
-    public static void TestWriteExcel()
-    {
-        string xlsxPath = Application.dataPath + "/../Data/Excel/G怪物.xlsx";
-        FileInfo xlsxFile = new FileInfo(xlsxPath);
-        if (xlsxFile.Exists)
-        {
-            xlsxFile.Delete();
-            xlsxFile = new FileInfo(xlsxPath);
-        }
-        using (ExcelPackage package = new ExcelPackage(xlsxFile))
-        {
-            ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("怪物配置");
-            //worksheet.DefaultColWidth = 10;//sheet页面默认行宽度
-            //worksheet.DefaultRowHeight = 30;//sheet页面默认列高度
-            //worksheet.Cells.Style.WrapText = true;//设置所有单元格的自动换行
-            //worksheet.InsertColumn();//插入行，从某一行开始插入多少行
-            //worksheet.InsertRow();//插入列，从某一列开始插入多少列
-            //worksheet.DeleteColumn();//删除行，从某一行开始删除多少行
-            //worksheet.DeleteRow();//删除列，从某一列开始删除多少列
-            //worksheet.Column(1).Width = 10;//设定第几行宽度
-            //worksheet.Row(1).Height = 30;//设定第几列高度
-            //worksheet.Column(1).Hidden = true;//设定第几行隐藏
-            //worksheet.Row(1).Hidden = true;//设定第几列隐藏
-            //worksheet.Column(1).Style.Locked = true;//设定第几行锁定
-            //worksheet.Row(1).Style.Locked = true;//设定第几列锁定
-            //worksheet.Cells.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;//设定所有单元格对齐方式
-
-            worksheet.Cells.AutoFitColumns();
-            ExcelRange range = worksheet.Cells[1, 1];
-            range.Value = " 测试sadddddddddddddd\ndddddddddddddddddddasda";
-            range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.None;
-            //range.Style.Fill.BackgroundColor.SetColor();//设置单元格内背景颜色
-            //range.Style.Font.Color.SetColor();//设置单元格内字体颜色
-            range.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;//对齐方式 
-            range.AutoFitColumns();
-            range.Style.WrapText = true;
-
-            ExcelRange range1 = worksheet.Cells[1, 2];
-            range1.Value = " Siki学院Ocean老师!!!!!!";
-            package.Save();
-        }
-    }
-
-    [MenuItem("Tools/测试/测试已有类进行反射")]
-    public static void TestReflection1()
-    {
-        TestInfo testInfo = new TestInfo()
-        {
-            Id = 2,
-            Name = "测试反射",
-            IsA = false,
-            AllStrList = new List<string>(),
-            AllTestInfoList = new List<TestInfoTwo>(),
-        };
-
-        testInfo.AllStrList.Add("测试1111");
-        testInfo.AllStrList.Add("测试2222");
-        testInfo.AllStrList.Add("测试3333");
-
-        for (int i = 0; i < 3; i++)
-        {
-            TestInfoTwo test = new TestInfoTwo();
-            test.Id = i + 1;
-            test.Name = i + "name";
-            testInfo.AllTestInfoList.Add(test);
-        }
-
-        GetMemberValue(testInfo, "Name");
-        //object list = GetMemberValue(testInfo, "AllStrList");
-        //int listCount = System.Convert.ToInt32(list.GetType().InvokeMember("get_Count", BindingFlags.Default | BindingFlags.InvokeMethod, null, list, new object[] { }));
-
-        //for(int i = 0; i < listCount; i++)
-        //{
-        //    object item = list.GetType().InvokeMember("get_Item", BindingFlags.Default | BindingFlags.InvokeMethod, null, list, new object[] { i });
-        //    Debug.LogError(item);
-        //}
-
-        object list = GetMemberValue(testInfo, "AllTestInfoList");
-        int listCount = System.Convert.ToInt32(list.GetType().InvokeMember("get_Count", BindingFlags.Default | BindingFlags.InvokeMethod, null, list, new object[] { }));
-        for (int i = 0; i < listCount; i++)
-        {
-            object item = list.GetType().InvokeMember("get_Item", BindingFlags.Default | BindingFlags.InvokeMethod, null, list, new object[] { i });
-
-            object id = GetMemberValue(item, "Id");
-            object name = GetMemberValue(item, "Name");
-            Debug.LogError(id + " " + name);
-        }
-    }
-
-    [MenuItem("Tools/测试/测试已有数据进行反射")]
-    public static void TestReflection2()
-    {
-        object obj = CreateClass("TestInfo");
-        PropertyInfo info = obj.GetType().GetProperty("Id");
-        SetValue(info, obj, "21", "int");
-        //info.SetValue(obj, System.Convert.ToInt32("20"));
-        PropertyInfo nameInfo = obj.GetType().GetProperty("Name");
-        SetValue(nameInfo, obj, "aqweddad", "string");
-        //nameInfo.SetValue(obj, "huhiuhiuhi");
-        PropertyInfo isInfo = obj.GetType().GetProperty("IsA");
-        SetValue(isInfo, obj, "true", "bool");
-        //isInfo.SetValue(obj, System.Convert.ToBoolean("false"));
-        PropertyInfo heighInfo = obj.GetType().GetProperty("Heigh");
-        SetValue(heighInfo, obj, "51.4", "float");
-        //heighInfo.SetValue(obj, System.Convert.ToSingle("22.5"));
-        PropertyInfo enumInfo = obj.GetType().GetProperty("TestType");
-        SetValue(enumInfo, obj, "VAR1", "enum");
-        //object infoValue = TypeDescriptor.GetConverter(enumInfo.PropertyType).ConvertFromInvariantString("VAR1");
-        //enumInfo.SetValue(obj, infoValue);
-
-        Type type = typeof(string);
-        object list = CreateList(type);
-        for (int i = 0; i < 3; i++)
-        {
-            object addItem = "测试填数据" + i;
-            list.GetType().InvokeMember("Add", BindingFlags.Default | BindingFlags.InvokeMethod, null, list, new object[] { addItem });//调用list的add方法添加数据
-        }
-
-        obj.GetType().GetProperty("AllStrList").SetValue(obj, list);
-
-        object twoList = CreateList(typeof(TestInfoTwo));
-        for (int i = 0; i < 3; i++)
-        {
-            object addItem = CreateClass("TestInfoTwo");
-            PropertyInfo itemIdInfo = addItem.GetType().GetProperty("Id");
-            SetValue(itemIdInfo, addItem, "152" + i, "int");
-            PropertyInfo itemNameInfo = addItem.GetType().GetProperty("Name");
-            SetValue(itemNameInfo, addItem, "测试类" + i, "string");
-            twoList.GetType().InvokeMember("Add", BindingFlags.Default | BindingFlags.InvokeMethod, null, twoList, new object[] { addItem });
-        }
-        obj.GetType().GetProperty("AllTestInfoList").SetValue(obj, twoList);
-
-        TestInfo testInfo = (obj as TestInfo);
-        //foreach (string str in testInfo.AllStrList)
-        //{
-        //    Debug.LogError(str);
-        //}
-
-        foreach (TestInfoTwo test in testInfo.AllTestInfoList)
-            Debug.LogError(test.Id + " " + test.Name);
-    }
-    #endregion
-
     #region Assets To Xml Func
-    [MenuItem("Tools/Xml/类转xml")]
+    [MenuItem("Assets/Xml/类转xml")]
     public static void AssetsClassToXml()
     {
         UnityEngine.Object[] objs = Selection.objects;
@@ -252,7 +64,7 @@ public class DataEditor
     #endregion
 
     #region Excel To Xml Func
-    [MenuItem("Tools/Xml/Excel转Xml")]
+    [MenuItem("Tools/Xml/AllExcel转Xml")]
     public static void AllExcelToXml()
     {
         string[] filePaths = Directory.GetFiles(RegPath, "*", SearchOption.AllDirectories);
@@ -477,8 +289,8 @@ public class DataEditor
 
     #endregion
 
-    #region XmlToExcelFunc
-    [MenuItem("Tools/Xml/Xml转Excel")]
+    #region Xml To Excel Func
+    [MenuItem("Assets/Xml/Xml转Excel")]
     public static void AssetsXmlToExcel()
     {
         UnityEngine.Object[] objs = Selection.objects;
@@ -743,8 +555,8 @@ public class DataEditor
     #endregion
 
     #region Xml To Binary Func
-    [MenuItem("Tools/Xml/Xml转Binary")]
-    public static void XmlToBinary()
+    [MenuItem("Assets/Xml/Xml转Binary")]
+    public static void AssetsXmlToBinary()
     {
         UnityEngine.Object[] objs = Selection.objects;
         for (int i = 0; i < objs.Length; i++)
@@ -802,6 +614,257 @@ public class DataEditor
             }
         }
         catch { Debug.LogError(name + "xml转二进制失败！"); }
+    }
+    #endregion
+
+    #region Xml To Protobuf Func
+    [MenuItem("Assets/Xml/Xml转Protobuf")]
+    public static void AssetsXmlToProtobuf()
+    {
+        UnityEngine.Object[] objs = Selection.objects;
+        for (int i = 0; i < objs.Length; i++)
+        {
+            EditorUtility.DisplayProgressBar("文件下的xml转成Protobuf", "正在扫描" + objs[i].name + "... ...", 1.0f / objs.Length * i);
+            XmlToProtobuf(objs[i].name);
+        }
+        AssetDatabase.Refresh();
+        EditorUtility.ClearProgressBar();
+    }
+    [MenuItem("Tools/Xml/AllXml转Protobuf")]
+    public static void AllXmlToProtobuf()
+    {
+        string path = Application.dataPath.Replace("Assets", "") + XmlPath;
+        string[] filesPath = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
+        for (int i = 0; i < filesPath.Length; i++)
+        {
+            EditorUtility.DisplayProgressBar("查找文件夹下面的Xml", "正在扫描" + filesPath[i] + "... ...", 1.0f / filesPath.Length * i);
+            if (filesPath[i].EndsWith(".xml"))
+            {
+                string tempPath = filesPath[i].Substring(filesPath[i].LastIndexOf("/") + 1);
+                tempPath = tempPath.Replace(".xml", "");
+                XmlToProtobuf(tempPath);
+            }
+        }
+        AssetDatabase.Refresh();
+        EditorUtility.ClearProgressBar();
+    }
+    /// <summary>
+    /// xml转protobuf
+    /// </summary>
+    /// <param name="name"></param>
+    private static void XmlToProtobuf(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return;
+        try
+        {
+            Type type = null;
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                Type tempType = asm.GetType(name);
+                if (tempType != null)
+                {
+                    type = tempType;
+                    break;
+                }
+            }
+            if (type != null)
+            {
+                string xmlPath = XmlPath + name + ".xml";
+                string protobufPath = ProtobufPath + name + ".bytes";//文件还是以.bytes后缀
+                object obj = BinarySerializeOpt.XmlDeserialize(xmlPath, type);
+                BinarySerializeOpt.ProtoSerialize(protobufPath, obj);
+                Debug.Log(name + "xml转protobuf成功，protobuf路径为:" + protobufPath);
+            }
+        }
+        catch { Debug.LogError(name + "xml转protobuf失败！"); }
+    }
+    #endregion
+
+    #region 读取写入反射：Tools/测试
+    [MenuItem("Tools/测试/测试读取xml")]
+    public static void TestReadXml()
+    {
+        string xmlPath = Application.dataPath + "/../Data/Reg/MonsterData.xml";
+        XmlReader reader = null;
+        try
+        {
+            XmlDocument xml = new XmlDocument();
+            reader = XmlReader.Create(xmlPath);
+            xml.Load(reader);
+            XmlNode xn = xml.SelectSingleNode("data");
+            XmlElement xe = (XmlElement)xn;
+            string className = xe.GetAttribute("name");
+            string xmlName = xe.GetAttribute("to");
+            string excelName = xe.GetAttribute("from");
+            reader.Close();
+            Debug.LogError(className + "  " + xmlName + "  " + excelName);
+            foreach (XmlNode node in xe.ChildNodes)
+            {
+                XmlElement tempXe = (XmlElement)node;
+                string name = tempXe.GetAttribute("name");
+                string type = tempXe.GetAttribute("type");
+                Debug.LogError(name + "  " + type);
+                XmlNode listNode = tempXe.FirstChild;
+                XmlElement listElement = (XmlElement)listNode;
+                string listName = listElement.GetAttribute("name");
+                string sheetName = listElement.GetAttribute("sheetname");
+                string mainKey = listElement.GetAttribute("mainKey");
+                Debug.LogError("list: " + listName + "  " + sheetName + "  " + mainKey);
+                foreach (XmlNode nd in listElement.ChildNodes)
+                {
+                    XmlElement txe = (XmlElement)nd;
+                    Debug.LogError(txe.GetAttribute("name") + "  " + txe.GetAttribute("col") + "  " + txe.GetAttribute("type"));
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            if (reader != null) reader.Close();
+            Debug.LogError(e);
+        }
+    }
+
+    [MenuItem("Tools/测试/测试写入Excel")]
+    public static void TestWriteExcel()
+    {
+        string xlsxPath = Application.dataPath + "/../Data/Excel/G怪物.xlsx";
+        FileInfo xlsxFile = new FileInfo(xlsxPath);
+        if (xlsxFile.Exists)
+        {
+            xlsxFile.Delete();
+            xlsxFile = new FileInfo(xlsxPath);
+        }
+        using (ExcelPackage package = new ExcelPackage(xlsxFile))
+        {
+            ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("怪物配置");
+            //worksheet.DefaultColWidth = 10;//sheet页面默认行宽度
+            //worksheet.DefaultRowHeight = 30;//sheet页面默认列高度
+            //worksheet.Cells.Style.WrapText = true;//设置所有单元格的自动换行
+            //worksheet.InsertColumn();//插入行，从某一行开始插入多少行
+            //worksheet.InsertRow();//插入列，从某一列开始插入多少列
+            //worksheet.DeleteColumn();//删除行，从某一行开始删除多少行
+            //worksheet.DeleteRow();//删除列，从某一列开始删除多少列
+            //worksheet.Column(1).Width = 10;//设定第几行宽度
+            //worksheet.Row(1).Height = 30;//设定第几列高度
+            //worksheet.Column(1).Hidden = true;//设定第几行隐藏
+            //worksheet.Row(1).Hidden = true;//设定第几列隐藏
+            //worksheet.Column(1).Style.Locked = true;//设定第几行锁定
+            //worksheet.Row(1).Style.Locked = true;//设定第几列锁定
+            //worksheet.Cells.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;//设定所有单元格对齐方式
+
+            worksheet.Cells.AutoFitColumns();
+            ExcelRange range = worksheet.Cells[1, 1];
+            range.Value = " 测试sadddddddddddddd\ndddddddddddddddddddasda";
+            range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.None;
+            //range.Style.Fill.BackgroundColor.SetColor();//设置单元格内背景颜色
+            //range.Style.Font.Color.SetColor();//设置单元格内字体颜色
+            range.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;//对齐方式 
+            range.AutoFitColumns();
+            range.Style.WrapText = true;
+
+            ExcelRange range1 = worksheet.Cells[1, 2];
+            range1.Value = " Siki学院Ocean老师!!!!!!";
+            package.Save();
+        }
+    }
+
+    [MenuItem("Tools/测试/测试已有类进行反射")]
+    public static void TestReflection1()
+    {
+        TestInfo testInfo = new TestInfo()
+        {
+            Id = 2,
+            Name = "测试反射",
+            IsA = false,
+            AllStrList = new List<string>(),
+            AllTestInfoList = new List<TestInfoTwo>(),
+        };
+
+        testInfo.AllStrList.Add("测试1111");
+        testInfo.AllStrList.Add("测试2222");
+        testInfo.AllStrList.Add("测试3333");
+
+        for (int i = 0; i < 3; i++)
+        {
+            TestInfoTwo test = new TestInfoTwo();
+            test.Id = i + 1;
+            test.Name = i + "name";
+            testInfo.AllTestInfoList.Add(test);
+        }
+
+        GetMemberValue(testInfo, "Name");
+        //object list = GetMemberValue(testInfo, "AllStrList");
+        //int listCount = System.Convert.ToInt32(list.GetType().InvokeMember("get_Count", BindingFlags.Default | BindingFlags.InvokeMethod, null, list, new object[] { }));
+
+        //for(int i = 0; i < listCount; i++)
+        //{
+        //    object item = list.GetType().InvokeMember("get_Item", BindingFlags.Default | BindingFlags.InvokeMethod, null, list, new object[] { i });
+        //    Debug.LogError(item);
+        //}
+
+        object list = GetMemberValue(testInfo, "AllTestInfoList");
+        int listCount = System.Convert.ToInt32(list.GetType().InvokeMember("get_Count", BindingFlags.Default | BindingFlags.InvokeMethod, null, list, new object[] { }));
+        for (int i = 0; i < listCount; i++)
+        {
+            object item = list.GetType().InvokeMember("get_Item", BindingFlags.Default | BindingFlags.InvokeMethod, null, list, new object[] { i });
+
+            object id = GetMemberValue(item, "Id");
+            object name = GetMemberValue(item, "Name");
+            Debug.LogError(id + " " + name);
+        }
+    }
+
+    [MenuItem("Tools/测试/测试已有数据进行反射")]
+    public static void TestReflection2()
+    {
+        object obj = CreateClass("TestInfo");
+        PropertyInfo info = obj.GetType().GetProperty("Id");
+        SetValue(info, obj, "21", "int");
+        //info.SetValue(obj, System.Convert.ToInt32("20"));
+        PropertyInfo nameInfo = obj.GetType().GetProperty("Name");
+        SetValue(nameInfo, obj, "aqweddad", "string");
+        //nameInfo.SetValue(obj, "huhiuhiuhi");
+        PropertyInfo isInfo = obj.GetType().GetProperty("IsA");
+        SetValue(isInfo, obj, "true", "bool");
+        //isInfo.SetValue(obj, System.Convert.ToBoolean("false"));
+        PropertyInfo heighInfo = obj.GetType().GetProperty("Heigh");
+        SetValue(heighInfo, obj, "51.4", "float");
+        //heighInfo.SetValue(obj, System.Convert.ToSingle("22.5"));
+        PropertyInfo enumInfo = obj.GetType().GetProperty("TestType");
+        SetValue(enumInfo, obj, "VAR1", "enum");
+        //object infoValue = TypeDescriptor.GetConverter(enumInfo.PropertyType).ConvertFromInvariantString("VAR1");
+        //enumInfo.SetValue(obj, infoValue);
+
+        Type type = typeof(string);
+        object list = CreateList(type);
+        for (int i = 0; i < 3; i++)
+        {
+            object addItem = "测试填数据" + i;
+            list.GetType().InvokeMember("Add", BindingFlags.Default | BindingFlags.InvokeMethod, null, list, new object[] { addItem });//调用list的add方法添加数据
+        }
+
+        obj.GetType().GetProperty("AllStrList").SetValue(obj, list);
+
+        object twoList = CreateList(typeof(TestInfoTwo));
+        for (int i = 0; i < 3; i++)
+        {
+            object addItem = CreateClass("TestInfoTwo");
+            PropertyInfo itemIdInfo = addItem.GetType().GetProperty("Id");
+            SetValue(itemIdInfo, addItem, "152" + i, "int");
+            PropertyInfo itemNameInfo = addItem.GetType().GetProperty("Name");
+            SetValue(itemNameInfo, addItem, "测试类" + i, "string");
+            twoList.GetType().InvokeMember("Add", BindingFlags.Default | BindingFlags.InvokeMethod, null, twoList, new object[] { addItem });
+        }
+        obj.GetType().GetProperty("AllTestInfoList").SetValue(obj, twoList);
+
+        TestInfo testInfo = (obj as TestInfo);
+        //foreach (string str in testInfo.AllStrList)
+        //{
+        //    Debug.LogError(str);
+        //}
+
+        foreach (TestInfoTwo test in testInfo.AllTestInfoList)
+            Debug.LogError(test.Id + " " + test.Name);
     }
     #endregion
 
